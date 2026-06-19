@@ -277,7 +277,7 @@ export default async function HRDashboard({
               projectMap.get(key)!.push(s);
             }
 
-            const projects = [...projectMap.entries()].sort((a, b) => {
+            const projects = Array.from(projectMap.entries()).sort((a, b) => {
               // Sort by most recent
               const aLatest = a[1][0]?.week_start || "";
               const bLatest = b[1][0]?.week_start || "";
