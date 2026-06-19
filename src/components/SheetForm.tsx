@@ -215,14 +215,14 @@ export default function SheetForm({ existingSheet }: SheetFormProps) {
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">EQX Folha de Serviço</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-xl font-bold text-navy">EQX Folha de Serviço</h2>
+            <p className="text-sm text-steel/70 mt-1">
               Semana de {format(new Date(weekDates[0].date + "T00:00:00"), "dd/MM", { locale: pt })} a{" "}
               {format(new Date(weekDates[5].date + "T00:00:00"), "dd/MM/yyyy", { locale: pt })}
             </p>
           </div>
           {existingSheet && (
-            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800">
+            <span className="badge-draft">
               {existingSheet.status === "draft" ? "Rascunho" : existingSheet.status === "submitted" ? "Submetida" : "Validada"}
             </span>
           )}
@@ -256,21 +256,21 @@ export default function SheetForm({ existingSheet }: SheetFormProps) {
         <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-2 font-semibold text-gray-700 w-20">Dia</th>
-                <th className="text-left py-2 px-2 font-semibold text-gray-700">Trabalho a executar (Detalhar)</th>
-                <th className="text-left py-2 px-2 font-semibold text-gray-700 w-36">Tipo de Trabalho</th>
-                <th className="text-left py-2 px-2 font-semibold text-gray-700 w-28">Data</th>
-                <th className="text-left py-2 px-2 font-semibold text-gray-700 w-24">Início</th>
-                <th className="text-left py-2 px-2 font-semibold text-gray-700 w-24">Fim</th>
-                <th className="text-left py-2 px-2 font-semibold text-gray-700 w-32">Avaliação</th>
-                <th className="text-left py-2 px-2 font-semibold text-gray-700 w-20">Rubrica</th>
+              <tr className="border-b border-steel-300/30">
+                <th className="text-left py-2 px-2 font-semibold text-steel text-xs tracking-wide w-20">Dia</th>
+                <th className="text-left py-2 px-2 font-semibold text-steel text-xs tracking-wide">Trabalho a executar (Detalhar)</th>
+                <th className="text-left py-2 px-2 font-semibold text-steel text-xs tracking-wide w-36">Tipo de Trabalho</th>
+                <th className="text-left py-2 px-2 font-semibold text-steel text-xs tracking-wide w-28">Data</th>
+                <th className="text-left py-2 px-2 font-semibold text-steel text-xs tracking-wide w-24">Início</th>
+                <th className="text-left py-2 px-2 font-semibold text-steel text-xs tracking-wide w-24">Fim</th>
+                <th className="text-left py-2 px-2 font-semibold text-steel text-xs tracking-wide w-32">Avaliação</th>
+                <th className="text-left py-2 px-2 font-semibold text-steel text-xs tracking-wide w-20">Rubrica</th>
               </tr>
             </thead>
             <tbody>
               {entries.map((entry, i) => (
-                <tr key={entry.day} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-2 px-2 font-medium text-gray-900">
+                <tr key={entry.day} className="border-b border-steel-300/10 hover:bg-navy/[0.02]">
+                  <td className="py-2 px-2 font-medium text-navy">
                     {DAYS[i].label}
                   </td>
                   <td className="py-2 px-2">
@@ -346,8 +346,8 @@ export default function SheetForm({ existingSheet }: SheetFormProps) {
         {/* Card list: mobile / tablet */}
         <div className="lg:hidden space-y-4">
           {entries.map((entry, i) => (
-            <div key={entry.day} className="border border-gray-200 rounded-lg p-4 space-y-3">
-              <h3 className="font-semibold text-gray-900">
+            <div key={entry.day} className="border border-steel-300/30 rounded p-4 space-y-3">
+              <h3 className="font-semibold text-navy">
                 {DAYS[i].label} — {weekDates[i].date}
               </h3>
               <input
@@ -378,7 +378,7 @@ export default function SheetForm({ existingSheet }: SheetFormProps) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-500">Início</label>
+                  <label className="text-xs text-steel/70">Início</label>
                   <input
                     type="time"
                     value={entry.start_time}
@@ -387,7 +387,7 @@ export default function SheetForm({ existingSheet }: SheetFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500">Fim</label>
+                  <label className="text-xs text-steel/70">Fim</label>
                   <input
                     type="time"
                     value={entry.end_time}
@@ -425,11 +425,11 @@ export default function SheetForm({ existingSheet }: SheetFormProps) {
 
         {/* Observations (desktop) */}
         <div className="hidden lg:block mt-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">Observações</h4>
+          <h4 className="text-sm font-semibold text-steel mb-2">Observações</h4>
           <div className="grid grid-cols-3 gap-2">
             {entries.map((entry, i) => (
               <div key={entry.day}>
-                <label className="text-xs text-gray-500">{DAYS[i].label}</label>
+                <label className="text-xs text-steel/70">{DAYS[i].label}</label>
                 <input
                   type="text"
                   value={entry.observations}
@@ -443,10 +443,10 @@ export default function SheetForm({ existingSheet }: SheetFormProps) {
         </div>
 
         {/* Totals */}
-        <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
-          <p className="text-sm text-gray-600">
+        <div className="mt-6 pt-4 border-t border-steel-300/30 flex items-center justify-between">
+          <p className="text-sm text-steel">
             Total de horas esta semana:{" "}
-            <span className="font-bold text-gray-900">
+            <span className="font-bold font-mono text-navy">
               {hrs}h{min > 0 ? ` ${min}m` : ""}
             </span>
           </p>

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { format, startOfWeek, addDays, subDays } from "date-fns";
+import { format, startOfWeek } from "date-fns";
 import { pt } from "date-fns/locale";
 import Link from "next/link";
 import WeekNavigator from "./WeekNavigator";
@@ -23,144 +23,128 @@ function fmtMinutes(mins: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-export default async function HRHome({
-  searchParams,
-}: {
-  searchParams: { w?: string };
-}) {
+export default async function HRHome({ searchParams }: { searchParams: { w?: string } }) {
   const supabase = await createClient();
   const today = new Date();
   const thisMonday = startOfWeek(today, { weekStartsOn: 1 });
-  const weekStart = searchParams.w
-    ? new Date(searchParams.w + "T00:00:00")
-    : thisMonday;
+  const weekStart = searchParams.w ? new Date(searchParams.w + "T00:00:00") : thisMonday;
   const weekStartStr = format(weekStart, "yyyy-MM-dd");
 
-  // Fetch all workers
-  const { data: workers } = await supabase
-    .from("profiles")
-    .select("id, full_name")
-    .eq("role", "worker")
-    .order("full_name");
+  const { data: workers } = await supabase.from("profiles").select("id, full_name").eq("role", "worker").order("full_name");
 
-  // Fetch sheets for selected week
   const { data: weekSheets } = await supabase
     .from("work_sheets")
     .select("*, work_entries(*), worker:profiles!work_sheets_worker_id_fkey(full_name)")
     .eq("week_start", weekStartStr)
     .order("created_at", { ascending: false });
 
-  // Fetch ALL sheets for total stats
-  const { data: allSheets } = await supabase
-    .from("work_sheets")
-    .select("work_entries(*)")
-    .limit(500);
+  const { data: allSheets } = await supabase.from("work_sheets").select("work_entries(*)").limit(500);
 
+  const totalWorkers = workers?.length || 0;
   const workerIdsWithSheet = new Set((weekSheets || []).map((s) => s.worker_id));
-  const submittedCount = (workers || []).filter((w) => workerIdsWithSheet.has(w.id)).length;
-  const notSubmittedCount = (workers || []).length - submittedCount;
-
-  // Total hours all time
-  const totalHoursAll = (allSheets || []).reduce((sum, s) => sum + calcMinutes(s.work_entries || []), 0);
-
-  // Hours this week
-  const totalHoursWeek = (weekSheets || []).reduce((sum, s) => sum + calcMinutes(s.work_entries || []), 0);
-
-  // Active projects this week
-  const projectsThisWeek = new Set((weekSheets || []).map((s) => s.work_number).filter(Boolean));
-
-  // Max bar value
-  const maxBar = Math.max(submittedCount, notSubmittedCount, 1);
+  const submitted = (workers || []).filter((w) => workerIdsWithSheet.has(w.id)).length;
+  const notSubmitted = totalWorkers - submitted;
+  const totalHoursAll = (allSheets || []).reduce((s, sh) => s + calcMinutes(sh.work_entries || []), 0);
+  const totalHoursWeek = (weekSheets || []).reduce((s, sh) => s + calcMinutes(sh.work_entries || []), 0);
+  const pct = totalWorkers > 0 ? Math.round((submitted / totalWorkers) * 100) : 0;
 
   return (
     <div className="space-y-6">
       <WeekNavigator currentWeek={weekStartStr} />
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Link href="/hr/users" className="card !p-3 text-center hover:shadow-md transition-shadow">
-          <p className="text-2xl font-bold text-primary-700">{workers?.length || 0}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Trabalhadores</p>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Link href="/hr/users" className="stat-card hover:border-navy/30 transition-colors">
+          <span className="stat-value">{totalWorkers}</span>
+          <span className="stat-label">Trabalhadores</span>
         </Link>
-        <div className="card !p-3 text-center">
-          <p className="text-2xl font-bold text-gray-800">{fmtMinutes(totalHoursWeek)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Horas esta semana</p>
+        <div className="stat-card">
+          <span className="stat-value">{fmtMinutes(totalHoursWeek)}</span>
+          <span className="stat-label">Horas esta semana</span>
         </div>
-        <div className="card !p-3 text-center">
-          <p className="text-2xl font-bold text-gray-800">{fmtMinutes(totalHoursAll)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Total horas</p>
+        <div className="stat-card">
+          <span className="stat-value">{fmtMinutes(totalHoursAll)}</span>
+          <span className="stat-label">Total de horas</span>
         </div>
-        <Link href="/hr/projects" className="card !p-3 text-center hover:shadow-md transition-shadow">
-          <p className="text-2xl font-bold text-gray-800">{projectsThisWeek.size}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Obras ativas</p>
+        <Link href="/hr/projects" className="stat-card hover:border-navy/30 transition-colors">
+          <span className="stat-value">{new Set((weekSheets || []).map((s) => s.work_number).filter(Boolean)).size}</span>
+          <span className="stat-label">Obras ativas</span>
         </Link>
       </div>
 
-      {/* Chart: Submitted vs Not */}
-      <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">
-          Folhas submetidas — semana de {format(weekStart, "dd/MM", { locale: pt })}
-        </h3>
-        
-        <div className="flex items-end gap-6 h-40 px-4">
-          {/* Submitted bar */}
-          <div className="flex-1 flex flex-col items-center gap-2">
-            <span className="text-2xl font-bold text-green-600">{submittedCount}</span>
-            <div
-              className="w-full max-w-[120px] bg-green-500 rounded-t-lg transition-all"
-              style={{ height: `${(submittedCount / maxBar) * 100}%` }}
-            />
-            <span className="text-xs text-gray-500 font-medium">Submeteram</span>
-          </div>
-
-          {/* Not submitted bar */}
-          <div className="flex-1 flex flex-col items-center gap-2">
-            <span className="text-2xl font-bold text-red-500">{notSubmittedCount}</span>
-            <div
-              className="w-full max-w-[120px] bg-red-400 rounded-t-lg transition-all"
-              style={{ height: `${(notSubmittedCount / maxBar) * 100}%` }}
-            />
-            <span className="text-xs text-gray-500 font-medium">Não submeteram</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick list: who submitted / who didn't */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="card">
-          <h3 className="text-sm font-semibold text-green-700 mb-3">
-            ✅ Submeteram ({submittedCount})
+      {/* Progress bar — submitted */}
+      <div className="card space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-navy tracking-wide">
+            Submissões — {format(weekStart, "dd/MM", { locale: pt })}
           </h3>
-          <ul className="space-y-2">
-            {(weekSheets || []).slice(0, 10).map((s: any) => (
-              <li key={s.id} className="flex items-center justify-between text-sm">
-                <Link href={`/hr/users/${s.worker_id}`} className="text-gray-900 hover:text-primary-600 font-medium">
-                  {s.worker?.full_name || "—"}
-                </Link>
-                <span className="text-xs text-gray-500">
-                  {s.client || "—"} · {fmtMinutes(calcMinutes(s.work_entries || []))}
-                </span>
-              </li>
+          <span className="font-mono text-sm text-steel tabular-nums">
+            {submitted}/{totalWorkers} · {pct}%
+          </span>
+        </div>
+
+        <div className="flex gap-2 h-2">
+          {submitted > 0 && (
+            <div
+              className="bg-green rounded-l-sm transition-all"
+              style={{ width: `${(submitted / Math.max(totalWorkers, 1)) * 100}%` }}
+            />
+          )}
+          <div
+            className="bg-steel-300/50 rounded-r-sm flex-1"
+            style={submitted === 0 ? { borderRadius: "2px" } : {}}
+          />
+        </div>
+
+        <div className="flex items-center gap-4 text-xs text-steel">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-green" />
+            {submitted} submeteram
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-steel-300/50" />
+            {notSubmitted} pendentes
+          </span>
+        </div>
+      </div>
+
+      {/* Lists */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="card">
+          <h4 className="text-xs font-semibold text-steel tracking-wide uppercase mb-3">Submeteram</h4>
+          <div className="space-y-2">
+            {(weekSheets || []).slice(0, 8).map((s: any) => (
+              <Link
+                key={s.id}
+                href={`/hr/users/${s.worker_id}`}
+                className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded hover:bg-navy/[0.03] transition-colors"
+              >
+                <span className="text-sm text-navy font-medium">{s.worker?.full_name || "—"}</span>
+                <span className="text-xs font-mono text-steel">{fmtMinutes(calcMinutes(s.work_entries || []))}</span>
+              </Link>
             ))}
-          </ul>
+            {(weekSheets || []).length === 0 && (
+              <p className="text-sm text-steel/60 py-2">Nenhuma submissão esta semana.</p>
+            )}
+          </div>
         </div>
 
         <div className="card">
-          <h3 className="text-sm font-semibold text-red-600 mb-3">
-            ❌ Não submeteram ({notSubmittedCount})
-          </h3>
-          <ul className="space-y-2">
-            {(workers || [])
-              .filter((w) => !workerIdsWithSheet.has(w.id))
-              .slice(0, 10)
-              .map((w) => (
-                <li key={w.id} className="text-sm">
-                  <Link href={`/hr/users/${w.id}`} className="text-gray-500 hover:text-primary-600">
-                    {w.full_name}
-                  </Link>
-                </li>
-              ))}
-          </ul>
+          <h4 className="text-xs font-semibold text-steel tracking-wide uppercase mb-3">Pendentes</h4>
+          <div className="space-y-2">
+            {(workers || []).filter((w) => !workerIdsWithSheet.has(w.id)).slice(0, 8).map((w) => (
+              <Link
+                key={w.id}
+                href={`/hr/users/${w.id}`}
+                className="flex items-center py-1.5 px-2 -mx-2 rounded text-sm text-steel hover:text-navy hover:bg-navy/[0.03] transition-colors"
+              >
+                {w.full_name}
+              </Link>
+            ))}
+            {notSubmitted === 0 && (
+              <p className="text-sm text-green/70 py-2">Todos submeteram!</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

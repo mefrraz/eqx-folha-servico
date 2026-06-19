@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -14,78 +15,72 @@ function calcMinutes(entries: any[]): number {
     return s;
   }, 0);
 }
-
-function fmtMinutes(mins: number): string {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
+function fmtM(m: number) { const h=Math.floor(m/60); const mi=m%60; return mi?`${h}h ${mi}m`:`${h}h`; }
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
-
   const { data: sheets } = await supabase
     .from("work_sheets")
     .select("*, work_entries(*), worker:profiles!work_sheets_worker_id_fkey(full_name)")
     .order("week_start", { ascending: false })
     .limit(500);
 
-  // Group by work_number
-  const projectMap = new Map<string, { sheets: any[]; workers: Set<string>; totalMins: number; latestWeek: string }>();
+  const projectMap = new Map<string, { sheets: any[]; workers: Set<string>; mins: number; latestWeek: string }>();
   for (const s of sheets || []) {
     const key = s.work_number || "Sem obra";
-    if (!projectMap.has(key)) {
-      projectMap.set(key, { sheets: [], workers: new Set(), totalMins: 0, latestWeek: s.week_start });
-    }
+    if (!projectMap.has(key)) projectMap.set(key, { sheets: [], workers: new Set(), mins: 0, latestWeek: s.week_start });
     const p = projectMap.get(key)!;
     p.sheets.push(s);
     p.workers.add(s.worker_id);
-    p.totalMins += calcMinutes(s.work_entries || []);
+    p.mins += calcMinutes(s.work_entries || []);
     if (s.week_start > p.latestWeek) p.latestWeek = s.week_start;
   }
 
   const projects = Array.from(projectMap.entries()).sort((a, b) => b[1].latestWeek.localeCompare(a[1].latestWeek));
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold text-gray-900">Obras</h2>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-bold text-navy">Obras</h2>
+        <p className="text-sm text-steel mt-0.5">{projects.length} obra{projects.length !== 1 ? "s" : ""} registada{projects.length !== 1 ? "s" : ""}</p>
+      </div>
 
       <div className="grid gap-3">
-        {projects.length === 0 ? (
-          <div className="card text-center py-12 text-gray-500">Nenhuma obra registada.</div>
-        ) : (
-          projects.map(([projectNumber, p]) => (
-            <div key={projectNumber} className="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="font-semibold text-gray-900 text-lg">
-                  🏗️ {projectNumber}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {p.workers.size} trabalhador{p.workers.size !== 1 ? "es" : ""} ·{" "}
-                  {p.sheets.length} folha{p.sheets.length !== 1 ? "s" : ""} ·{" "}
-                  Última: {format(new Date(p.latestWeek + "T00:00:00"), "dd/MM/yyyy", { locale: pt })}
-                </p>
-                {/* Show worker names */}
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {sheets
-                    ?.filter((s) => (s.work_number || "Sem obra") === projectNumber)
-                    .map((s) => s.worker?.full_name)
-                    .filter((v, i, a) => a.indexOf(v) === i)
-                    .slice(0, 8)
-                    .map((name: string) => (
-                      <span key={name} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                        {name}
-                      </span>
-                    ))}
-                </div>
+        {projects.length === 0 && (
+          <div className="card text-center py-12 text-steel text-sm">Nenhuma obra registada.</div>
+        )}
+        {projects.map(([number, p]) => (
+          <Link
+            key={number}
+            href={`/hr/projects/${encodeURIComponent(number)}`}
+            className="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-navy/30 transition-all group"
+          >
+            <div className="space-y-1.5">
+              <p className="font-semibold text-navy text-base group-hover:text-navy transition-colors">
+                {number === "Sem obra" ? "Sem obra atribuída" : number}
+              </p>
+              <div className="flex items-center gap-3 text-xs text-steel">
+                <span className="font-medium">{p.workers.size} trabalhador{p.workers.size !== 1 ? "es" : ""}</span>
+                <span className="w-0.5 h-0.5 bg-steel-300 rounded-full" />
+                <span>{p.sheets.length} folha{p.sheets.length !== 1 ? "s" : ""}</span>
+                <span className="w-0.5 h-0.5 bg-steel-300 rounded-full" />
+                <span>Última: {format(new Date(p.latestWeek + "T00:00:00"), "dd/MM/yy", { locale: pt })}</span>
               </div>
-              <div className="text-right shrink-0">
-                <p className="text-xl font-bold text-gray-800">{fmtMinutes(p.totalMins)}</p>
-                <p className="text-xs text-gray-500">Total horas</p>
+              <div className="flex flex-wrap gap-1">
+                {(() => {
+                  const names = p.sheets.map((s: any) => s.worker?.full_name).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i);
+                  return names.slice(0, 6).map((name: string) => (
+                    <span key={name} className="text-[11px] bg-navy/[0.04] text-steel px-2 py-0.5 rounded">{name}</span>
+                  ));
+                })()}
               </div>
             </div>
-          ))
-        )}
+            <div className="text-right shrink-0">
+              <span className="stat-value text-xl">{fmtM(p.mins)}</span>
+              <span className="stat-label">horas</span>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

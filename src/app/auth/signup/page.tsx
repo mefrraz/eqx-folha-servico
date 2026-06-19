@@ -17,122 +17,57 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // 1. Create auth user
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
-    });
-
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
     if (error) {
-      if (error.message?.includes("User already registered") || error.status === 422) {
-        toast.error("Este email já está registado.");
-      } else {
-        toast.error("Erro no registo: " + error.message);
-      }
-      setLoading(false);
-      return;
+      toast.error(error.message?.includes("already registered") ? "Este email já está registado." : "Erro: " + error.message);
+      setLoading(false); return;
     }
+    if (!data.user) { toast.error("Erro ao criar conta."); setLoading(false); return; }
 
-    if (!data.user) {
-      toast.error("Erro ao criar conta. Tente novamente.");
-      setLoading(false);
-      return;
-    }
-
-    // Check if email confirmation is required
     if (data.session) {
-      // Auto-confirmed — update the profile name (trigger auto-created it)
-      await supabase
-        .from("profiles")
-        .update({ full_name: fullName })
-        .eq("id", data.user.id);
-
-      toast.success("Conta criada com sucesso!");
-      router.push("/");
-      router.refresh();
+      await supabase.from("profiles").update({ full_name: fullName }).eq("id", data.user.id);
+      toast.success("Conta criada!");
+      router.push("/"); router.refresh();
     } else {
-      // Email confirmation required — trigger already created the profile
-      toast.success("Conta criada! Verifique o seu email antes de fazer login.");
+      toast.success("Conta criada! Verifique o email antes de entrar.");
       router.push("/auth/login");
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-8">
+    <div className="flex min-h-screen items-center justify-center bg-navy px-4">
+      <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-primary-700">
-            EQX Folha de Serviço
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Criar nova conta de trabalhador
-          </p>
+          <svg width="64" height="32" viewBox="0 0 48 24" className="mx-auto mb-4">
+            <rect width="48" height="24" rx="4" fill="none" stroke="#F1C411" strokeWidth="2"/>
+            <text x="24" y="17" textAnchor="middle" fill="#F1C411" fontSize="14" fontWeight="700" fontFamily="Inter,sans-serif">EQX</text>
+          </svg>
+          <h2 className="text-lg font-semibold text-white/90">Criar conta</h2>
+          <p className="text-sm text-white/40 mt-1">Registo de trabalhador</p>
         </div>
 
-        <form onSubmit={handleSignup} className="card space-y-5">
-          <h2 className="text-xl font-semibold text-gray-900 text-center">
-            Registo
-          </h2>
-
+        <form onSubmit={handleSignup} className="bg-white rounded p-6 space-y-4">
           <div>
-            <label htmlFor="fullName" className="label-field">
-              Nome completo
-            </label>
-            <input
-              id="fullName"
-              type="text"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="input-field"
-              placeholder="João Silva"
-            />
+            <label htmlFor="fullName" className="label-field">Nome completo</label>
+            <input id="fullName" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)}
+              className="input-field" placeholder="João Silva" />
           </div>
-
           <div>
-            <label htmlFor="email" className="label-field">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="joao@empresa.pt"
-            />
+            <label htmlFor="email" className="label-field">Email</label>
+            <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+              className="input-field" placeholder="joao@eqx.pt" />
           </div>
-
           <div>
-            <label htmlFor="password" className="label-field">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="Mínimo 6 caracteres"
-            />
+            <label htmlFor="password" className="label-field">Password</label>
+            <input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
+              className="input-field" placeholder="Mínimo 6 caracteres" />
           </div>
-
           <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? "A criar conta..." : "Criar conta"}
+            {loading ? "A criar conta…" : "Criar conta"}
           </button>
-
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-xs text-steel">
             Já tem conta?{" "}
-            <Link href="/auth/login" className="font-medium text-primary-600 hover:text-primary-500">
-              Entrar
-            </Link>
+            <Link href="/auth/login" className="font-medium text-navy hover:text-gold transition-colors">Entrar</Link>
           </p>
         </form>
       </div>
