@@ -9,7 +9,8 @@ DELETE FROM work_entries;
 DELETE FROM work_sheets;
 DELETE FROM projects;
 DELETE FROM clients;
--- Manter profiles e auth.users (menos admin)
+DELETE FROM profiles WHERE id IN (SELECT id FROM auth.users WHERE email LIKE '%@eqx.pt' AND raw_user_meta_data->>'full_name' IS NOT NULL);
+DELETE FROM auth.users WHERE email LIKE '%@eqx.pt';
 
 -- 2. Criar 3 clientes
 INSERT INTO clients (id, name) VALUES
