@@ -23,6 +23,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS profiles_updated_at ON profiles;
 CREATE TRIGGER profiles_updated_at
   BEFORE UPDATE ON profiles
   FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS work_sheets (
   UNIQUE(worker_id, week_start)
 );
 
+DROP TRIGGER IF EXISTS work_sheets_updated_at ON work_sheets;
 CREATE TRIGGER work_sheets_updated_at
   BEFORE UPDATE ON work_sheets
   FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
@@ -68,6 +70,7 @@ CREATE TABLE IF NOT EXISTS work_entries (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS work_entries_updated_at ON work_entries;
 CREATE TRIGGER work_entries_updated_at
   BEFORE UPDATE ON work_entries
   FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
@@ -77,11 +80,13 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_sheets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_entries ENABLE ROW LEVEL SECURITY;
 
--- Políticas: profiles
+-- Políticas: profiles (DROP + CREATE = idempotente)
+DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
 CREATE POLICY "Users can read own profile"
   ON profiles FOR SELECT
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Admins can read all profiles" ON profiles;
 CREATE POLICY "Admins can read all profiles"
   ON profiles FOR SELECT
   USING (
@@ -91,15 +96,18 @@ CREATE POLICY "Admins can read all profiles"
     )
   );
 
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
 
 -- Políticas: work_sheets
+DROP POLICY IF EXISTS "Workers can CRUD own sheets" ON work_sheets;
 CREATE POLICY "Workers can CRUD own sheets"
   ON work_sheets FOR ALL
   USING (worker_id = auth.uid());
 
+DROP POLICY IF EXISTS "Admins can read all sheets" ON work_sheets;
 CREATE POLICY "Admins can read all sheets"
   ON work_sheets FOR SELECT
   USING (
@@ -109,6 +117,7 @@ CREATE POLICY "Admins can read all sheets"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can update sheets" ON work_sheets;
 CREATE POLICY "Admins can update sheets"
   ON work_sheets FOR UPDATE
   USING (
@@ -126,6 +135,7 @@ CREATE POLICY "Admins can update sheets"
   );
 
 -- Políticas: work_entries
+DROP POLICY IF EXISTS "Workers can CRUD entries of own sheets" ON work_entries;
 CREATE POLICY "Workers can CRUD entries of own sheets"
   ON work_entries FOR ALL
   USING (
@@ -136,6 +146,7 @@ CREATE POLICY "Workers can CRUD entries of own sheets"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can read all entries" ON work_entries;
 CREATE POLICY "Admins can read all entries"
   ON work_entries FOR SELECT
   USING (
@@ -159,11 +170,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
--- 6. Índices para performance
-CREATE INDEX idx_work_sheets_worker ON work_sheets(worker_id, week_start);
-CREATE INDEX idx_work_sheets_status ON work_sheets(status);
-CREATE INDEX idx_work_entries_sheet ON work_entries(sheet_id);
+-- 6. Índices para performance (IF NOT EXISTS para ser seguro re-executar)
+CREATE INDEX IF NOT EXISTS idx_work_sheets_worker ON work_sheets(worker_id, week_start);
+CREATE INDEX IF NOT EXISTS idx_work_sheets_status ON work_sheets(status);
+CREATE INDEX IF NOT EXISTS idx_work_entries_sheet ON work_entries(sheet_id);
