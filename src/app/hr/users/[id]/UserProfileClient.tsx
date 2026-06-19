@@ -80,11 +80,11 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
       </div>
 
       {/* Calendar + Obras */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="card !p-4">
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="card !p-4 w-full lg:w-[280px] lg:h-[280px] shrink-0 flex items-center justify-center">
           <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedWeek} onSelectWeek={(d) => { setSelectedWeek(d); setSelectedSheet(findSheet(d)); }} />
         </div>
-        <div className="card !p-4">
+        <div className="card !p-4 flex-1">
           <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase mb-3">Obras</h4>
           {workerProjects.length === 0 ? (
             <p className="text-sm text-brand-muted text-center py-8">Nenhuma obra associada</p>
