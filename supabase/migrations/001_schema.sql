@@ -160,7 +160,7 @@ CREATE POLICY "Admins can read all entries"
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER
 SECURITY DEFINER
-SET search_path = ''
+SET search_path = public
 AS $$
 BEGIN
   INSERT INTO profiles (id, full_name, role)
