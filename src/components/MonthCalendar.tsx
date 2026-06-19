@@ -31,16 +31,16 @@ export default function MonthCalendar({ sheets, selectedWeek, onSelectWeek }: { 
   };
 
   return (
-    <div className="select-none max-w-[220px] mx-auto">
+    <div className="select-none w-full">
       <div className="flex items-center justify-between mb-1.5">
         <button onClick={() => setViewDate(subMonths(viewDate, 1))} className="text-brand-muted hover:text-brand-dark text-xs px-0.5">&lt;</button>
         <span className="text-xs font-semibold text-brand-dark">{format(viewDate, "MMM yyyy", { locale: pt })}</span>
         <button onClick={() => setViewDate(addMonths(viewDate, 1))} className="text-brand-muted hover:text-brand-dark text-xs px-0.5">&gt;</button>
       </div>
-      <div className="grid grid-cols-7 mb-0.5">
-        {DAYS.map((d,i) => <div key={i} className="text-center text-[10px] font-medium text-brand-muted py-0">{d}</div>)}
+      <div className="grid grid-cols-7 gap-1 mb-0.5">
+        {DAYS.map((d,i) => <div key={i} className="text-center text-[10px] font-medium text-brand-muted py-0.5">{d}</div>)}
       </div>
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: startDay }).map((_, i) => <div key={`e${i}`} className="aspect-square" />)}
         {days.map(day => {
           const status = getDayStatus(day);
@@ -48,7 +48,7 @@ export default function MonthCalendar({ sheets, selectedWeek, onSelectWeek }: { 
           return (
             <button key={day.toISOString()} onClick={() => handleDayClick(day)}
               title={weekSheet ? `Folha ${weekSheet.status==="submitted"?"Submetida":weekSheet.status==="draft"?"Rascunho":"Validada"}` : ""}
-              className={`aspect-square flex items-center justify-center rounded-md text-[11px] font-medium transition-all
+              className={`aspect-square flex items-center justify-center rounded-md text-xs font-medium transition-all
                 ${status === "selected" ? "bg-brand-gold text-brand-dark font-bold" : ""}
                 ${status === "hasSheet" ? "bg-brand-gold/10 text-brand-dark" : ""}
                 ${status === "today" ? "ring-1.5 ring-brand-gold/60" : ""}
