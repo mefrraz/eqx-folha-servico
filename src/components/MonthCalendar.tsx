@@ -31,7 +31,7 @@ export default function MonthCalendar({ sheets, selectedWeek, onSelectWeek }: { 
   };
 
   return (
-    <div className="select-none max-w-[260px] mx-auto">
+    <div className="select-none">
       <div className="flex items-center justify-between mb-1.5">
         <button onClick={() => setViewDate(subMonths(viewDate, 1))} className="text-brand-muted hover:text-brand-dark text-xs px-0.5">&lt;</button>
         <span className="text-xs font-semibold text-brand-dark">{format(viewDate, "MMM yyyy", { locale: pt })}</span>

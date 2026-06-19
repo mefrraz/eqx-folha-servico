@@ -81,7 +81,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
 
       {/* Calendar + Obras */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="card !p-4 aspect-square flex items-center justify-center">
+        <div className="card !p-4">
           <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedWeek} onSelectWeek={(d) => { setSelectedWeek(d); setSelectedSheet(findSheet(d)); }} />
         </div>
         <div className="card !p-4">
