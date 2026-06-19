@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { notFound } from "next/navigation";
 import EditUserForm from "./EditUserForm";
-import ValidateButton from "../dashboard/ValidateButton";
+import ValidateButton from "../../dashboard/ValidateButton";
 
 export const dynamic = "force-dynamic";
 
