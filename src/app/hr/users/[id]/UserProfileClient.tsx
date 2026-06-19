@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { format, addDays } from "date-fns";
+import { format, addDays, startOfWeek } from "date-fns";
 import { pt } from "date-fns/locale";
 import MonthCalendar from "@/components/MonthCalendar";
 import DeleteUserButton from "./DeleteUserButton";
@@ -32,17 +32,31 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
     if (pids.size > 0) supabase.from("projects").select("id,name,client:clients(name)").in("id", Array.from(pids)).then(({data}) => setWorkerProjects(data||[]));
   }, []);
 
-  const findSheet = useCallback((ws: Date) => {
-    const key = format(ws, "yyyy-MM-dd");
-    return sheets.find((s: any) => s.week_start === key) || null;
+  // Find sheet by calendar-selected Sunday → compare to sheet week_start (Monday)
+  const findSheet = useCallback((sunday: Date) => {
+    const monday = format(addDays(sunday, 1), "yyyy-MM-dd");
+    return sheets.find((s: any) => s.week_start === monday) || null;
   }, [sheets]);
 
-  useEffect(() => { if (selectedWeek) setSelectedSheet(findSheet(selectedWeek)); }, [selectedWeek, findSheet]);
+  const handleWeekSelect = (sunday: Date) => {
+    setSelectedWeek(sunday);
+    setSelectedSheet(findSheet(sunday));
+  };
 
   const totalMins = sheets.reduce((s: number, sh: any) => s + cM(sh.work_entries || []), 0);
   const latestSheet = sheets[0];
 
-  const sheetWeeks = sheets.map((s: any) => ({ weekStart: new Date(s.week_start+"T00:00:00"), weekEnd: new Date(s.week_end+"T00:00:00"), hasSheet: true, sheetId: s.id, status: s.status }));
+  // Calendar sheets map: use Sunday-based weekStart for highlighting
+  const sheetSundays = new Map<string, any>();
+  for (const s of sheets) {
+    const sun = format(addDays(new Date(s.week_start+"T00:00:00"), -1), "yyyy-MM-dd");
+    sheetSundays.set(sun, s);
+  }
+
+  const sheetWeeks = sheets.map((s: any) => {
+    const sun = addDays(new Date(s.week_start+"T00:00:00"), -1);
+    return { weekStart: sun, weekEnd: addDays(sun, 6), hasSheet: true, sheetId: s.id, status: s.status };
+  });
 
   const handleValidate = async (sheetId: string) => {
     const r = await fetch("/api/validate-sheet", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({sheetId}) });
@@ -63,12 +77,19 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
 
   return (
     <div className="space-y-6">
-      {/* Top — name + stats only */}
+      {/* Top card: name + stats + obras below name */}
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
           <div>
             <h2 className="text-2xl font-bold text-brand-dark">{profile.full_name}</h2>
             <p className="text-xs text-brand-soft mt-0.5">{userEmail}</p>
+            {/* Obras below name */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {workerProjects.map((p: any) => (
+                <span key={p.id} className="text-xs bg-brand-gold/10 text-brand-dark font-medium px-2.5 py-1 rounded-full">{p.name}</span>
+              ))}
+              {workerProjects.length===0 && <span className="text-xs text-brand-muted">Nenhuma obra</span>}
+            </div>
           </div>
           <div className="flex gap-8 text-right shrink-0">
             <div><span className="block text-3xl font-bold font-mono text-brand-dark tracking-tight">{fM(totalMins)}</span><span className="text-xs text-brand-muted tracking-wide uppercase">Horas totais</span></div>
@@ -79,33 +100,21 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
         <button onClick={() => { setEditName(profile.full_name); setEditEmail(userEmail); setShowEdit(true); }} className="btn-secondary text-xs !py-1.5 !px-3 mt-4">Editar</button>
       </div>
 
-      {/* Calendar + Obras */}
+      {/* Calendar + Sheet detail side by side */}
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="card !p-4 w-full lg:w-[280px] lg:h-[280px] shrink-0 flex items-center justify-center">
-          <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedWeek} onSelectWeek={(d) => { setSelectedWeek(d); setSelectedSheet(findSheet(d)); }} />
+          <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedWeek} onSelectWeek={handleWeekSelect} />
         </div>
-        <div className="card !p-4 flex-1">
-          <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase mb-3">Obras</h4>
-          {workerProjects.length === 0 ? (
-            <p className="text-sm text-brand-muted text-center py-8">Nenhuma obra associada</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {workerProjects.map((p: any) => (
-                <span key={p.id} className="text-sm bg-brand-gold/10 text-brand-dark font-medium px-3 py-2 rounded-xl">
-                  {p.name}
-                  {p.client?.name && <span className="block text-xs text-brand-muted font-normal mt-0.5">{p.client.name}</span>}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Sheet detail */}
-      {selectedWeek && (
-        <div className="card !p-4 min-h-[150px]">
-          {!selectedSheet ? (
-            <div className="text-center py-10"><p className="text-brand-muted text-sm">Nenhuma folha esta semana</p><p className="text-xs text-brand-soft">{format(selectedWeek,"dd/MM",{locale:pt})} – {format(addDays(selectedWeek,6),"dd/MM/yyyy",{locale:pt})}</p></div>
+        {/* Sheet detail to the right */}
+        <div className="card !p-4 flex-1 min-h-[280px]">
+          {!selectedWeek ? (
+            <div className="text-center py-16 text-brand-muted text-sm">Selecione uma semana no calendário</div>
+          ) : !selectedSheet ? (
+            <div className="text-center py-16">
+              <p className="text-brand-muted text-sm mb-2">Nenhuma folha esta semana</p>
+              <p className="text-xs text-brand-soft">{format(selectedWeek,"dd/MM",{locale:pt})} – {format(addDays(selectedWeek,6),"dd/MM/yyyy",{locale:pt})}</p>
+            </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -122,11 +131,10 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
             </div>
           )}
         </div>
-      )}
+      </div>
 
       <DeleteUserButton userId={userId} userName={profile.full_name} />
 
-      {/* Edit modal */}
       {showEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto py-8" onClick={() => setShowEdit(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -138,15 +146,10 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
             </div>
             <div>
               <label className="label-field">Obras</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {workerProjects.map((p:any)=>(<span key={p.id} className="text-xs bg-brand-gold/10 text-brand-dark font-medium px-2.5 py-1 rounded-full flex items-center gap-1">{p.name}<button onClick={() => setWorkerProjects(prev => prev.filter(x => x.id !== p.id))} className="text-brand-muted hover:text-red-500 ml-1 font-bold">&times;</button></span>))}
-              </div>
+              <div className="flex flex-wrap gap-2 mb-2">{workerProjects.map((p:any)=>(<span key={p.id} className="text-xs bg-brand-gold/10 text-brand-dark font-medium px-2.5 py-1 rounded-full flex items-center gap-1">{p.name}<button onClick={() => setWorkerProjects(prev => prev.filter(x => x.id !== p.id))} className="text-brand-muted hover:text-red-500 ml-1 font-bold">&times;</button></span>))}</div>
               <select onChange={e => { if(e.target.value && !workerProjects.find(p=>p.id===e.target.value)) { const p = allProjects.find(x=>x.id===e.target.value); if(p) setWorkerProjects(prev => [...prev, p]); e.target.value=""; } }} defaultValue="" className="input-field text-sm"><option value="">Adicionar obra…</option>{allProjects.filter(p => !workerProjects.some(wp => wp.id === p.id)).map((p:any) => (<option key={p.id} value={p.id}>{p.name}</option>))}</select>
             </div>
-            <div className="flex gap-3 justify-end pt-2">
-              <button onClick={() => setShowEdit(false)} className="btn-secondary !py-2 !px-4 text-sm">Cancelar</button>
-              <button onClick={handleSaveEdit} disabled={editSaving} className="btn-primary !py-2 !px-4 text-sm">{editSaving?"A guardar…":"Guardar"}</button>
-            </div>
+            <div className="flex gap-3 justify-end pt-2"><button onClick={() => setShowEdit(false)} className="btn-secondary !py-2 !px-4 text-sm">Cancelar</button><button onClick={handleSaveEdit} disabled={editSaving} className="btn-primary !py-2 !px-4 text-sm">{editSaving?"A guardar…":"Guardar"}</button></div>
           </div>
         </div>
       )}
