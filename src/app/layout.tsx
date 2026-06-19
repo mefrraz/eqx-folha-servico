@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="EQX" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        <link rel="icon" href="/eqx-logo.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
       </head>
       <body className="min-h-screen">
         <Toaster position="top-right" toastOptions={{ style: { background: "#1a1a1a", color: "#F1C411", borderRadius: "12px", fontSize: "13px", fontFamily: "Inter, sans-serif" } }} />
