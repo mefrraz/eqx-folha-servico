@@ -6,6 +6,7 @@ import { format, startOfWeek, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import MonthCalendar from "@/components/MonthCalendar";
 import EditUserForm from "./EditUserForm";
+import DeleteUserButton from "./DeleteUserButton";
 import toast from "react-hot-toast";
 
 const DL:Record<string,string>={monday:"2ª",tuesday:"3ª",wednesday:"4ª",thursday:"5ª",friday:"6ª",saturday:"Sáb"};
@@ -68,6 +69,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
       </div>
 
       <EditUserForm userId={userId} fullName={profile.full_name} />
+      <DeleteUserButton userId={userId} userName={profile.full_name} />
 
       {/* Calendar + Sheet detail */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
