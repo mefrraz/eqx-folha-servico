@@ -80,6 +80,20 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_sheets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_entries ENABLE ROW LEVEL SECURITY;
 
+-- Helper: is_admin() — SECURITY DEFINER para evitar recursão de RLS
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS boolean
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  user_role text;
+BEGIN
+  SELECT role INTO user_role FROM profiles WHERE id = auth.uid();
+  RETURN user_role IN ('admin', 'hr');
+END;
+$$ LANGUAGE plpgsql;
+
 -- Políticas: profiles (DROP + CREATE = idempotente)
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
 CREATE POLICY "Users can read own profile"
@@ -89,12 +103,7 @@ CREATE POLICY "Users can read own profile"
 DROP POLICY IF EXISTS "Admins can read all profiles" ON profiles;
 CREATE POLICY "Admins can read all profiles"
   ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role IN ('admin', 'hr')
-    )
-  );
+  USING (is_admin());
 
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile"
@@ -110,29 +119,13 @@ CREATE POLICY "Workers can CRUD own sheets"
 DROP POLICY IF EXISTS "Admins can read all sheets" ON work_sheets;
 CREATE POLICY "Admins can read all sheets"
   ON work_sheets FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role IN ('admin', 'hr')
-    )
-  );
+  USING (is_admin());
 
 DROP POLICY IF EXISTS "Admins can update sheets" ON work_sheets;
 CREATE POLICY "Admins can update sheets"
   ON work_sheets FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role IN ('admin', 'hr')
-    )
-  )
-  WITH CHECK (
-    -- Admins só podem alterar estado, não dados do trabalhador
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role IN ('admin', 'hr')
-    )
-  );
+  USING (is_admin())
+  WITH CHECK (is_admin());
 
 -- Políticas: work_entries
 DROP POLICY IF EXISTS "Workers can CRUD entries of own sheets" ON work_entries;
@@ -149,12 +142,7 @@ CREATE POLICY "Workers can CRUD entries of own sheets"
 DROP POLICY IF EXISTS "Admins can read all entries" ON work_entries;
 CREATE POLICY "Admins can read all entries"
   ON work_entries FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role IN ('admin', 'hr')
-    )
-  );
+  USING (is_admin());
 
 -- 5. Trigger: criar perfil automaticamente ao criar user
 CREATE OR REPLACE FUNCTION handle_new_user()
