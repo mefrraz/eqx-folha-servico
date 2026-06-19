@@ -9,55 +9,42 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const DL: Record<string, string> = { monday: "2ª feira", tuesday: "3ª feira", wednesday: "4ª feira", thursday: "5ª feira", friday: "6ª feira", saturday: "Sábado" };
   const WT: Record<string, string> = { new_installation: "Nova Instalação", installation_continuation: "Continuação instalação", preventive_maintenance: "Manutenção preventiva", corrective_maintenance: "Manutenção corretiva" };
 
+  const td = "border:1px solid #999;padding:4px 6px;font-size:10px;font-family:Arial;vertical-align:top";
+  const th = "border:1px solid #999;padding:4px 6px;font-size:9px;font-family:Arial;font-weight:bold;background:#e8e8e8;text-align:left;white-space:nowrap";
+
   const rows = ["monday","tuesday","wednesday","thursday","friday","saturday"].map(day => {
     const e = (sheet.work_entries || []).find((x: any) => x.day === day);
     return `<tr>
-      <td style="border:1px solid #999;padding:5px 8px;font-size:11px;font-family:Arial;font-weight:bold;vertical-align:top">${DL[day]}</td>
-      <td style="border:1px solid #999;padding:5px 8px;font-size:11px;font-family:Arial;vertical-align:top">${e?.work_description || "&nbsp;"}</td>
-      <td style="border:1px solid #999;padding:5px 8px;font-size:11px;font-family:Arial;vertical-align:top">${WT[e?.work_type] || "&nbsp;"}</td>
-      <td style="border:1px solid #999;padding:5px 8px;font-size:11px;font-family:Arial;vertical-align:top">${e?.date || "&nbsp;"}</td>
-      <td style="border:1px solid #999;padding:5px 8px;font-size:11px;font-family:Arial;vertical-align:top">${e?.evaluation || "&nbsp;"}</td>
-      <td style="border:1px solid #999;padding:5px 8px;font-size:11px;font-family:Arial;vertical-align:top">${e?.signature || "&nbsp;"}</td>
-      <td style="border:1px solid #999;padding:5px 8px;font-size:11px;font-family:Arial;vertical-align:top">${e?.observations || "&nbsp;"}</td>
+      <td style="${td};font-weight:bold">${DL[day]}</td>
+      <td style="${td}">${e?.work_description || ""}</td>
+      <td style="${td}">${WT[e?.work_type] || ""}</td>
+      <td style="${td};text-align:center">${e?.date || ""}</td>
+      <td style="${td};text-align:center">${e?.evaluation || ""}</td>
+      <td style="${td};text-align:center">${e?.signature || ""}</td>
+      <td style="${td}">${e?.observations || ""}</td>
+      <td style="${td};text-align:center;white-space:nowrap">${e?.start_time || ""}</td>
+      <td style="${td};text-align:center;white-space:nowrap">${e?.end_time || ""}</td>
     </tr>`;
   }).join("");
 
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8"><title>Folha de Serviço</title>
-<style>
-  @page { size: A4 landscape; margin: 2cm; }
-  body { font-family: Arial, sans-serif; font-size: 11pt; }
-  h2 { text-align: center; font-size: 14pt; margin-bottom: 4pt; }
-  .subtitle { text-align: center; font-size: 10pt; margin-bottom: 12pt; color: #555; }
-  .info { margin-bottom: 10pt; font-size: 10pt; }
-  .info strong { display: inline-block; width: 70px; }
-  .footer { margin-top: 14pt; font-size: 9pt; color: #888; text-align: right; border-top: 1px solid #ccc; padding-top: 4pt; }
-</style>
-</head>
-<body>
+<style>@page{size:A4 landscape;margin:1.5cm}body{font-family:Arial,sans-serif}
+h2{text-align:center;font-size:13pt;margin:0 0 2pt 0}
+.sub{text-align:center;font-size:9pt;margin:0 0 8pt 0;color:#555}
+.info{margin:0 0 4pt 0;font-size:9pt}.info b{display:inline-block;width:65px}
+.foot{margin-top:10pt;font-size:8pt;color:#888;text-align:right;border-top:1px solid #ccc;padding-top:3pt}
+</style></head><body>
 <h2>Folha de Serviço</h2>
-<p class="subtitle">Plano de Trabalhos Semana ${sheet.week_start} a ${sheet.week_end}</p>
-
-<p class="info"><strong>Cliente:</strong> ${sheet.client || "_______________________________"}</p>
-<p class="info"><strong>Nº Obra:</strong> ${sheet.work_number || "_______________________________"}</p>
-<p class="info"><strong>Trabalhador:</strong> ${sheet.worker?.full_name || "_______________________________"}</p>
-
-<table style="border-collapse:collapse;width:100%;font-size:10pt;font-family:Arial">
-<thead>
-<tr style="background:#e8e8e8">
-<th style="border:1px solid #999;padding:5px 8px;font-size:10px;text-align:left">Dia</th>
-<th style="border:1px solid #999;padding:5px 8px;font-size:10px;text-align:left">Trabalho a executar (Detalhar)</th>
-<th style="border:1px solid #999;padding:5px 8px;font-size:10px;text-align:left">Tipo de Trabalho</th>
-<th style="border:1px solid #999;padding:5px 8px;font-size:10px;text-align:left">Data</th>
-<th style="border:1px solid #999;padding:5px 8px;font-size:10px;text-align:left">Avaliação (após terminar trabalho)</th>
-<th style="border:1px solid #999;padding:5px 8px;font-size:10px;text-align:left">Rubrica</th>
-<th style="border:1px solid #999;padding:5px 8px;font-size:10px;text-align:left">Observações</th>
-</tr>
-</thead>
-<tbody>${rows}</tbody>
-</table>
-
-<p class="footer">M24.V1_Folha de Serviço</p>
+<p class="sub">Plano de Trabalhos Semana ${sheet.week_start} a ${sheet.week_end}</p>
+<p class="info"><b>Cliente:</b> ${sheet.client || "_______________________________"}</p>
+<p class="info"><b>Nº Obra:</b> ${sheet.work_number || "_______________________________"}</p>
+<p class="info"><b>Trabalhador:</b> ${sheet.worker?.full_name || "_______________________________"}</p>
+<table style="border-collapse:collapse;width:100%">
+<thead><tr>
+<th style="${th}">Dia</th><th style="${th}">Trabalho a executar (Detalhar)</th><th style="${th}">Tipo de Trabalho</th><th style="${th}">Data</th><th style="${th}">Avaliação<br>(após terminar)</th><th style="${th}">Rubrica</th><th style="${th}">Observações</th><th style="${th}">Início<br>Trabalho</th><th style="${th}">Fim<br>Trabalho</th>
+</tr></thead><tbody>${rows}</tbody></table>
+<p class="foot">M24.V1_Folha de Serviço</p>
 </body></html>`;
 
   return new NextResponse(html, {
