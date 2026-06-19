@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import ValidateButton from "./ValidateButton";
 
 export const dynamic = "force-dynamic";
 
@@ -190,13 +191,7 @@ export default async function HRDashboard() {
                                 <span className="text-sm font-medium">
                                   {eHrs}h{eM > 0 ? ` ${eM}m` : ""}
                                 </span>
-                                <span
-                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                                    STATUS_LABELS[sheet.status]?.color
-                                  }`}
-                                >
-                                  {STATUS_LABELS[sheet.status]?.label || sheet.status}
-                                </span>
+                                <ValidateButton sheetId={sheet.id} currentStatus={sheet.status} />
                               </div>
                             </div>
 
