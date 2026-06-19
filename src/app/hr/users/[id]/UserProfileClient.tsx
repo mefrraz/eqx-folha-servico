@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { format, startOfWeek, addDays } from "date-fns";
+import { format, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import MonthCalendar from "@/components/MonthCalendar";
 import DeleteUserButton from "./DeleteUserButton";
@@ -32,55 +32,43 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
     if (pids.size > 0) supabase.from("projects").select("id,name,client:clients(name)").in("id", Array.from(pids)).then(({data}) => setWorkerProjects(data||[]));
   }, []);
 
-  const findSheet = useCallback((weekStart: Date) => {
-    const ws = format(weekStart, "yyyy-MM-dd");
-    return sheets.find((s: any) => s.week_start === ws) || null;
+  const findSheet = useCallback((ws: Date) => {
+    const key = format(ws, "yyyy-MM-dd");
+    return sheets.find((s: any) => s.week_start === key) || null;
   }, [sheets]);
 
-  useEffect(() => {
-    if (selectedWeek) setSelectedSheet(findSheet(selectedWeek));
-  }, [selectedWeek, findSheet]);
+  useEffect(() => { if (selectedWeek) setSelectedSheet(findSheet(selectedWeek)); }, [selectedWeek, findSheet]);
 
   const totalMins = sheets.reduce((s: number, sh: any) => s + cM(sh.work_entries || []), 0);
   const latestSheet = sheets[0];
-  const uniqueWeeks = new Set(sheets.map((s: any) => s.week_start)).size;
-  const avgHoursPerWeek = uniqueWeeks > 0 ? Math.round((totalMins / 60) / uniqueWeeks) : 0;
-  const uniqueProjects = new Set(sheets.map((s: any) => s.project_id).filter(Boolean)).size;
 
   const sheetWeeks = sheets.map((s: any) => ({ weekStart: new Date(s.week_start+"T00:00:00"), weekEnd: new Date(s.week_end+"T00:00:00"), hasSheet: true, sheetId: s.id, status: s.status }));
 
   const handleValidate = async (sheetId: string) => {
     const r = await fetch("/api/validate-sheet", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({sheetId}) });
-    const d = await r.json();
-    if (d.error) toast.error(d.error); else { setSelectedSheet((prev: any) => prev?.id===sheetId ? {...prev,status:"reviewed"} : prev); toast.success("Validada!"); }
+    if ((await r.json()).success) { setSelectedSheet((prev: any) => prev?.id===sheetId ? {...prev,status:"reviewed"} : prev); toast.success("Validada!"); }
   };
 
   const handleSaveEdit = async () => {
     setEditSaving(true);
-    let err = false;
-    if (editName !== profile.full_name) { const r = await fetch("/api/update-profile", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,full_name:editName}) }); if (!(await r.json()).success) err=true; }
+    if (editName !== profile.full_name) await fetch("/api/update-profile", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,full_name:editName}) });
     if (editEmail !== userEmail || editPassword) {
-      const r = await fetch("/api/update-user", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,email:editEmail!==userEmail?editEmail:undefined,password:editPassword||undefined}) });
+      const r = await fetch("/api/update-user", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,email:editEmail!==userEmail?editEmail:null,password:editPassword||null}) });
       const d = await r.json();
-      if (d.error) { toast.error(d.error); err=true; }
+      if (d.error) { toast.error(d.error); setEditSaving(false); return; }
     }
-    if (!err) toast.success("Guardado!");
+    toast.success("Guardado!");
     setEditSaving(false); setShowEdit(false); setEditPassword("");
   };
 
   return (
     <div className="space-y-6">
-      {/* Top — read-only */}
+      {/* Top — name + stats only */}
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
           <div>
             <h2 className="text-2xl font-bold text-brand-dark">{profile.full_name}</h2>
             <p className="text-xs text-brand-soft mt-0.5">{userEmail}</p>
-            <p className="text-[10px] font-mono text-brand-muted mt-0.5">{userId}</p>
-            <div className="flex flex-wrap gap-2 mt-3">
-              {workerProjects.map((p: any) => (<span key={p.id} className="text-xs bg-brand-gold/10 text-brand-dark font-medium px-2.5 py-1 rounded-full">{p.name}</span>))}
-              {workerProjects.length===0 && <span className="text-xs text-brand-muted">Nenhuma obra</span>}
-            </div>
           </div>
           <div className="flex gap-8 text-right shrink-0">
             <div><span className="block text-3xl font-bold font-mono text-brand-dark tracking-tight">{fM(totalMins)}</span><span className="text-xs text-brand-muted tracking-wide uppercase">Horas totais</span></div>
@@ -91,26 +79,33 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
         <button onClick={() => { setEditName(profile.full_name); setEditEmail(userEmail); setShowEdit(true); }} className="btn-secondary text-xs !py-1.5 !px-3 mt-4">Editar</button>
       </div>
 
-      {/* Calendar + Stats row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <div className="card !p-4">
-            <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedWeek} onSelectWeek={(d) => { setSelectedWeek(d); setSelectedSheet(findSheet(d)); }} />
-          </div>
+      {/* Calendar + Obras */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="card !p-4">
+          <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedWeek} onSelectWeek={(d) => { setSelectedWeek(d); setSelectedSheet(findSheet(d)); }} />
         </div>
-        <div className="space-y-3">
-          <div className="card !p-3 text-center"><span className="block text-xl font-bold font-mono text-brand-dark">{fM(totalMins)}</span><span className="text-[10px] text-brand-muted">Total horas</span></div>
-          <div className="card !p-3 text-center"><span className="block text-xl font-bold font-mono text-brand-dark">{avgHoursPerWeek}h</span><span className="text-[10px] text-brand-muted">Média / semana</span></div>
-          <div className="card !p-3 text-center"><span className="block text-xl font-bold font-mono text-brand-dark">{uniqueWeeks}</span><span className="text-[10px] text-brand-muted">Semanas</span></div>
-          <div className="card !p-3 text-center"><span className="block text-xl font-bold font-mono text-brand-dark">{uniqueProjects}</span><span className="text-[10px] text-brand-muted">Obras</span></div>
+        <div className="card !p-4">
+          <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase mb-3">Obras</h4>
+          {workerProjects.length === 0 ? (
+            <p className="text-sm text-brand-muted text-center py-8">Nenhuma obra associada</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {workerProjects.map((p: any) => (
+                <span key={p.id} className="text-sm bg-brand-gold/10 text-brand-dark font-medium px-3 py-2 rounded-xl">
+                  {p.name}
+                  {p.client?.name && <span className="block text-xs text-brand-muted font-normal mt-0.5">{p.client.name}</span>}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Sheet detail below */}
+      {/* Sheet detail */}
       {selectedWeek && (
-        <div className="card !p-4 min-h-[200px]">
+        <div className="card !p-4 min-h-[150px]">
           {!selectedSheet ? (
-            <div className="text-center py-8"><p className="text-brand-muted text-sm">Nenhuma folha esta semana</p><p className="text-xs text-brand-soft">{format(selectedWeek,"dd/MM",{locale:pt})} – {format(addDays(selectedWeek,6),"dd/MM/yyyy",{locale:pt})}</p></div>
+            <div className="text-center py-10"><p className="text-brand-muted text-sm">Nenhuma folha esta semana</p><p className="text-xs text-brand-soft">{format(selectedWeek,"dd/MM",{locale:pt})} – {format(addDays(selectedWeek,6),"dd/MM/yyyy",{locale:pt})}</p></div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -138,14 +133,13 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
             <h3 className="text-lg font-bold text-brand-dark">Editar {profile.full_name}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="label-field">Nome</label><input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="input-field" /></div>
-              <div><label className="label-field">Email atual</label><input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} className="input-field" /></div>
-              <div className="sm:col-span-2"><label className="label-field">Nova password (deixar vazio para manter)</label><input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} className="input-field" placeholder="Mín. 6 caracteres" minLength={6} /></div>
+              <div><label className="label-field">Email</label><input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} className="input-field" /></div>
+              <div className="sm:col-span-2"><label className="label-field">Nova password (opcional)</label><input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} className="input-field" placeholder="Deixar vazio = manter atual" minLength={6} /></div>
             </div>
             <div>
               <label className="label-field">Obras</label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {workerProjects.map((p:any)=>(<span key={p.id} className="text-xs bg-brand-gold/10 text-brand-dark font-medium px-2.5 py-1 rounded-full flex items-center gap-1">{p.name}<button onClick={() => setWorkerProjects(prev => prev.filter(x => x.id !== p.id))} className="text-brand-muted hover:text-red-500 ml-1 font-bold">&times;</button></span>))}
-                {workerProjects.length===0 && <span className="text-xs text-brand-muted">Nenhuma obra</span>}
               </div>
               <select onChange={e => { if(e.target.value && !workerProjects.find(p=>p.id===e.target.value)) { const p = allProjects.find(x=>x.id===e.target.value); if(p) setWorkerProjects(prev => [...prev, p]); e.target.value=""; } }} defaultValue="" className="input-field text-sm"><option value="">Adicionar obra…</option>{allProjects.filter(p => !workerProjects.some(wp => wp.id === p.id)).map((p:any) => (<option key={p.id} value={p.id}>{p.name}</option>))}</select>
             </div>
