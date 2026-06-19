@@ -28,26 +28,37 @@ export default function SignupPage() {
     });
 
     if (error) {
-      toast.error(error.message);
+      if (error.message?.includes("User already registered") || error.status === 422) {
+        toast.error("Este email já está registado.");
+      } else {
+        toast.error("Erro no registo: " + error.message);
+      }
       setLoading(false);
       return;
     }
 
-    if (data.user) {
-      // Profile is auto-created by DB trigger — upsert to ensure full_name is set
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({ id: data.user.id, full_name: fullName, role: "worker" });
-
-      if (profileError) {
-        toast.error("Erro ao criar perfil: " + profileError.message);
-        setLoading(false);
-        return;
-      }
+    if (!data.user) {
+      toast.error("Erro ao criar conta. Tente novamente.");
+      setLoading(false);
+      return;
     }
 
-    toast.success("Conta criada com sucesso! Verifique o seu email para confirmar.");
-    router.push("/auth/login");
+    // Check if email confirmation is required
+    if (data.session) {
+      // Auto-confirmed — update the profile name (trigger auto-created it)
+      await supabase
+        .from("profiles")
+        .update({ full_name: fullName })
+        .eq("id", data.user.id);
+
+      toast.success("Conta criada com sucesso!");
+      router.push("/");
+      router.refresh();
+    } else {
+      // Email confirmation required — trigger already created the profile
+      toast.success("Conta criada! Verifique o seu email antes de fazer login.");
+      router.push("/auth/login");
+    }
   };
 
   return (

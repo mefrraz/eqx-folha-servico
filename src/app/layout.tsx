@@ -8,11 +8,6 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   themeColor: "#2563eb",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "EQX Folhas",
-  },
 };
 
 export default function RootLayout({
@@ -22,6 +17,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt">
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="EQX Folhas" />
+        <link rel="icon" href="/icons/icon-192.svg" type="image/svg+xml" />
+      </head>
       <body className="min-h-screen">
         <Toaster position="top-right" />
         {children}
