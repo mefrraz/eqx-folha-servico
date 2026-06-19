@@ -18,60 +18,100 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
   const [sheets, setSheets] = useState(initialSheets);
   const [selectedWeek, setSelectedWeek] = useState<Date | null>(null);
   const [selectedSheet, setSelectedSheet] = useState<any>(null);
-  const [showFull, setShowFull] = useState(false);
+  const [allProjects, setAllProjects] = useState<any[]>([]);
+  const [workerProjects, setWorkerProjects] = useState<any[]>([]);
   const supabase = createClient();
+
+  useEffect(() => {
+    supabase.from("projects").select("id,name,client:clients(name)").order("name").then(({data}) => setAllProjects(data||[]));
+    // Get worker's projects from sheets
+    const pids = new Set(initialSheets.map(s => s.project_id).filter(Boolean));
+    supabase.from("projects").select("id,name,client:clients(name)").in("id", Array.from(pids)).then(({data}) => setWorkerProjects(data||[]));
+  }, []);
 
   useEffect(() => {
     if (selectedWeek) {
       const ws = format(selectedWeek, "yyyy-MM-dd");
-      const found = sheets.find((s: any) => s.week_start === ws);
-      setSelectedSheet(found || null);
+      setSelectedSheet(sheets.find((s: any) => s.week_start === ws) || null);
     }
   }, [selectedWeek, sheets]);
 
-  const sheetWeeks = sheets.map((s: any) => ({
-    weekStart: new Date(s.week_start + "T00:00:00"),
-    weekEnd: new Date(s.week_end + "T00:00:00"),
-    hasSheet: true,
-    sheetId: s.id,
-    hours: fM(cM(s.work_entries || [])),
-    status: s.status,
-  }));
-
   const totalMins = sheets.reduce((s: number, sh: any) => s + cM(sh.work_entries || []), 0);
+  const latestSheet = sheets[0];
+  const sheetWeeks = sheets.map((s: any) => ({ weekStart: new Date(s.week_start+"T00:00:00"), weekEnd: new Date(s.week_end+"T00:00:00"), hasSheet: true, sheetId: s.id, status: s.status }));
 
   const handleValidate = async (sheetId: string) => {
-    const res = await fetch("/api/validate-sheet", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sheetId }),
+    const r = await fetch("/api/validate-sheet", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({sheetId}) });
+    const d = await r.json();
+    if (d.error) toast.error(d.error);
+    else { setSheets(prev => prev.map(s => s.id===sheetId ? {...s,status:"reviewed"} : s)); toast.success("Validada!"); }
+  };
+
+  const addProjectToWorker = async (projectId: string) => {
+    if (!projectId) return;
+    toast.success("Obra associada. As próximas folhas serão vinculadas.");
+    setWorkerProjects(prev => {
+      const exists = prev.find(p => p.id === projectId);
+      if (exists) return prev;
+      const p = allProjects.find(p => p.id === projectId);
+      return p ? [...prev, p] : prev;
     });
-    const data = await res.json();
-    if (data.error) toast.error(data.error);
-    else {
-      setSheets(prev => prev.map(s => s.id === sheetId ? { ...s, status: "reviewed" } : s));
-      toast.success("Validada!");
-    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-brand-dark">{profile.full_name}</h2>
-          <p className="text-xs font-mono text-brand-muted mt-0.5">{userId}</p>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="text-right"><span className="stat-value text-lg">{fM(totalMins)}</span><span className="stat-label ml-1">horas</span></div>
-          <div className="text-right"><span className="stat-value text-lg">{sheets.length}</span><span className="stat-label ml-1">folhas</span></div>
+      {/* Top header — spacious */}
+      <div className="card">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+          <div>
+            <h2 className="text-2xl font-bold text-brand-dark">{profile.full_name}</h2>
+            <p className="text-xs font-mono text-brand-muted mt-1">{userId}</p>
+          </div>
+          <div className="flex gap-8 text-right">
+            <div>
+              <span className="block text-3xl font-bold font-mono text-brand-dark">{fM(totalMins)}</span>
+              <span className="text-xs text-brand-muted tracking-wide uppercase">Horas totais</span>
+            </div>
+            <div>
+              <span className="block text-3xl font-bold font-mono text-brand-dark">{sheets.length}</span>
+              <span className="text-xs text-brand-muted tracking-wide uppercase">Folhas</span>
+            </div>
+            <div>
+              <span className="block text-3xl font-bold font-mono text-brand-dark">{latestSheet ? format(new Date(latestSheet.week_start+"T00:00:00"), "dd/MM", {locale:pt}) : "—"}</span>
+              <span className="text-xs text-brand-muted tracking-wide uppercase">Última folha</span>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Edit form */}
       <EditUserForm userId={userId} fullName={profile.full_name} />
-      <DeleteUserButton userId={userId} userName={profile.full_name} />
 
-      {/* Calendar + Sheet detail */}
+      {/* Manage projects */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase">Obras</h4>
+          <div className="flex items-center gap-2">
+            <select onChange={e => addProjectToWorker(e.target.value)} defaultValue="" className="input-field !py-1.5 !px-2 text-xs w-48">
+              <option value="">Adicionar obra…</option>
+              {allProjects.filter(p => !workerProjects.some(wp => wp.id === p.id)).map((p: any) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {workerProjects.length === 0 && <p className="text-xs text-brand-muted">Nenhuma obra associada.</p>}
+          {workerProjects.map((p: any) => (
+            <span key={p.id} className="text-sm bg-brand-gold/10 text-brand-dark font-medium px-3 py-1.5 rounded-full flex items-center gap-2">
+              {p.name}
+              {p.client?.name && <span className="text-brand-muted font-normal">— {p.client.name}</span>}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Calendar (smaller) + Sheet detail */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card">
           <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedWeek} onSelectWeek={setSelectedWeek} />
@@ -79,35 +119,53 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
 
         <div className="card min-h-[200px]">
           {!selectedWeek ? (
-            <div className="text-center py-12 text-brand-muted text-sm">Selecione uma semana no calendário</div>
+            <div className="text-center py-16 text-brand-muted text-sm">Selecione uma semana no calendário</div>
           ) : !selectedSheet ? (
-            <div className="text-center py-12">
+            <div className="text-center py-16">
               <p className="text-brand-muted text-sm mb-2">Nenhuma folha esta semana</p>
-              <p className="text-xs text-brand-soft">{format(selectedWeek, "dd/MM", { locale: pt })} – {format(addDays(selectedWeek, 5), "dd/MM/yyyy", { locale: pt })}</p>
+              <p className="text-xs text-brand-soft">{format(selectedWeek,"dd/MM",{locale:pt})} – {format(addDays(selectedWeek,5),"dd/MM/yyyy",{locale:pt})}</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-brand-dark">
-                  Semana {format(new Date(selectedSheet.week_start+"T00:00:00"), "dd/MM", { locale: pt })} – {format(new Date(selectedSheet.week_end+"T00:00:00"), "dd/MM/yy", { locale: pt })}
-                </h4>
-                <span className={selectedSheet.status === "draft" ? "badge-draft" : selectedSheet.status === "submitted" ? "badge-submitted" : "badge-reviewed"}>
-                  {selectedSheet.status === "draft" ? "Rascunho" : selectedSheet.status === "submitted" ? "Submetida" : "Validada"}
+                <h4 className="text-sm font-bold text-brand-dark">Semana {format(new Date(selectedSheet.week_start+"T00:00:00"),"dd/MM",{locale:pt})} – {format(new Date(selectedSheet.week_end+"T00:00:00"),"dd/MM/yy",{locale:pt})}</h4>
+                <span className={selectedSheet.status==="draft"?"badge-draft":selectedSheet.status==="submitted"?"badge-submitted":"badge-reviewed"}>
+                  {selectedSheet.status==="draft"?"Rascunho":selectedSheet.status==="submitted"?"Submetida":"Validada"}
                 </span>
               </div>
-              <p className="text-xs text-brand-soft">{selectedSheet.client || "—"} · {selectedSheet.work_number || "—"}</p>
-              <p className="text-sm font-mono text-brand-dark">{fM(cM(selectedSheet.work_entries || []))}</p>
 
-              <table className="w-full text-xs">
-                <thead><tr className="text-brand-soft border-b border-brand-light/30"><th className="text-left py-1">Dia</th><th className="text-left py-1">Trabalho</th><th className="text-right py-1">Horas</th></tr></thead>
-                <tbody>{["monday","tuesday","wednesday","thursday","friday","saturday"].map(day=>{const e=(selectedSheet.work_entries||[]).find((x:any)=>x.day===day);if(!e)return null;let dm=0;if(e.start_time&&e.end_time){const[a,b]=e.start_time.split(":").map(Number);const[c,d]=e.end_time.split(":").map(Number);dm=c*60+d-(a*60+b);}return(<tr key={day} className="border-b border-brand-light/20"><td className="py-1 font-medium">{DL[day]}</td><td className="py-1 text-brand-soft">{e.work_description||"—"}</td><td className="py-1 text-right font-mono">{dm>0?fM(dm):"—"}</td></tr>);})}</tbody>
-              </table>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div><span className="text-xs text-brand-muted">Cliente</span><p className="text-brand-dark font-medium">{selectedSheet.client||"—"}</p></div>
+                <div><span className="text-xs text-brand-muted">Obra</span><p className="text-brand-dark font-medium">{selectedSheet.work_number||"—"}</p></div>
+              </div>
+
+              <div className="text-center py-3 bg-brand-gold/5 rounded-xl">
+                <span className="text-2xl font-bold font-mono text-brand-dark">{fM(cM(selectedSheet.work_entries||[]))}</span>
+                <p className="text-xs text-brand-soft mt-1">Horas trabalhadas</p>
+              </div>
+
+              <div className="space-y-2">
+                {["monday","tuesday","wednesday","thursday","friday","saturday"].map(day => {
+                  const e = (selectedSheet.work_entries||[]).find((x:any)=>x.day===day);
+                  if (!e) return null;
+                  let dm = 0;
+                  if (e.start_time && e.end_time) { const[a,b]=e.start_time.split(":").map(Number); const[c,d]=e.end_time.split(":").map(Number); dm=c*60+d-(a*60+b); }
+                  return (
+                    <div key={day} className="flex items-center justify-between py-2 px-3 rounded-xl bg-brand-light/5 hover:bg-brand-gold/5 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-semibold text-brand-dark w-8">{DL[day]}</span>
+                        <span className="text-sm text-brand-soft">{e.work_description||"—"}</span>
+                      </div>
+                      <span className="text-xs font-mono text-brand-dark tabular-nums">{dm>0?fM(dm):"—"}</span>
+                    </div>
+                  );
+                })}
+              </div>
 
               <div className="flex gap-2 pt-2">
-                <button onClick={() => setShowFull(true)} className="btn-secondary text-xs !py-1.5 !px-3">Ver folha completa</button>
-                <a href={`/api/export-sheet/${selectedSheet.id}`} className="btn-ghost text-xs !py-1.5 !px-3">Exportar Word</a>
-                {selectedSheet.status === "submitted" && (
-                  <button onClick={() => handleValidate(selectedSheet.id)} className="badge-submitted cursor-pointer hover:brightness-95 text-xs">Validar</button>
+                <a href={`/api/export-sheet/${selectedSheet.id}`} className="btn-secondary text-xs !py-1.5 !px-3">Exportar Word</a>
+                {selectedSheet.status==="submitted" && (
+                  <button onClick={()=>handleValidate(selectedSheet.id)} className="badge-submitted cursor-pointer hover:brightness-95 text-xs">Validar</button>
                 )}
               </div>
             </div>
@@ -115,25 +173,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
         </div>
       </div>
 
-      {/* Full sheet modal */}
-      {showFull && selectedSheet && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 overflow-y-auto py-8" onClick={() => setShowFull(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-4xl mx-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-brand-dark">Folha de Serviço</h3>
-              <button onClick={() => setShowFull(false)} className="btn-ghost text-xs">Fechar</button>
-            </div>
-            <p className="text-xs text-brand-soft mb-4">
-              Semana {format(new Date(selectedSheet.week_start+"T00:00:00"),"dd/MM",{locale:pt})} – {format(new Date(selectedSheet.week_end+"T00:00:00"),"dd/MM/yy",{locale:pt})}
-              &nbsp;· {selectedSheet.client || "—"} · {selectedSheet.work_number || "—"}
-            </p>
-            <table className="w-full text-sm">
-              <thead><tr className="text-brand-soft border-b border-brand-light/30"><th className="text-left py-2">Dia</th><th className="text-left py-2">Trabalho</th><th className="text-left py-2">Tipo</th><th className="text-left py-2">Início</th><th className="text-left py-2">Fim</th><th className="text-left py-2">Aval.</th><th className="text-left py-2">Rubrica</th></tr></thead>
-              <tbody>{["monday","tuesday","wednesday","thursday","friday","saturday"].map(day=>{const e=(selectedSheet.work_entries||[]).find((x:any)=>x.day===day);if(!e)return(<tr key={day} className="border-b border-brand-light/20"><td className="py-2 font-medium">{DL[day]}</td><td colSpan={6} className="py-2 text-brand-muted">—</td></tr>);return(<tr key={day} className="border-b border-brand-light/20"><td className="py-2 font-medium">{DL[day]}</td><td className="py-2 text-brand-soft">{e.work_description||"—"}</td><td className="py-2 text-brand-muted">{WT[e.work_type]||"—"}</td><td className="py-2 font-mono">{e.start_time||"—"}</td><td className="py-2 font-mono">{e.end_time||"—"}</td><td className="py-2">{e.evaluation||"—"}</td><td className="py-2">{e.signature ? <img src={e.signature} alt="Rubrica" className="h-8 w-auto rounded" /> : "—"}</td></tr>);})}</tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DeleteUserButton userId={userId} userName={profile.full_name} />
     </div>
   );
 }

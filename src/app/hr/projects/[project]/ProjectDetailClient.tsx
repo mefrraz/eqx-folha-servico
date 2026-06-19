@@ -14,7 +14,6 @@ function wL(d:string){return format(new Date(d+"T00:00:00"),"dd/MM",{locale:pt})
 
 export default function ProjectDetailClient({ project, sheets: initialSheets }: { project: any; sheets: any[] }) {
   const [sheets, setSheets] = useState(initialSheets);
-  const [showEdit, setShowEdit] = useState(false);
   const supabase = createClient();
 
   const safe = sheets || [];
@@ -56,12 +55,12 @@ export default function ProjectDetailClient({ project, sheets: initialSheets }: 
           <div className="card">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase">Trabalhadores ({workers.length})</h4>
-              <button onClick={() => setShowEdit(true)} className="text-xs text-brand-gold font-medium hover:underline">Gerir</button>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {workers.map(w=>(
                 <a key={w.id} href={`/hr/users/${w.id}`} className="text-xs bg-brand-gold/10 text-brand-dark font-medium px-2.5 py-1 rounded-full hover:bg-brand-gold/20 transition-colors">{w.name}</a>
               ))}
+              {workers.length===0 && <p className="text-xs text-brand-muted">Nenhum trabalhador.</p>}
             </div>
           </div>
         </div>
@@ -101,19 +100,6 @@ export default function ProjectDetailClient({ project, sheets: initialSheets }: 
         </div>
       </div>
 
-      {/* Edit workers modal */}
-      {showEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={()=>setShowEdit(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4" onClick={e=>e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-brand-dark">Gerir trabalhadores</h3>
-            <p className="text-xs text-brand-muted">Os trabalhadores são automaticamente associados quando submetem folhas para esta obra.</p>
-            <div className="flex flex-wrap gap-1.5 max-h-60 overflow-y-auto">
-              {workers.map(w=>(<span key={w.id} className="text-xs bg-brand-gold/10 text-brand-dark font-medium px-2.5 py-1 rounded-full">{w.name}</span>))}
-            </div>
-            <button onClick={()=>setShowEdit(false)} className="btn-secondary w-full text-sm">Fechar</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

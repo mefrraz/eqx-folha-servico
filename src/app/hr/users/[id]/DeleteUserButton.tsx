@@ -4,51 +4,47 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-const CACHE_KEY = "eqx_admin_delete_pw";
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const CACHE_KEY = "eqx_admin_creds";
+const CACHE_DURATION = 5 * 60 * 1000;
 
-function getCachedPassword(): string | null {
+function getCachedCreds(): { email: string; password: string } | null {
   try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return null;
-    const { password, timestamp } = JSON.parse(cached);
-    if (Date.now() - timestamp < CACHE_DURATION) return password;
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Date.now() - data.ts < CACHE_DURATION) return { email: data.email, password: data.pw };
     localStorage.removeItem(CACHE_KEY);
   } catch {}
   return null;
 }
 
-function setCachedPassword(password: string) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify({ password, timestamp: Date.now() }));
+function setCachedCreds(email: string, password: string) {
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ email, password: password, ts: Date.now() }));
 }
 
 export default function DeleteUserButton({ userId, userName }: { userId: string; userName: string }) {
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [password, setPassword] = useState("");
   const [step, setStep] = useState<"hidden" | "warn" | "confirm">("hidden");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const cached = getCachedPassword();
-    if (cached) setPassword(cached);
+    const creds = getCachedCreds();
+    if (creds) { setEmail(creds.email); setPassword(creds.password); }
   }, []);
 
   const handleDelete = async () => {
-    if (!password.trim()) { toast.error("Password obrigatória."); return; }
+    if (!email.trim() || !password.trim()) { toast.error("Email e password obrigatórios."); return; }
     setLoading(true);
     const res = await fetch(`/api/users/${userId}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminPassword: password }),
+      body: JSON.stringify({ email: email.trim(), password }),
     });
     const data = await res.json();
-    if (data.error) {
-      toast.error(data.error);
-      setLoading(false);
-      return;
-    }
-    setCachedPassword(password);
+    if (data.error) { toast.error(data.error); setLoading(false); return; }
+    setCachedCreds(email.trim(), password);
     toast.success("Utilizador eliminado.");
     router.push("/hr/users");
     router.refresh();
@@ -56,46 +52,27 @@ export default function DeleteUserButton({ userId, userName }: { userId: string;
 
   return (
     <div className="mt-4 pt-4 border-t border-brand-light/30">
-      {/* Hidden trigger */}
       {step === "hidden" && (
-        <button onClick={() => setStep("warn")} className="text-xs text-brand-muted hover:text-red-500 transition-colors">
-          Eliminar utilizador
-        </button>
+        <button onClick={() => setStep("warn")} className="text-xs text-brand-muted hover:text-red-500 transition-colors">Eliminar utilizador</button>
       )}
-
-      {/* Warning step */}
       {step === "warn" && (
         <div className="space-y-3">
           <p className="text-sm font-semibold text-red-600">⚠️ Ação irreversível</p>
-          <p className="text-xs text-brand-soft">
-            Vai eliminar permanentemente <strong>{userName}</strong> e todas as suas folhas de serviço.
-          </p>
+          <p className="text-xs text-brand-soft">Vai eliminar <strong>{userName}</strong> e todas as suas folhas.</p>
           <div className="flex gap-2">
             <button onClick={() => setStep("hidden")} className="btn-secondary text-xs !py-1.5 !px-3">Cancelar</button>
-            <button onClick={() => setStep("confirm")} className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-red-600 transition-colors">
-              Continuar
-            </button>
+            <button onClick={() => setStep("confirm")} className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-red-600 transition-colors">Continuar</button>
           </div>
         </div>
       )}
-
-      {/* Password step */}
       {step === "confirm" && (
         <div className="space-y-3">
-          <p className="text-xs text-brand-soft">Escreva a password de admin para confirmar:</p>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-field text-sm"
-            placeholder="Password de administrador"
-            autoFocus
-          />
+          <p className="text-xs text-brand-soft">Autentique-se como admin:</p>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field text-sm" placeholder="Email de admin" autoFocus />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="input-field text-sm" placeholder="Password de admin" />
           <div className="flex gap-2">
             <button onClick={() => setStep("hidden")} className="btn-secondary text-xs !py-1.5 !px-3">Cancelar</button>
-            <button onClick={handleDelete} disabled={loading || !password.trim()} className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-40">
-              {loading ? "A eliminar…" : `Eliminar ${userName}`}
-            </button>
+            <button onClick={handleDelete} disabled={loading} className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-red-600 disabled:opacity-40">{loading ? "…" : `Eliminar ${userName}`}</button>
           </div>
         </div>
       )}
