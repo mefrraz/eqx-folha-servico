@@ -51,14 +51,15 @@ export default async function ProjectDetailPage({ params }: { params: { project:
     );
   }
 
-  const totalMins = sheets.reduce((s, sh) => s + calcM(sh.work_entries || []), 0);
-  const workerSet = new Set(sheets.map((s) => s.worker_id));
-  const weeksCount = new Set(sheets.map((s) => s.week_start)).size;
+  const safeSheets = sheets!;
+  const totalMins = safeSheets.reduce((s, sh) => s + calcM(sh.work_entries || []), 0);
+  const workerSet = new Set(safeSheets.map((s) => s.worker_id));
+  const weeksCount = new Set(safeSheets.map((s) => s.week_start)).size;
   const avgHoursPerWeek = weeksCount > 0 ? totalMins / 60 / weeksCount : 0;
 
   // Weekly breakdown for chart
   const weeklyMins = new Map<string, number>();
-  for (const s of sheets) {
+  for (const s of safeSheets) {
     const m = calcM(s.work_entries || []);
     weeklyMins.set(s.week_start, (weeklyMins.get(s.week_start) || 0) + m);
   }
@@ -74,7 +75,7 @@ export default async function ProjectDetailPage({ params }: { params: { project:
         <div>
           <h2 className="text-xl font-bold text-navy">{projectNumber === "Sem obra" ? "Sem obra atribuída" : projectNumber}</h2>
           <p className="text-sm text-steel mt-1">
-            {workerSet.size} trabalhador{workerSet.size !== 1 ? "es" : ""} · {sheets.length} folha{sheets.length !== 1 ? "s" : ""} · {weeksCount} semana{weeksCount !== 1 ? "s" : ""}
+            {workerSet.size} trabalhador{workerSet.size !== 1 ? "es" : ""} · {safeSheets.length} folha{safeSheets.length !== 1 ? "s" : ""} · {weeksCount} semana{weeksCount !== 1 ? "s" : ""}
           </p>
         </div>
         <div className="flex gap-4 text-right">
@@ -105,7 +106,7 @@ export default async function ProjectDetailPage({ params }: { params: { project:
       {/* Sheets */}
       <div className="space-y-3">
         <h4 className="text-xs font-semibold text-steel tracking-wide uppercase">Folhas</h4>
-        {sheets.map((sheet) => {
+        {safeSheets.map((sheet) => {
           const eMins = calcM(sheet.work_entries || []);
           return (
             <details key={sheet.id} className="card !p-4 group">

@@ -63,7 +63,7 @@
     @apply badge bg-green/15 text-green-700;
   }
   .badge-reviewed {
-    @apply badge bg-navy/8 text-navy;
+    @apply badge bg-navy/[0.08] text-navy;
   }
   .nav-link {
     @apply block px-3 py-2 rounded text-sm font-medium tracking-wide transition-colors
