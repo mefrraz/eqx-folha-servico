@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import { formatMinutes } from "@/lib/utils";
 
@@ -8,15 +9,24 @@ export default function WorkerSettingsClient({ userId, profile, totalMins, sheet
   const [name, setName] = useState(profile?.full_name || "");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const supabase = createClient();
 
   const handle = async () => {
     setSaving(true);
-    if (name !== profile?.full_name) await fetch("/api/update-profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, full_name: name }) });
-    if (password && password.length >= 6) {
-      const r = await fetch("/api/update-user", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, password }) });
-      if ((await r.json()).error) { toast.error("Erro ao mudar password."); setSaving(false); return; }
+    let err = false;
+
+    if (name !== profile?.full_name) {
+      const r = await fetch("/api/update-profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, full_name: name }) });
+      if ((await r.json()).error) { toast.error("Erro ao guardar nome."); err = true; }
     }
-    toast.success("Guardado!");
+
+    if (password && password.length >= 6) {
+      // Usa o cliente browser — não precisa de service_role
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) { toast.error("Erro ao mudar password: " + error.message); err = true; }
+    }
+
+    if (!err) toast.success("Guardado!");
     setSaving(false); setPassword("");
   };
 

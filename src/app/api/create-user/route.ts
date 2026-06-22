@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     // Profile is auto-created by trigger
     // Update with full_name just to be sure
     if (userData.user) {
-      await supabase.from("profiles").update({ full_name }).eq("id", userData.user.id);
+      await supabase.from("profiles").update({ full_name, email }).eq("id", userData.user.id);
     }
 
     return NextResponse.json({ success: true });

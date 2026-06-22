@@ -25,8 +25,8 @@ DROP FUNCTION IF EXISTS handle_new_user CASCADE;
 CREATE FUNCTION handle_new_user()
 RETURNS TRIGGER SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  INSERT INTO profiles (id, full_name, role)
-  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email), 'worker')
+  INSERT INTO profiles (id, full_name, email, role)
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email), NEW.email, 'worker')
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
@@ -64,6 +64,7 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
+  email TEXT,
   role TEXT NOT NULL DEFAULT 'worker' CHECK (role IN ('worker','admin','hr')),
   company TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -252,8 +253,8 @@ USING (bucket_id = 'rubricas' AND owner = auth.uid())
 WITH CHECK (bucket_id = 'rubricas' AND owner = auth.uid());
 
 -- ── REPOR PERFIS DOS ADMINS ──
-INSERT INTO profiles (id, full_name, role, created_at, updated_at)
-SELECT id, COALESCE(raw_user_meta_data->>'full_name', email), 'admin', created_at, NOW()
+INSERT INTO profiles (id, full_name, email, role, created_at, updated_at)
+SELECT id, COALESCE(raw_user_meta_data->>'full_name', email), email, 'admin', created_at, NOW()
 FROM auth.users
 WHERE raw_user_meta_data->>'full_name' IS NOT NULL
   AND id NOT IN (SELECT id FROM profiles)
