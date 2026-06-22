@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { adminUpdateUser } from "@/app/hr/actions";
 import toast from "react-hot-toast";
 
 export default function SettingsForm({ userId, fullName, userEmail }: { userId: string; fullName: string; userEmail: string }) {
@@ -8,15 +10,31 @@ export default function SettingsForm({ userId, fullName, userEmail }: { userId: 
   const [email, setEmail] = useState(userEmail);
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const supabase = createClient();
 
   const handle = async () => {
     setSaving(true);
-    if (name !== fullName) await fetch("/api/update-profile", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,full_name:name}) });
-    if (email !== userEmail || password) {
-      const r = await fetch("/api/update-user", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,email:email!==userEmail?email:null,password:password||null}) });
-      if ((await r.json()).error) { toast.error("Erro ao atualizar."); setSaving(false); return; }
+    let err = false;
+
+    // Update name
+    if (name !== fullName) {
+      const r = await fetch("/api/update-profile", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,full_name:name}) });
+      if ((await r.json()).error) { toast.error("Erro ao guardar nome."); err = true; }
     }
-    toast.success("Guardado!");
+
+    // Update email (needs service_role via server action)
+    if (email !== userEmail && email.includes("@")) {
+      const r = await adminUpdateUser(userId, { email });
+      if (r.error) { toast.error(r.error); err = true; }
+    }
+
+    // Update password (self = browser client, no service_role needed)
+    if (password && password.length >= 6) {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) { toast.error("Erro ao mudar password: " + error.message); err = true; }
+    }
+
+    if (!err) toast.success("Guardado!");
     setSaving(false); setPassword("");
   };
 
