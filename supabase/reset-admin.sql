@@ -33,10 +33,9 @@ BEGIN
     is_super_admin, is_sso_user, deleted_at,
     created_at, updated_at, phone,
     phone_confirmed_at, phone_change, phone_change_token,
-    phone_change_sent_at, confirmed_at, email_change_token_current,
-    email_change_confirm_status, banned_until,
-    reauthentication_token, reauthentication_sent_at,
-    is_anonymous
+    phone_change_sent_at, email_change_token_current,
+    banned_until,
+    reauthentication_token, reauthentication_sent_at
   ) VALUES (
     admin_id,
     '00000000-0000-0000-0000-000000000000',
@@ -44,20 +43,32 @@ BEGIN
     'authenticated',
     admin_email,
     crypt(admin_password, gen_salt('bf')),
-    now(),
-    NULL, '', NULL,
-    '', NULL,
-    '', '', NULL,
-    now(),
+    now(),        -- email_confirmed_at
+    NULL,          -- invited_at
+    '',            -- confirmation_token
+    NULL,          -- confirmation_sent_at
+    '',            -- recovery_token
+    NULL,          -- recovery_sent_at
+    '',            -- email_change_token_new
+    '',            -- email_change
+    NULL,          -- email_change_sent_at
+    now(),         -- last_sign_in_at
     '{"provider":"email","providers":["email"]}'::jsonb,
     jsonb_build_object('full_name', admin_name),
-    false, false, NULL,
-    now(), now(), NULL,
-    NULL, '', '',
-    NULL, now(), '',
-    0, NULL,
-    '', NULL,
-    false
+    false,         -- is_super_admin
+    false,         -- is_sso_user
+    NULL,          -- deleted_at
+    now(),         -- created_at
+    now(),         -- updated_at
+    NULL,          -- phone
+    NULL,          -- phone_confirmed_at
+    '',            -- phone_change
+    '',            -- phone_change_token
+    NULL,          -- phone_change_sent_at
+    '',            -- email_change_token_current
+    NULL,          -- banned_until
+    '',            -- reauthentication_token
+    NULL           -- reauthentication_sent_at
   );
 
   INSERT INTO auth.identities (
