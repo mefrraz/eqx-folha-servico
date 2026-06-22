@@ -31,12 +31,10 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Use getSession() instead of getUser() — reads from cookie (instant), no network call
+  // Use getUser() for secure session verification
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const user = session?.user ?? null;
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Protect worker routes
   if (request.nextUrl.pathname.startsWith("/worker") && !user) {
