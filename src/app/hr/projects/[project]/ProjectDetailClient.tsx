@@ -31,9 +31,6 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
     hasSheet: true, sheetId: s.id, status: s.status
   }));
 
-  const totalMins = allSheets.reduce((s: number, sh: any) => s + cM(sh.work_entries || []), 0);
-  const weeksCount = new Set(allSheets.map(s => s.week_start)).size;
-  const avg = weeksCount > 0 ? Math.round((totalMins / 60) / weeksCount) : 0;
   const wM = new Map<string,number>(); for(const s of allSheets){const m=cM(s.work_entries||[]);wM.set(s.week_start,(wM.get(s.week_start)||0)+m);}
   const sW = Array.from(wM.entries()).sort((a,b)=>a[0].localeCompare(b[0]));
   const max = Math.max(...Array.from(wM.values()),1);
@@ -67,28 +64,24 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
             <h2 className="text-xl font-bold text-brand-dark">{project.name}</h2>
             {project.client?.name && <p className="text-sm text-brand-soft">{project.client.name}{project.location ? ` · ${project.location}` : ""}</p>}
           </div>
-          <div className="flex gap-4 text-right shrink-0">
-            <div><span className="stat-value text-lg">{fM(totalMins)}</span><span className="stat-label ml-1">total</span></div>
-            <div><span className="stat-value text-lg">{Math.round(avg)}h</span><span className="stat-label ml-1">média/sem</span></div>
-          </div>
         </div>
       </div>
 
-      {/* Calendar + Search + Sheet detail */}
+      {/* Calendar + Search | Sheet detail */}
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Calendar */}
-        <div className="card !p-4 w-full lg:w-[280px] lg:h-[280px] shrink-0 flex items-center justify-center">
-          <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedSunday} onSelectWeek={handleWeekSelect} />
-        </div>
-
-        {/* Search workers */}
-        <div className="card !p-4 w-full lg:w-[220px] lg:h-[280px] shrink-0">
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} className="input-field text-xs !py-1.5 mb-2" placeholder="Pesquisar colaborador…" />
-          <div className="space-y-1 max-h-[220px] overflow-y-auto">
-            {filteredWorkers.map((w: any) => (
-              <a key={w.id} href={`/hr/users/${w.id}`} className="block text-xs text-brand-soft hover:text-brand-dark hover:bg-brand-gold/5 px-2 py-1 rounded transition-colors">{w.name}</a>
-            ))}
-            {filteredWorkers.length===0 && <p className="text-xs text-brand-muted px-2">Nenhum resultado</p>}
+        {/* Left column: calendar + search */}
+        <div className="flex flex-col gap-4 w-full lg:w-[280px] shrink-0">
+          <div className="card !p-4 lg:h-[280px] flex items-center justify-center">
+            <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedSunday} onSelectWeek={handleWeekSelect} />
+          </div>
+          <div className="card !p-3">
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)} className="input-field text-xs !py-1.5" placeholder="Pesquisar colaborador…" />
+            <div className="space-y-0.5 mt-2 max-h-[180px] overflow-y-auto">
+              {filteredWorkers.map((w: any) => (
+                <a key={w.id} href={`/hr/users/${w.id}`} className="block text-xs text-brand-soft hover:text-brand-dark hover:bg-brand-gold/5 px-2 py-1 rounded transition-colors">{w.name}</a>
+              ))}
+              {filteredWorkers.length===0 && <p className="text-xs text-brand-muted px-2">Nenhum</p>}
+            </div>
           </div>
         </div>
 
