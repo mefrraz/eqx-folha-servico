@@ -6,6 +6,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
+import AddUserButton from "./AddUserButton";
 
 export default function UsersPageClient() {
   const [workers, setWorkers] = useState<any[]>([]);
@@ -40,7 +41,7 @@ export default function UsersPageClient() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div><h2 className="text-lg font-bold text-brand-dark">Utilizadores</h2><p className="text-sm text-brand-soft mt-0.5">{workers.length} trabalhadores</p></div>
-        <Link href="/auth/signup" className="btn-primary text-sm !py-2 !px-4">Adicionar</Link>
+        <AddUserButton />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
