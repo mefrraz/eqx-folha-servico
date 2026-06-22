@@ -6,16 +6,31 @@ import { useRouter } from "next/navigation";
 import { format, startOfWeek, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import toast from "react-hot-toast";
+import type { WorkSheet, WorkEntry } from "@/lib/types";
+import { calcMinutes, formatMinutes } from "@/lib/utils";
 
-interface WorkEntry { id?: string; day: string; work_description: string; work_type: string; date: string; evaluation: string; signature: string; observations: string; start_time: string; end_time: string; }
-interface WorkSheet { id?: string; client: string; work_number: string; week_start: string; week_end: string; status: string; entries: WorkEntry[]; }
+const DAYS = [
+  { key: "monday", label: "2ª Feira" },
+  { key: "tuesday", label: "3ª Feira" },
+  { key: "wednesday", label: "4ª Feira" },
+  { key: "thursday", label: "5ª Feira" },
+  { key: "friday", label: "6ª Feira" },
+  { key: "saturday", label: "Sábado" },
+];
+const WORK_TYPES = [
+  { value: "", label: "— Selecionar —" },
+  { value: "new_installation", label: "Nova Instalação" },
+  { value: "installation_continuation", label: "Continuação instalação" },
+  { value: "preventive_maintenance", label: "Manutenção preventiva" },
+  { value: "corrective_maintenance", label: "Manutenção corretiva" },
+];
 
-const DAYS = [{key:"monday",label:"2ª Feira"},{key:"tuesday",label:"3ª Feira"},{key:"wednesday",label:"4ª Feira"},{key:"thursday",label:"5ª Feira"},{key:"friday",label:"6ª Feira"},{key:"saturday",label:"Sábado"}];
-const WORK_TYPES = [{value:"",label:"— Selecionar —"},{value:"new_installation",label:"Nova Instalação"},{value:"installation_continuation",label:"Continuação instalação"},{value:"preventive_maintenance",label:"Manutenção preventiva"},{value:"corrective_maintenance",label:"Manutenção corretiva"}];
-
-function emptyEntry(day:string):WorkEntry{return{day,work_description:"",work_type:"",date:"",evaluation:"",signature:"",observations:"",start_time:"",end_time:""};}
-function getWeekDates(ws:Date){return DAYS.map((d,i)=>({...d,date:format(addDays(ws,i),"yyyy-MM-dd")}));}
-function totMin(e:WorkEntry[]):number{return e.reduce((s,x)=>{if(x.start_time&&x.end_time){const[a,b]=x.start_time.split(":").map(Number);const[c,d]=x.end_time.split(":").map(Number);return s+(c*60+d)-(a*60+b);}return s;},0);}
+function emptyEntry(day: string): WorkEntry {
+  return { day, work_description: "", work_type: "", date: "", evaluation: "", signature: "", observations: "", start_time: "", end_time: "" };
+}
+function getWeekDates(ws: Date) {
+  return DAYS.map((d, i) => ({ ...d, date: format(addDays(ws, i), "yyyy-MM-dd") }));
+}
 
 export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet | null }) {
   const router=useRouter();const supabase=createClient();const [saving,setSaving]=useState(false);const [submitting,setSubmitting]=useState(false);
@@ -38,7 +53,9 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
     toast.success(status==="submitted"?"Folha submetida!":"Rascunho guardado!");router.push("/worker/dashboard");router.refresh();
   };
 
-  const mins=totMin(entries);const hrs=Math.floor(mins/60);const min=mins%60;
+  const mins = calcMinutes(entries);
+  const hrs = Math.floor(mins / 60);
+  const min = mins % 60;
 
   return(<div className="space-y-6">
     <div className="card"><div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"><div><h2 className="text-xl font-bold text-brand-dark">EQX Folha de Serviço</h2><p className="text-sm text-brand-soft mt-1">Semana de {format(new Date(weekDates[0].date+"T00:00:00"),"dd/MM",{locale:pt})} a {format(new Date(weekDates[5].date+"T00:00:00"),"dd/MM/yyyy",{locale:pt})}</p></div>{existingSheet&&<span className="badge-draft">{existingSheet.status==="draft"?"Rascunho":existingSheet.status==="submitted"?"Submetida":"Validada"}</span>}</div>

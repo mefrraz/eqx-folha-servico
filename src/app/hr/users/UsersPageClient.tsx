@@ -5,9 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
-
-function cM(e:any[]){return e.reduce((s:number,x:any)=>{if(x.start_time&&x.end_time){const[a,b]=x.start_time.split(":").map(Number);const[c,d]=x.end_time.split(":").map(Number);return s+(c*60+d)-(a*60+b)}return s},0);}
-function fM(m:number){const h=Math.floor(m/60);const mi=m%60;return mi?`${h}h ${mi}m`:`${h}h`;}
+import { calcMinutes, formatMinutes } from "@/lib/utils";
 
 export default function UsersPageClient() {
   const [workers, setWorkers] = useState<any[]>([]);
@@ -54,7 +52,7 @@ export default function UsersPageClient() {
       <div className="card !p-0 overflow-hidden">
         <table className="w-full text-sm table-fixed">
           <thead><tr className="border-b border-brand-light/30 bg-brand-gold/5"><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide">Nome</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden sm:table-cell">Última folha</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden md:table-cell">Horas</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden lg:table-cell">Registo</th></tr></thead>
-          <tbody>{filtered.map(w=>{const l=latestByWorker.get(w.id);const m=cM(l?.work_entries||[]);return(<tr key={w.id} className="border-b border-brand-light/20 hover:bg-brand-gold/5 transition-colors"><td className="py-3 px-4"><Link href={`/hr/users/${w.id}`} className="text-brand-dark hover:text-brand-gold font-medium">{w.full_name}</Link></td><td className="py-3 px-4 text-brand-soft hidden sm:table-cell font-mono text-xs">{l?format(new Date(l.week_start+"T00:00:00"),"dd/MM/yy",{locale:pt}):"—"}</td><td className="py-3 px-4 text-brand-dark hidden md:table-cell font-mono text-xs">{l?fM(m):"—"}</td><td className="py-3 px-4 text-brand-muted hidden lg:table-cell text-xs font-mono">{format(new Date(w.created_at),"dd/MM/yy",{locale:pt})}</td></tr>);})}</tbody>
+          <tbody>{filtered.map(w=>{const l=latestByWorker.get(w.id);const m=calcMinutes(l?.work_entries||[]);return(<tr key={w.id} className="border-b border-brand-light/20 hover:bg-brand-gold/5 transition-colors"><td className="py-3 px-4"><Link href={`/hr/users/${w.id}`} className="text-brand-dark hover:text-brand-gold font-medium">{w.full_name}</Link></td><td className="py-3 px-4 text-brand-soft hidden sm:table-cell font-mono text-xs">{l?format(new Date(l.week_start+"T00:00:00"),"dd/MM/yy",{locale:pt}):"—"}</td><td className="py-3 px-4 text-brand-dark hidden md:table-cell font-mono text-xs">{l?formatMinutes(m):"—"}</td><td className="py-3 px-4 text-brand-muted hidden lg:table-cell text-xs font-mono">{format(new Date(w.created_at),"dd/MM/yy",{locale:pt})}</td></tr>);})}</tbody>
         </table>
         {filtered.length===0 && <div className="text-center py-12 text-brand-muted text-sm">Nenhum resultado.</div>}
       </div>

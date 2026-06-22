@@ -3,11 +3,9 @@ import { format, startOfWeek } from "date-fns";
 import { pt } from "date-fns/locale";
 import Link from "next/link";
 import WeekNavigator from "./WeekNavigator";
+import { calcMinutes, formatMinutes } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-function calcM(e: any[]) { return e.reduce((s:number,x:any)=>{if(x.start_time&&x.end_time){const[a,b]=x.start_time.split(":").map(Number);const[c,d]=x.end_time.split(":").map(Number);return s+(c*60+d)-(a*60+b)}return s},0); }
-function fmtM(m:number){const h=Math.floor(m/60);const mi=m%60;return mi?`${h}h ${mi}m`:`${h}h`;}
 
 export default async function HRHome({ searchParams }: { searchParams: { w?: string } }) {
   const supabase = await createClient();
@@ -24,8 +22,8 @@ export default async function HRHome({ searchParams }: { searchParams: { w?: str
   const ids = new Set((weekSheets||[]).map(s=>s.worker_id));
   const sub = (workers||[]).filter(w=>ids.has(w.id)).length;
   const not = totalW - sub;
-  const hrsAll = (allSheets||[]).reduce((s,sh)=>s+calcM(sh.work_entries||[]),0);
-  const hrsWeek = (weekSheets||[]).reduce((s,sh)=>s+calcM(sh.work_entries||[]),0);
+  const hrsAll = (allSheets||[]).reduce((s,sh)=>s+calcMinutes(sh.work_entries||[]),0);
+  const hrsWeek = (weekSheets||[]).reduce((s,sh)=>s+calcMinutes(sh.work_entries||[]),0);
   const pct = totalW>0?Math.round(sub/totalW*100):0;
 
   return (
@@ -33,8 +31,8 @@ export default async function HRHome({ searchParams }: { searchParams: { w?: str
       <WeekNavigator currentWeek={ws} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Link href="/hr/users" className="stat-card hover:border-brand-gold/40 transition-all"><span className="stat-value">{totalW}</span><span className="stat-label">Trabalhadores</span></Link>
-        <div className="stat-card"><span className="stat-value">{fmtM(hrsWeek)}</span><span className="stat-label">Horas esta semana</span></div>
-        <div className="stat-card"><span className="stat-value">{fmtM(hrsAll)}</span><span className="stat-label">Total de horas</span></div>
+        <div className="stat-card"><span className="stat-value">{formatMinutes(hrsWeek)}</span><span className="stat-label">Horas esta semana</span></div>
+        <div className="stat-card"><span className="stat-value">{formatMinutes(hrsAll)}</span><span className="stat-label">Total de horas</span></div>
         <Link href="/hr/projects" className="stat-card hover:border-brand-gold/40 transition-all"><span className="stat-value">{new Set((weekSheets||[]).map(s=>s.work_number).filter(Boolean)).size}</span><span className="stat-label">Obras ativas</span></Link>
       </div>
 
@@ -56,7 +54,7 @@ export default async function HRHome({ searchParams }: { searchParams: { w?: str
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="card">
           <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase mb-3">Submeteram</h4>
-          <div className="space-y-1.5">{(weekSheets||[]).slice(0,8).map((s:any)=>(<Link key={s.id} href={`/hr/users/${s.worker_id}`} className="flex items-center justify-between py-2 px-2 -mx-2 rounded-xl hover:bg-brand-gold/5 transition-colors"><span className="text-sm text-brand-dark font-medium">{s.worker?.full_name||"—"}</span><span className="text-xs font-mono text-brand-soft">{fmtM(calcM(s.work_entries||[]))}</span></Link>))}
+          <div className="space-y-1.5">{(weekSheets||[]).slice(0,8).map((s:any)=>(<Link key={s.id} href={`/hr/users/${s.worker_id}`} className="flex items-center justify-between py-2 px-2 -mx-2 rounded-xl hover:bg-brand-gold/5 transition-colors"><span className="text-sm text-brand-dark font-medium">{s.worker?.full_name||"—"}</span><span className="text-xs font-mono text-brand-soft">{formatMinutes(calcMinutes(s.work_entries||[]))}</span></Link>))}
           {(weekSheets||[]).length===0 && <p className="text-sm text-brand-muted py-2">Nenhuma submissão.</p>}</div>
         </div>
         <div className="card">

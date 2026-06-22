@@ -7,10 +7,10 @@ import { pt } from "date-fns/locale";
 import MonthCalendar from "@/components/MonthCalendar";
 import DeleteUserButton from "./DeleteUserButton";
 import toast from "react-hot-toast";
+import { calcMinutes, formatMinutes } from "@/lib/utils";
+import { DAY_LABELS } from "@/lib/types";
 
-const DL:Record<string,string>={monday:"2ª",tuesday:"3ª",wednesday:"4ª",thursday:"5ª",friday:"6ª",saturday:"Sáb"};
-function cM(e:any[]){return e.reduce((s:number,x:any)=>{if(x.start_time&&x.end_time){const[a,b]=x.start_time.split(":").map(Number);const[c,d]=x.end_time.split(":").map(Number);return s+(c*60+d)-(a*60+b)}return s},0);}
-function fM(m:number){const h=Math.floor(m/60);const mi=m%60;return mi?`${h}h ${mi}m`:`${h}h`;}
+const DL = DAY_LABELS;
 
 export default function UserProfileClient({ userId, profile, sheets: initialSheets, userEmail }: { userId: string; profile: any; sheets: any[]; userEmail: string }) {
   const [sheets] = useState(initialSheets);
@@ -43,7 +43,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
     setSelectedSheet(findSheet(sunday));
   };
 
-  const totalMins = sheets.reduce((s: number, sh: any) => s + cM(sh.work_entries || []), 0);
+  const totalMins = sheets.reduce((s: number, sh: any) => s + calcMinutes(sh.work_entries || []), 0);
   const latestSheet = sheets[0];
 
   // Calendar sheets map: use Sunday-based weekStart for highlighting
@@ -92,7 +92,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
             </div>
           </div>
           <div className="flex gap-8 text-right shrink-0">
-            <div><span className="block text-3xl font-bold font-mono text-brand-dark tracking-tight">{fM(totalMins)}</span><span className="text-xs text-brand-muted tracking-wide uppercase">Horas totais</span></div>
+            <div><span className="block text-3xl font-bold font-mono text-brand-dark tracking-tight">{formatMinutes(totalMins)}</span><span className="text-xs text-brand-muted tracking-wide uppercase">Horas totais</span></div>
             <div><span className="block text-3xl font-bold font-mono text-brand-dark tracking-tight">{sheets.length}</span><span className="text-xs text-brand-muted tracking-wide uppercase">Folhas</span></div>
             <div><span className="block text-3xl font-bold font-mono text-brand-dark tracking-tight">{latestSheet?format(new Date(latestSheet.week_start+"T00:00:00"),"dd/MM",{locale:pt}):"—"}</span><span className="text-xs text-brand-muted tracking-wide uppercase">Última folha</span></div>
           </div>
@@ -122,7 +122,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
                 <span className={selectedSheet.status==="draft"?"badge-draft":selectedSheet.status==="submitted"?"badge-submitted":"badge-reviewed"}>{selectedSheet.status==="draft"?"Rascunho":selectedSheet.status==="submitted"?"Submetida":"Validada"}</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm"><div><span className="text-xs text-brand-muted">Cliente</span><p className="text-brand-dark font-medium">{selectedSheet.client||"—"}</p></div><div><span className="text-xs text-brand-muted">Obra</span><p className="text-brand-dark font-medium">{selectedSheet.work_number||"—"}</p></div></div>
-              <div className="space-y-1.5">{["monday","tuesday","wednesday","thursday","friday","saturday"].map(day=>{const e=(selectedSheet.work_entries||[]).find((x:any)=>x.day===day);if(!e)return null;let dm=0;if(e.start_time&&e.end_time){const[a,b]=e.start_time.split(":").map(Number);const[c,d]=e.end_time.split(":").map(Number);dm=c*60+d-(a*60+b);}return(<div key={day} className="flex items-center justify-between py-2 px-3 rounded-xl bg-brand-light/5"><div className="flex items-center gap-3"><span className="text-xs font-semibold text-brand-dark w-8">{DL[day]}</span><span className="text-sm text-brand-soft">{e.work_description||"—"}</span></div><span className="text-xs font-mono text-brand-dark">{dm>0?fM(dm):"—"}</span></div>);})}</div>
+              <div className="space-y-1.5">{["monday","tuesday","wednesday","thursday","friday","saturday"].map(day=>{const e=(selectedSheet.work_entries||[]).find((x:any)=>x.day===day);if(!e)return null;let dm=0;if(e.start_time&&e.end_time){const[a,b]=e.start_time.split(":").map(Number);const[c,d]=e.end_time.split(":").map(Number);dm=c*60+d-(a*60+b);}return(<div key={day} className="flex items-center justify-between py-2 px-3 rounded-xl bg-brand-light/5"><div className="flex items-center gap-3"><span className="text-xs font-semibold text-brand-dark w-8">{DL[day]}</span><span className="text-sm text-brand-soft">{e.work_description||"—"}</span></div><span className="text-xs font-mono text-brand-dark">{dm>0?formatMinutes(dm):"—"}</span></div>);})}</div>
               <div className="flex gap-2 pt-2">
                 <a href={`/api/export-sheet/${selectedSheet.id}`} className="btn-secondary text-xs !py-1.5 !px-3">Exportar Word</a>
                 {selectedSheet.status==="submitted"&&<button onClick={()=>handleValidate(selectedSheet.id)} className="badge-submitted cursor-pointer hover:brightness-95 text-xs">Validar</button>}

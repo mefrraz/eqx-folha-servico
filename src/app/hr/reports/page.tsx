@@ -1,14 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import ReportsClient from "./ReportsClient";
+import { calcMinutes } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-function calcM(e: any[]) {
-  return e.reduce((s: number, x: any) => {
-    if (x.start_time && x.end_time) { const [a, b] = x.start_time.split(":").map(Number); const [c, d] = x.end_time.split(":").map(Number); return s + (c * 60 + d) - (a * 60 + b); }
-    return s;
-  }, 0);
-}
 
 export default async function ReportsPage({ searchParams }: { searchParams: { months?: string } }) {
   const supabase = await createClient();
@@ -33,7 +27,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: { mo
     const key = s.project?.name || s.work_number || "Sem obra";
     if (!byProject.has(key)) byProject.set(key, { name: key, mins: 0, sheets: 0, workers: new Set() });
     const p = byProject.get(key)!;
-    p.mins += calcM(s.work_entries || []);
+    p.mins += calcMinutes(s.work_entries || []);
     p.sheets++;
     p.workers.add(s.worker_id);
   }
@@ -46,7 +40,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: { mo
     const key = s.worker_id;
     if (!byWorker.has(key)) byWorker.set(key, { name: s.worker?.full_name || "—", mins: 0, sheets: 0 });
     const w = byWorker.get(key)!;
-    w.mins += calcM(s.work_entries || []);
+    w.mins += calcMinutes(s.work_entries || []);
     w.sheets++;
   }
   const workerData = Array.from(byWorker.values()).sort((a, b) => b.mins - a.mins);
@@ -56,12 +50,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: { mo
   const byMonth = new Map<string, number>();
   for (const s of safe) {
     const month = s.week_start.substring(0, 7);
-    byMonth.set(month, (byMonth.get(month) || 0) + calcM(s.work_entries || []));
+    byMonth.set(month, (byMonth.get(month) || 0) + calcMinutes(s.work_entries || []));
   }
   const monthData = Array.from(byMonth.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   const maxMonthMins = Math.max(...Array.from(byMonth.values()), 1);
 
-  const totalMins = safe.reduce((s, sh) => s + calcM(sh.work_entries || []), 0);
+  const totalMins = safe.reduce((s, sh) => s + calcMinutes(sh.work_entries || []), 0);
   const totalWorkers = new Set(safe.map(s => s.worker_id)).size;
   const totalSheets = safe.length;
 

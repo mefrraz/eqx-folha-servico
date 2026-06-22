@@ -1,13 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { DAY_LABELS, WORK_TYPE_LABELS } from "@/lib/types";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const supabase = await createClient();
   const { data: sheet } = await supabase.from("work_sheets").select("*, work_entries(*), worker:profiles!work_sheets_worker_id_fkey(full_name)").eq("id", params.id).single();
   if (!sheet) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const DL: Record<string, string> = { monday: "2ª feira", tuesday: "3ª feira", wednesday: "4ª feira", thursday: "5ª feira", friday: "6ª feira", saturday: "Sábado" };
-  const WT: Record<string, string> = { new_installation: "Nova Instalação", installation_continuation: "Continuação instalação", preventive_maintenance: "Manutenção preventiva", corrective_maintenance: "Manutenção corretiva" };
+  const DL = DAY_LABELS;
+  const WT = WORK_TYPE_LABELS;
 
   const td = "border:1px solid #999;padding:4px 6px;font-size:10px;font-family:Arial;vertical-align:top";
   const th = "border:1px solid #999;padding:4px 6px;font-size:9px;font-family:Arial;font-weight:bold;background:#e8e8e8;text-align:left;white-space:nowrap";

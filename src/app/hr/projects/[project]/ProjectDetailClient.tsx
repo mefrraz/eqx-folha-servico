@@ -6,11 +6,11 @@ import { format, addDays, startOfWeek as sunStart } from "date-fns";
 import { pt } from "date-fns/locale";
 import MonthCalendar from "@/components/MonthCalendar";
 import toast from "react-hot-toast";
+import { calcMinutes, formatMinutes } from "@/lib/utils";
+import { DAY_LABELS, WORK_TYPE_LABELS } from "@/lib/types";
 
-const DL:Record<string,string>={monday:"2ª",tuesday:"3ª",wednesday:"4ª",thursday:"5ª",friday:"6ª",saturday:"Sáb"};
-const WT:Record<string,string>={new_installation:"Nova Instalação",installation_continuation:"Continuação",preventive_maintenance:"Manut. preventiva",corrective_maintenance:"Manut. corretiva"};
-function cM(e:any[]){return e.reduce((s:number,x:any)=>{if(x.start_time&&x.end_time){const[a,b]=x.start_time.split(":").map(Number);const[c,d]=x.end_time.split(":").map(Number);return s+(c*60+d)-(a*60+b)}return s},0);}
-function fM(m:number){const h=Math.floor(m/60);const mi=m%60;return mi?`${h}h ${mi}m`:`${h}h`;}
+const DL = DAY_LABELS;
+const WT = WORK_TYPE_LABELS;
 
 export default function ProjectDetailClient({ project, sheets: allSheets }: { project: any; sheets: any[] }) {
   const [selectedSunday, setSelectedSunday] = useState<Date | null>(null);
@@ -32,7 +32,7 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
     hasSheet: true, sheetId: s.id, status: s.status
   }));
 
-  const wM = new Map<string,number>(); for(const s of allSheets){const m=cM(s.work_entries||[]);wM.set(s.week_start,(wM.get(s.week_start)||0)+m);}
+  const wM = new Map<string,number>(); for(const s of allSheets){const m=calcMinutes(s.work_entries||[]);wM.set(s.week_start,(wM.get(s.week_start)||0)+m);}
   const sW = Array.from(wM.entries()).sort((a,b)=>a[0].localeCompare(b[0]));
   const max = Math.max(...Array.from(wM.values()),1);
 
@@ -138,7 +138,7 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
                       <button onClick={() => toggleExpand(s.id)} className="flex-1 flex items-center justify-between text-left">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-brand-dark text-sm">{s.worker?.full_name||"—"}</span>
-                        <span className="text-xs font-mono text-brand-soft">{fM(cM(s.work_entries||[]))}</span>
+                        <span className="text-xs font-mono text-brand-soft">{formatMinutes(calcMinutes(s.work_entries||[]))}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {s.status==="submitted"?<span className="badge-submitted text-xs">Submetida</span>:s.status==="draft"?<span className="badge-draft text-xs">Rascunho</span>:<span className="badge-reviewed text-xs">Validada</span>}
@@ -149,7 +149,7 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
                     {isOpen && (
                       <div className="px-3 pb-3">
                         <table className="w-full text-xs"><thead><tr className="text-brand-soft border-b border-brand-light/30"><th className="text-left py-1">Dia</th><th className="text-left py-1">Trabalho</th><th className="text-left py-1">Tipo</th><th className="text-right py-1">Horas</th></tr></thead>
-                        <tbody>{["monday","tuesday","wednesday","thursday","friday","saturday"].map(day=>{const e=(s.work_entries||[]).find((x:any)=>x.day===day);if(!e)return null;let dm=0;if(e.start_time&&e.end_time){const[a,b]=e.start_time.split(":").map(Number);const[c,d]=e.end_time.split(":").map(Number);dm=c*60+d-(a*60+b);}return(<tr key={day} className="border-b border-brand-light/20"><td className="py-1 font-medium">{DL[day]}</td><td className="py-1 text-brand-soft">{e.work_description||"—"}</td><td className="py-1 text-brand-muted">{WT[e.work_type]||"—"}</td><td className="py-1 text-right font-mono">{dm>0?fM(dm):"—"}</td></tr>);})}</tbody></table>
+                        <tbody>{["monday","tuesday","wednesday","thursday","friday","saturday"].map(day=>{const e=(s.work_entries||[]).find((x:any)=>x.day===day);if(!e)return null;let dm=0;if(e.start_time&&e.end_time){const[a,b]=e.start_time.split(":").map(Number);const[c,d]=e.end_time.split(":").map(Number);dm=c*60+d-(a*60+b);}return(<tr key={day} className="border-b border-brand-light/20"><td className="py-1 font-medium">{DL[day]}</td><td className="py-1 text-brand-soft">{e.work_description||"—"}</td><td className="py-1 text-brand-muted">{WT[e.work_type]||"—"}</td><td className="py-1 text-right font-mono">{dm>0?formatMinutes(dm):"—"}</td></tr>);})}</tbody></table>
                         <div className="flex gap-2 mt-2">
                           {s.status==="submitted"&&<button onClick={()=>handleValidate(s.id)} className="badge-submitted cursor-pointer hover:brightness-95 text-xs">Validar</button>}
                         </div>

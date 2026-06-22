@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-function fM(m: number) { const h = Math.floor(m / 60); const mi = m % 60; return mi ? `${h}h ${mi}m` : `${h}h`; }
+import { formatMinutes } from "@/lib/utils";
 function pct(v: number, max: number) { return `${Math.round((v / max) * 100)}%`; }
 
 interface ReportsClientProps {
@@ -42,7 +41,7 @@ export default function ReportsClient(props: ReportsClientProps) {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="stat-card text-center">
-          <span className="stat-value">{fM(totalMins)}</span>
+          <span className="stat-value">{formatMinutes(totalMins)}</span>
           <span className="stat-label">Horas totais</span>
         </div>
         <div className="stat-card text-center">
@@ -77,7 +76,7 @@ export default function ReportsClient(props: ReportsClientProps) {
             <div key={p.name}>
               <div className="flex items-center justify-between text-xs mb-0.5">
                 <span className="text-brand-dark font-medium truncate mr-2">{p.name}</span>
-                <span className="font-mono text-brand-soft shrink-0">{fM(p.mins)} · {p.sheets} folhas</span>
+                <span className="font-mono text-brand-soft shrink-0">{formatMinutes(p.mins)} · {p.sheets} folhas</span>
               </div>
               <div className="h-3 bg-brand-light/20 rounded-full overflow-hidden">
                 <div className="h-full bg-brand-gold/60 rounded-full" style={{ width: pct(p.mins, maxProjectMins) }} />
@@ -95,7 +94,7 @@ export default function ReportsClient(props: ReportsClientProps) {
             <div key={w.name}>
               <div className="flex items-center justify-between text-xs mb-0.5">
                 <span className="text-brand-dark font-medium">{w.name}</span>
-                <span className="font-mono text-brand-soft">{fM(w.mins)} · {w.sheets} folhas</span>
+                <span className="font-mono text-brand-soft">{formatMinutes(w.mins)} · {w.sheets} folhas</span>
               </div>
               <div className="h-3 bg-brand-light/20 rounded-full overflow-hidden">
                 <div className="h-full bg-success/60 rounded-full" style={{ width: pct(w.mins, maxWorkerMins) }} />

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-
-function fM(m: number) { const h = Math.floor(m / 60); const mi = m % 60; return mi ? `${h}h ${mi}m` : `${h}h`; }
+import { formatMinutes } from "@/lib/utils";
 
 export default function WorkerSettingsClient({ userId, profile, totalMins, sheetsCount, projects }: { userId: string; profile: any; totalMins: number; sheetsCount: number; projects: any[] }) {
   const [name, setName] = useState(profile?.full_name || "");
@@ -27,7 +26,7 @@ export default function WorkerSettingsClient({ userId, profile, totalMins, sheet
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="stat-card text-center"><span className="stat-value">{fM(totalMins)}</span><span className="stat-label">Horas totais</span></div>
+        <div className="stat-card text-center"><span className="stat-value">{formatMinutes(totalMins)}</span><span className="stat-label">Horas totais</span></div>
         <div className="stat-card text-center"><span className="stat-value">{sheetsCount}</span><span className="stat-label">Folhas</span></div>
         <div className="stat-card text-center"><span className="stat-value">{projects.length}</span><span className="stat-label">Obras</span></div>
       </div>
