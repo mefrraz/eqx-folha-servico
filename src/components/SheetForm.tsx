@@ -18,7 +18,7 @@ const DAYS = [
   { key: "thursday", label: "5ª Feira" },
   { key: "friday", label: "6ª Feira" },
   { key: "saturday", label: "Sábado" },
-];
+] as const;
 
 function emptyEntry(day: WorkEntry["day"]): WorkEntry {
   return {

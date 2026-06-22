@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "EQX Folha de Serviço",
   description: "EQX — Plataforma de gestão de folhas de serviço semanais",
   manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
   themeColor: "#F1C411",
 };
 
