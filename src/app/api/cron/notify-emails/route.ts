@@ -1,8 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// Vercel Cron calls this every minute — only process if we have Resend configured
-export async function GET() {
+// Vercel Cron calls GET, pg_net trigger calls POST — handle both
+export async function GET() { return handleEmailSend(); }
+export async function POST() { return handleEmailSend(); }
+
+async function handleEmailSend() {
   const resendApiKey = process.env.RESEND_API_KEY;
   const adminEmail = process.env.ADMIN_EMAIL;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
