@@ -16,7 +16,8 @@ export default async function NotificationsPage() {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  const unread = (notifications || []).filter((n) => !n.read).length;
+  const unreadNotifications = (notifications || []).filter((n) => !n.read);
+  const unread = unreadNotifications.length;
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -25,14 +26,14 @@ export default async function NotificationsPage() {
           <h2 className="text-lg font-bold text-brand-dark">Notificações</h2>
           <p className="text-sm text-brand-soft mt-0.5">{unread} por ler</p>
         </div>
-        {(notifications || []).length > 0 && <ClearAllButton />}
+        {unreadNotifications.length > 0 && <ClearAllButton />}
       </div>
 
       <div className="space-y-2">
-        {(!notifications || notifications.length === 0) && (
-          <div className="card text-center py-12 text-brand-muted text-sm">Nenhuma notificação.</div>
+        {unreadNotifications.length === 0 && (
+          <div className="card text-center py-12 text-brand-muted text-sm">Nenhuma notificação por ler.</div>
         )}
-        {notifications?.map((n: any) => (
+        {unreadNotifications.map((n: any) => (
           <div key={n.id} className={`card !p-4 flex items-center justify-between ${!n.read ? "border-l-[3px] border-brand-gold" : ""}`}>
             <div className="flex-1">
               <p className={`text-sm ${!n.read ? "text-brand-dark font-semibold" : "text-brand-soft"}`}>{n.message}</p>

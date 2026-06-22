@@ -22,9 +22,13 @@ export async function updateProfile(userId: string, data: { full_name?: string; 
 }
 
 export async function adminUpdateUser(userId: string, data: { email?: string; password?: string }) {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    return { error: "SUPABASE_SERVICE_ROLE_KEY não configurada no servidor. Contacta o admin." };
+  }
   const supabase = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    serviceRoleKey
   );
   const updateData: Record<string, string> = {};
   if (data.email) updateData.email = data.email;

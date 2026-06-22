@@ -32,7 +32,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
     supabase.from("notifications").select("id", { count: "exact", head: true }).eq("read", false).then(({ count }) => {
       setNotifCount(count || 0);
     });
-  }, []);
+  }, [pathname]); // Re-fetch count on every navigation
 
   const isActive = (item: typeof NAV[0]) => item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
