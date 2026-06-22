@@ -1,23 +1,25 @@
 -- ============================================================
--- LIMPAR DADOS + CRIAR ADMIN colaboradoreshoraseqx@gmail.com
+-- LIMPAR DADOS + CRIAR ADMIN (v2 — robusto)
 -- Executar no Supabase SQL Editor
 -- ============================================================
 
--- 1. Apagar todos os dados (mantém schema e admin existente se quiseres)
+-- 1. Apagar dados das tabelas da app (ordem correcta)
 DELETE FROM notifications;
 DELETE FROM work_entries;
 DELETE FROM work_sheets;
 DELETE FROM projects;
 DELETE FROM clients;
 DELETE FROM profiles;
-DELETE FROM auth.users;
 
--- 2. Criar admin novo
+-- 2. Apagar auth users (excepto o admin que vamos criar)
+-- Usa CASCADE para lidar com FK internas (sessions, refresh_tokens, etc.)
+TRUNCATE auth.users CASCADE;
+
+-- 3. Criar admin
 DO $$
 DECLARE
   admin_id UUID := gen_random_uuid();
 BEGIN
-  -- Inserir em auth.users
   INSERT INTO auth.users (
     id, instance_id, email, encrypted_password,
     email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
@@ -42,7 +44,6 @@ BEGIN
     NULL
   );
 
-  -- Inserir em auth.identities
   INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
   VALUES (
     gen_random_uuid(),
@@ -54,10 +55,11 @@ BEGIN
     now()
   );
 
-  -- Inserir em profiles
-  INSERT INTO profiles (id, full_name, email, role)
-  VALUES (admin_id, 'Admin EQX', 'colaboradoreshoraseqx@gmail.com', 'admin');
+  -- Trigger handle_new_user insere o profile automaticamente
+  -- Garantir que fica como admin
+  UPDATE profiles SET role = 'admin', email = 'colaboradoreshoraseqx@gmail.com'
+  WHERE id = admin_id;
 
-  RAISE NOTICE '✅ Admin criado: colaboradoreshoraseqx@gmail.com / eqx2030';
+  RAISE NOTICE '✅ Admin: colaboradoreshoraseqx@gmail.com / eqx2030';
 END;
 $$;
