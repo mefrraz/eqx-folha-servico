@@ -8,6 +8,9 @@
   body {
     @apply bg-page text-brand-dark antialiased font-sans;
   }
+  .dark {
+    @apply bg-brand-dark;
+  }
 }
 
 @layer components {

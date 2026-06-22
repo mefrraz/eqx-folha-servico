@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 import toast from "react-hot-toast";
 
 const NAV = [
@@ -56,7 +57,10 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="px-4 py-4 border-t border-brand-light/30 space-y-1">
-          <p className="text-xs text-brand-soft font-medium truncate">{userName}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-brand-soft font-medium truncate">{userName}</p>
+            <ThemeToggle />
+          </div>
           <div className="flex items-center gap-2">
             <Link href="/hr/settings" className="text-xs text-brand-muted hover:text-brand-dark transition-colors" title="Definições">⚙️</Link>
             <button onClick={async () => { await supabase.auth.signOut(); toast.success("Sessão terminada."); router.push("/auth/login"); }}

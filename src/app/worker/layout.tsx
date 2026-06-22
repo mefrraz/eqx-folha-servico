@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 import toast from "react-hot-toast";
 
 export default function WorkerLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,7 @@ export default function WorkerLayout({ children }: { children: React.ReactNode }
             <span className="text-[10px] tracking-[.2em] uppercase text-brand-muted font-semibold hidden sm:inline">Folha de Serviço</span>
           </Link>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             {userName && <span className="text-sm text-brand-soft hidden sm:block">{userName}</span>}
             <Link href="/worker/settings" className="text-xs text-brand-muted hover:text-brand-dark transition-colors" title="Definições">⚙️</Link>
             <button onClick={async () => { await supabase.auth.signOut(); toast.success("Sessão terminada."); router.push("/auth/login"); }} className="text-xs text-brand-muted hover:text-brand-dark transition-colors">Sair</button>
