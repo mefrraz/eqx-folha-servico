@@ -16,7 +16,7 @@ export default async function HRHome({ searchParams }: { searchParams: { w?: str
 
   const { data: workers } = await supabase.from("profiles").select("id, full_name").eq("role","worker").order("full_name");
   const { data: weekSheets } = await supabase.from("work_sheets").select("*, work_entries(*), worker:profiles!work_sheets_worker_id_fkey(full_name)").eq("week_start",ws).order("created_at",{ascending:false});
-  const { data: allSheets } = await supabase.from("work_sheets").select("work_entries(*)").limit(500);
+  const { data: allSheets } = await supabase.from("work_sheets").select("work_entries(*)").limit(200);
 
   const totalW = workers?.length || 0;
   const ids = new Set((weekSheets||[]).map(s=>s.worker_id));

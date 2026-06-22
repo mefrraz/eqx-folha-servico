@@ -17,7 +17,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: { mo
     .select("*, work_entries(*), worker:profiles!work_sheets_worker_id_fkey(full_name), project:projects(name)")
     .gte("week_start", cutoffStr)
     .order("week_start", { ascending: false })
-    .limit(2000);
+    // Cap at 1000 for safety; add cursor-based pagination for larger datasets
+    .limit(1000);
 
   const safe = sheets || [];
 

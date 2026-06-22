@@ -17,7 +17,8 @@ export default function UsersPageClient() {
 
   useEffect(() => {
     supabase.from("profiles").select("id,full_name,created_at").eq("role","worker").order("full_name").then(({data}) => setWorkers(data||[]));
-    supabase.from("work_sheets").select("worker_id,week_start,work_entries(*),project_id").order("week_start",{ascending:false}).limit(2000).then(({data}) => setSheets(data||[]));
+    // Fetch latest sheets per worker (limit to avoid over-fetching; add server-side pagination for production)
+    supabase.from("work_sheets").select("worker_id,week_start,work_entries(*),project_id").order("week_start",{ascending:false}).limit(500).then(({data}) => setSheets(data||[]));
     supabase.from("projects").select("id,name").order("name").then(({data}) => setProjects(data||[]));
   }, []);
 
