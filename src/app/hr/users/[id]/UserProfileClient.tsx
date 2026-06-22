@@ -82,7 +82,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
           <div>
             <h2 className="text-2xl font-bold text-brand-dark">{profile.full_name}</h2>
-            <p className="text-xs text-brand-soft mt-0.5">{userEmail}</p>
+            <p className="text-sm text-brand-soft mt-0.5">{userEmail}</p>
             {/* Obras below name */}
             <div className="flex flex-wrap gap-2 mt-3">
               {workerProjects.map((p: any) => (

@@ -16,11 +16,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="EQX" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <script dangerouslySetInnerHTML={{ __html: `try{var d=localStorage.getItem("eqx-dark");if(d==="true"||(!d&&window.matchMedia("(prefers-color-scheme:dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}` }} />
       </head>
       <body className="min-h-screen">
-        <Toaster position="top-right" toastOptions={{ style: { background: "#1a1a1a", color: "#F1C411", borderRadius: "12px", fontSize: "13px", fontFamily: "Inter, sans-serif" } }} />
+        <Toaster position="top-right" toastOptions={{
+          style: { background: "#1a1a1a", color: "#F1C411", borderRadius: "12px", fontSize: "13px", fontFamily: "Inter, sans-serif" },
+          success: { iconTheme: { primary: "#F1C411", secondary: "#1a1a1a" } },
+          error: { iconTheme: { primary: "#ef4444", secondary: "#1a1a1a" } },
+        }} />
         {children}
       </body>
     </html>
