@@ -1,8 +1,29 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
+    // Verify the caller is an admin
+    const serverClient = await createServerClient();
+    const {
+      data: { user },
+    } = await serverClient.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
+
+    const { data: profile } = await serverClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || (profile.role !== "admin" && profile.role !== "hr")) {
+      return NextResponse.json({ error: "Apenas administradores." }, { status: 403 });
+    }
+
     const body = await request.json();
     const { full_name, email, password } = body;
 

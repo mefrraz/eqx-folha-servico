@@ -4,8 +4,40 @@ import { DAY_LABELS, WORK_TYPE_LABELS } from "@/lib/types";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const supabase = await createClient();
-  const { data: sheet } = await supabase.from("work_sheets").select("*, work_entries(*), worker:profiles!work_sheets_worker_id_fkey(full_name)").eq("id", params.id).single();
+
+  // Verify the caller is authenticated
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+  }
+
+  // Fetch the sheet
+  const { data: sheet } = await supabase
+    .from("work_sheets")
+    .select("*, work_entries(*), worker:profiles!work_sheets_worker_id_fkey(full_name)")
+    .eq("id", params.id)
+    .single();
+
   if (!sheet) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Verify the caller owns the sheet or is admin
+  const isOwner = sheet.worker_id === user.id;
+  let isAdmin = false;
+  if (!isOwner) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    isAdmin = profile?.role === "admin" || profile?.role === "hr";
+  }
+
+  if (!isOwner && !isAdmin) {
+    return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
+  }
 
   const DL = DAY_LABELS;
   const WT = WORK_TYPE_LABELS;
