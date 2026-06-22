@@ -32,6 +32,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
     supabase.from("projects").select("id,name,client:clients(name)").order("name").then(({data}) => setAllProjects(data||[]));
     const pids = new Set(initialSheets.map(s => s.project_id).filter(Boolean));
     if (pids.size > 0) supabase.from("projects").select("id,name,client:clients(name)").in("id", Array.from(pids)).then(({data}) => setWorkerProjects(data||[]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Find sheet by calendar-selected Sunday → compare to sheet week_start (Monday)

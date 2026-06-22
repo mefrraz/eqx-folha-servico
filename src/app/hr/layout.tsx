@@ -40,7 +40,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
     const handler = () => fetchNotifCount();
     window.addEventListener("notif-cleared", handler);
     return () => window.removeEventListener("notif-cleared", handler);
-  }, [pathname]);
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isActive = (item: typeof NAV[0]) => item.exact ? pathname === item.href : pathname.startsWith(item.href);
 

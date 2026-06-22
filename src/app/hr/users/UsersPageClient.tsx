@@ -20,6 +20,7 @@ export default function UsersPageClient() {
     // Fetch latest sheets per worker (limit to avoid over-fetching; add server-side pagination for production)
     supabase.from("work_sheets").select("worker_id,week_start,work_entries(*),project_id").order("week_start",{ascending:false}).limit(500).then(({data}) => setSheets(data||[]));
     supabase.from("projects").select("id,name").order("name").then(({data}) => setProjects(data||[]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const latestByWorker = new Map<string,any>();
