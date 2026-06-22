@@ -13,12 +13,3 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
-
-# Reasonix agent metadata
-.reasonix/
-
-# Attachments
-.reasonix/attachments/
-
-# Stray files
-EQX*.json
