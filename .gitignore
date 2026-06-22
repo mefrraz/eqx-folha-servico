@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+.next/
+
+# Env (contains secrets)
+.env.local
+.env*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Reasonix agent metadata
+.reasonix/
+
+# Attachments
+.reasonix/attachments/
+
+# Stray files
+EQX*.json
