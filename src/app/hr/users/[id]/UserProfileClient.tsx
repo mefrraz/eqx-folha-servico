@@ -7,6 +7,7 @@ import { pt } from "date-fns/locale";
 import MonthCalendar from "@/components/MonthCalendar";
 import DeleteUserButton from "./DeleteUserButton";
 import toast from "react-hot-toast";
+import { markAsReviewed } from "@/app/hr/actions";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
 import { DAY_LABELS } from "@/lib/types";
 
@@ -59,8 +60,9 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
   });
 
   const handleValidate = async (sheetId: string) => {
-    const r = await fetch("/api/validate-sheet", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({sheetId}) });
-    if ((await r.json()).success) { setSelectedSheet((prev: any) => prev?.id===sheetId ? {...prev,status:"reviewed"} : prev); toast.success("Validada!"); }
+    const result = await markAsReviewed(sheetId);
+    if (result.success) { setSelectedSheet((prev: any) => prev?.id===sheetId ? {...prev,status:"reviewed"} : prev); toast.success("Validada!"); }
+    else toast.error(result.error || "Erro ao validar");
   };
 
   const handleSaveEdit = async () => {

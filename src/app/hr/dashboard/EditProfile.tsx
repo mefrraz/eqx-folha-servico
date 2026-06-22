@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateProfile } from "./actions";
+import { updateProfile } from "@/app/hr/actions";
 import toast from "react-hot-toast";
 
 interface EditProfileProps {
