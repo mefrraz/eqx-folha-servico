@@ -39,20 +39,35 @@ export async function adminUpdateUser(userId: string, data: { email?: string; pa
     return { success: true, skipped: true };
   }
 
-  console.log("[adminUpdateUser] calling updateUserById", { userId, keys: Object.keys(updateData), url: process.env.NEXT_PUBLIC_SUPABASE_URL });
-
-  const supabase = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceRoleKey
-  );
+  console.log("[adminUpdateUser] calling Supabase Admin API", { userId, keys: Object.keys(updateData) });
 
   try {
-    const { data: result, error } = await supabase.auth.admin.updateUserById(userId, updateData);
-    console.log("[adminUpdateUser] RESULT", { result, error: error ? { message: error.message, status: error.status, name: error.name } : null });
-    if (error) return { error: error.message + " (status: " + error.status + ")" };
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const apiUrl = `${supabaseUrl}/auth/v1/admin/users/${userId}`;
+    
+    console.log("[adminUpdateUser] PUT", apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${serviceRoleKey}`,
+        "apikey": serviceRoleKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    const result = await response.json().catch(() => null);
+    console.log("[adminUpdateUser] HTTP", response.status, response.statusText, result);
+
+    if (!response.ok) {
+      return { error: `HTTP ${response.status}: ${result?.msg || result?.message || response.statusText}` };
+    }
+
+    console.log("[adminUpdateUser] SUCCESS", result);
   } catch (caught: any) {
-    console.error("[adminUpdateUser] EXCEPTION", caught?.message || caught);
-    return { error: "Exceção: " + (caught?.message || String(caught)) };
+    console.error("[adminUpdateUser] FETCH EXCEPTION", { message: caught?.message, name: caught?.name });
+    return { error: "Erro de rede: " + (caught?.message || String(caught)) };
   }
 
   revalidatePath("/hr", "layout");
