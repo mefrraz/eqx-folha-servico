@@ -84,7 +84,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
           <div>
             <h2 className="text-2xl font-bold text-brand-dark">{profile.full_name}</h2>
-            <p className="text-sm text-brand-soft mt-0.5">{userEmail}</p>
+            <p className="text-sm text-brand-dark font-medium mt-0.5">{userEmail || "Sem email"}</p>
             {/* Obras below name */}
             <div className="flex flex-wrap gap-2 mt-3">
               {workerProjects.map((p: any) => (
@@ -137,7 +137,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
       <DeleteUserButton userId={userId} userName={profile.full_name} />
 
       {showEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto py-8" onClick={() => setShowEdit(false)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 overflow-y-auto py-8" onClick={() => setShowEdit(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-brand-dark">Editar {profile.full_name}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

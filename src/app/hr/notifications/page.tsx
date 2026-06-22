@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
-import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import MarkReadButton from "./MarkReadButton";
+import ClearAllButton from "./ClearAllButton";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,7 @@ export default async function NotificationsPage() {
           <h2 className="text-lg font-bold text-brand-dark">Notificações</h2>
           <p className="text-sm text-brand-soft mt-0.5">{unread} por ler</p>
         </div>
+        {(notifications || []).length > 0 && <ClearAllButton />}
       </div>
 
       <div className="space-y-2">
@@ -40,8 +41,10 @@ export default async function NotificationsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2 ml-3">
-              {n.sheet_id && (
-                <Link href={`/hr/projects`} className="text-xs text-brand-gold font-medium hover:underline">Ver folha</Link>
+              {n.worker_id && (
+                <Link href={`/hr/users/${n.worker_id}`} className="text-xs text-brand-gold font-medium hover:underline">
+                  Ver trabalhador
+                </Link>
               )}
               {!n.read && <MarkReadButton id={n.id} />}
             </div>

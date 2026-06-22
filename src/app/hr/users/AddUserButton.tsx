@@ -32,7 +32,7 @@ export default function AddUserButton() {
   return (<>
     <button onClick={() => setOpen(true)} className="btn-primary text-sm !py-2 !px-4">Adicionar utilizador</button>
     {open && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setOpen(false)}>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={() => setOpen(false)}>
         <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
           <h3 className="text-lg font-bold text-brand-dark">Novo utilizador</h3>
           <div><label className="label-field">Nome completo</label><input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="input-field" placeholder="João Silva" /></div>
