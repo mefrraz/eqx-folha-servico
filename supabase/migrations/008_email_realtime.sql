@@ -34,5 +34,9 @@ CREATE TRIGGER on_notification_email
 -- 4. Adicionar coluna emailed_at (se ainda não existir)
 ALTER TABLE notifications ADD COLUMN IF NOT EXISTS emailed_at TIMESTAMPTZ;
 
-RAISE NOTICE '✅ Email notifications em tempo real ativadas!';
-RAISE NOTICE '⚠️ Verifica se a extensão pg_net está ativa em: Supabase Dashboard → Database → Extensions';
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Email notifications em tempo real ativadas!';
+  RAISE NOTICE '⚠️ Verifica se pg_net está ativo: Supabase Dashboard → Database → Extensions';
+END;
+$$;
