@@ -73,7 +73,7 @@ BEGIN
 
   INSERT INTO auth.identities (
     id, user_id, identity_data, provider, provider_id,
-    last_sign_in_at, created_at, updated_at, email
+    last_sign_in_at, created_at, updated_at
   ) VALUES (
     gen_random_uuid(),
     admin_id,
@@ -82,8 +82,7 @@ BEGIN
     admin_email,
     now(),
     now(),
-    now(),
-    admin_email
+    now()
   );
 
   INSERT INTO profiles (id, full_name, email, role, created_at, updated_at)
