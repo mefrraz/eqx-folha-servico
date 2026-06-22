@@ -20,7 +20,7 @@ const DAYS = [
   { key: "saturday", label: "Sábado" },
 ];
 
-function emptyEntry(day: string): WorkEntry {
+function emptyEntry(day: WorkEntry["day"]): WorkEntry {
   return {
     day,
     work_description: "",
