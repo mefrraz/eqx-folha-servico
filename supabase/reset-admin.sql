@@ -86,7 +86,8 @@ BEGIN
   );
 
   INSERT INTO profiles (id, full_name, email, role, created_at, updated_at)
-  VALUES (admin_id, admin_name, admin_email, 'admin', now(), now());
+  VALUES (admin_id, admin_name, admin_email, 'admin', now(), now())
+  ON CONFLICT (id) DO UPDATE SET role = 'admin', email = admin_email, updated_at = now();
 
   RAISE NOTICE '✅ Admin: % / %', admin_email, admin_password;
 END;
