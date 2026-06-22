@@ -4,6 +4,7 @@ import { pt } from "date-fns/locale";
 import Link from "next/link";
 import MarkReadButton from "./MarkReadButton";
 import ClearAllButton from "./ClearAllButton";
+import EmailTrigger from "./EmailTrigger";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function NotificationsPage() {
 
   return (
     <div className="max-w-2xl space-y-4">
+      <EmailTrigger />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-brand-dark">Notificações</h2>

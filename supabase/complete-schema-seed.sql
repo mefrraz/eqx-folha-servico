@@ -162,6 +162,24 @@ CREATE TRIGGER on_sheet_submitted AFTER UPDATE ON work_sheets FOR EACH ROW EXECU
 DROP TRIGGER IF EXISTS on_sheet_inserted ON work_sheets;
 CREATE TRIGGER on_sheet_inserted AFTER INSERT ON work_sheets FOR EACH ROW EXECUTE FUNCTION notify_sheet_inserted();
 
+-- ── EMAIL via pg_net (tempo real) ──
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+CREATE OR REPLACE FUNCTION notify_email_send()
+RETURNS TRIGGER SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  PERFORM net.http_post(
+    url := 'https://eqx-folha-servico.vercel.app/api/cron/notify-emails',
+    body := '{}'::jsonb,
+    timeout_milliseconds := 5000
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS on_notification_email ON notifications;
+CREATE TRIGGER on_notification_email AFTER INSERT ON notifications FOR EACH ROW EXECUTE FUNCTION notify_email_send();
+
 -- ── RLS ──
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_sheets ENABLE ROW LEVEL SECURITY;
