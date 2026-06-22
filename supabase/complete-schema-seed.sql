@@ -340,8 +340,8 @@ DECLARE
 BEGIN
   FOR i IN 1..54 LOOP
     uid := gen_random_uuid();
-    INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, aud, role, confirmation_token, recovery_token, created_at, updated_at, is_super_admin)
-    VALUES (uid, '00000000-0000-0000-0000-000000000000', lower(regexp_replace(names[i], ' ', '.', 'g')) || '@eqx.pt', crypt('eqx2024!', gen_salt('bf')), now(), jsonb_build_object('full_name', names[i]), 'authenticated', 'authenticated', '', '', now(), now(), false);
+    INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, raw_app_meta_data, aud, role, confirmation_token, recovery_token, created_at, updated_at, is_super_admin, is_sso_user, deleted_at)
+    VALUES (uid, '00000000-0000-0000-0000-000000000000', lower(regexp_replace(names[i], ' ', '.', 'g')) || '@eqx.pt', crypt('eqx2024!', gen_salt('bf')), now(), jsonb_build_object('full_name', names[i]), '{"provider":"email","providers":["email"]}', 'authenticated', 'authenticated', '', '', now(), now(), false, false, NULL);
     INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
     VALUES (gen_random_uuid(), uid, jsonb_build_object('sub', uid::text, 'email', lower(regexp_replace(names[i], ' ', '.', 'g')) || '@eqx.pt'), 'email', lower(regexp_replace(names[i], ' ', '.', 'g')) || '@eqx.pt', now(), now());
     
