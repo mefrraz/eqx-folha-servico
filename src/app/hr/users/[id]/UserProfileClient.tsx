@@ -10,15 +10,19 @@ import toast from "react-hot-toast";
 import { markAsReviewed } from "@/app/hr/actions";
 import { adminUpdateUser } from "@/app/hr/actions";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
-import { DAY_LABELS } from "@/lib/types";
+import { DAY_LABELS, WORK_TYPE_LABELS } from "@/lib/types";
 
 const DL = DAY_LABELS;
+const WT = WORK_TYPE_LABELS;
+
+const DAY_KEYS = ["monday","tuesday","wednesday","thursday","friday","saturday"];
 
 export default function UserProfileClient({ userId, profile, sheets: initialSheets, userEmail }: { userId: string; profile: any; sheets: any[]; userEmail: string }) {
   const [sheets] = useState(initialSheets);
   const [selectedWeek, setSelectedWeek] = useState<Date | null>(null);
   const [selectedSheet, setSelectedSheet] = useState<any>(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [showFullSheet, setShowFullSheet] = useState(false);
   const supabase = createClient();
 
   const [editName, setEditName] = useState(profile.full_name);
@@ -112,37 +116,124 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
         <button onClick={() => { setEditName(profile.full_name); setEditEmail(userEmail); setShowEdit(true); }} className="btn-secondary text-xs !py-1.5 !px-3 mt-4">Editar</button>
       </div>
 
-      {/* Calendar + Sheet detail side by side */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        <div className="card !p-4 w-full lg:w-[280px] lg:h-[280px] shrink-0 flex items-center justify-center">
+      {/* Calendar + Sheet detail side by side — compact */}
+      <div className="flex flex-col lg:flex-row gap-4 items-start">
+        {/* Calendar — natural height, no forced sizing */}
+        <div className="card !p-4 w-full lg:w-[260px] shrink-0">
           <MonthCalendar sheets={sheetWeeks} selectedWeek={selectedWeek} onSelectWeek={handleWeekSelect} />
         </div>
 
-        {/* Sheet detail to the right */}
-        <div className="card !p-4 flex-1 min-h-[280px]">
+        {/* Sheet preview — compact, same height as calendar */}
+        <div className="card !p-4 flex-1 self-stretch flex flex-col">
           {!selectedWeek ? (
-            <div className="text-center py-16 text-brand-muted text-sm">Selecione uma semana no calendário</div>
+            <div className="flex-1 flex items-center justify-center text-brand-muted text-sm">Selecione uma semana no calendário</div>
           ) : !selectedSheet ? (
-            <div className="text-center py-16">
-              <p className="text-brand-muted text-sm mb-2">Nenhuma folha esta semana</p>
-              <p className="text-xs text-brand-soft">{format(selectedWeek,"dd/MM",{locale:pt})} – {format(addDays(selectedWeek,6),"dd/MM/yyyy",{locale:pt})}</p>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center"><p className="text-brand-muted text-sm mb-1">Nenhuma folha esta semana</p><p className="text-xs text-brand-soft">{format(selectedWeek,"dd/MM",{locale:pt})} – {format(addDays(selectedWeek,6),"dd/MM/yyyy",{locale:pt})}</p></div>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-brand-dark">Semana {format(new Date(selectedSheet.week_start+"T00:00:00"),"dd/MM",{locale:pt})} – {format(new Date(selectedSheet.week_end+"T00:00:00"),"dd/MM/yy",{locale:pt})}</h4>
-                <span className={selectedSheet.status==="draft"?"badge-draft":selectedSheet.status==="submitted"?"badge-submitted":"badge-reviewed"}>{selectedSheet.status==="draft"?"Rascunho":selectedSheet.status==="submitted"?"Submetida":"Validada"}</span>
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-bold text-brand-dark">Semana {format(new Date(selectedSheet.week_start+"T00:00:00"),"dd/MM",{locale:pt})}</h4>
+                <span className={selectedSheet.status==="draft"?"badge-draft text-[10px]":selectedSheet.status==="submitted"?"badge-submitted text-[10px]":"badge-reviewed text-[10px]"}>{selectedSheet.status==="draft"?"Rascunho":selectedSheet.status==="submitted"?"Submetida":"Validada"}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm"><div><span className="text-xs text-brand-muted">Cliente</span><p className="text-brand-dark font-medium">{selectedSheet.client||"—"}</p></div><div><span className="text-xs text-brand-muted">Obra</span><p className="text-brand-dark font-medium">{selectedSheet.work_number||"—"}</p></div></div>
-              <div className="space-y-1.5">{["monday","tuesday","wednesday","thursday","friday","saturday"].map(day=>{const e=(selectedSheet.work_entries||[]).find((x:any)=>x.day===day);if(!e)return null;let dm=0;if(e.start_time&&e.end_time){const[a,b]=e.start_time.split(":").map(Number);const[c,d]=e.end_time.split(":").map(Number);dm=c*60+d-(a*60+b);}return(<div key={day} className="flex items-center justify-between py-2 px-3 rounded-xl bg-brand-light/5"><div className="flex items-center gap-3"><span className="text-xs font-semibold text-brand-dark w-8">{DL[day]}</span><span className="text-sm text-brand-soft">{e.work_description||"—"}</span></div><span className="text-xs font-mono text-brand-dark">{dm>0?formatMinutes(dm):"—"}</span></div>);})}</div>
-              <div className="flex gap-2 pt-2">
-                <a href={`/api/export-sheet/${selectedSheet.id}`} className="btn-secondary text-xs !py-1.5 !px-3">Exportar Word</a>
-                {selectedSheet.status==="submitted"&&<button onClick={()=>handleValidate(selectedSheet.id)} className="badge-submitted cursor-pointer hover:brightness-95 text-xs">Validar</button>}
+              <div className="text-xs text-brand-soft mb-2">{selectedSheet.client||"—"} · Obra {selectedSheet.work_number||"—"}</div>
+              {/* Days — compact list */}
+              <div className="space-y-1 flex-1">
+                {DAY_KEYS.map(day => {
+                  const e = (selectedSheet.work_entries||[]).find((x:any) => x.day === day);
+                  if (!e || (!e.work_description && !e.start_time)) return null;
+                  return (
+                    <div key={day} className="flex items-center gap-2 text-xs py-0.5">
+                      <span className="font-semibold text-brand-dark w-6 shrink-0">{DL[day].replace(" Feira","").replace("á","")}</span>
+                      <span className="text-brand-soft truncate">{e.work_description||"—"}</span>
+                      {e.start_time && e.end_time && (
+                        <span className="font-mono text-brand-dark ml-auto shrink-0">{e.start_time.substring(0,5)}–{e.end_time.substring(0,5)}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between gap-2 pt-2 mt-auto border-t border-brand-light/20">
+                <span className="text-xs font-mono text-brand-dark">{formatMinutes(calcMinutes(selectedSheet.work_entries||[]))}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowFullSheet(true)} className="text-xs text-brand-gold font-medium hover:underline">Ver folha</button>
+                  {selectedSheet.status==="submitted" && (
+                    <button onClick={() => handleValidate(selectedSheet.id)} className="text-xs text-success font-medium hover:underline">Validar</button>
+                  )}
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Full sheet modal */}
+      {showFullSheet && selectedSheet && (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 overflow-y-auto py-8" onClick={() => setShowFullSheet(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-3xl mx-4 space-y-5 my-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-brand-dark">Folha de Serviço</h3>
+                <p className="text-sm text-brand-soft">Semana {format(new Date(selectedSheet.week_start+"T00:00:00"),"dd/MM",{locale:pt})} – {format(new Date(selectedSheet.week_end+"T00:00:00"),"dd/MM/yyyy",{locale:pt})}</p>
+              </div>
+              <span className={selectedSheet.status==="draft"?"badge-draft":selectedSheet.status==="submitted"?"badge-submitted":"badge-reviewed"}>{selectedSheet.status==="draft"?"Rascunho":selectedSheet.status==="submitted"?"Submetida":"Validada"}</span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+              <div><span className="text-xs text-brand-muted">Cliente</span><p className="text-brand-dark font-medium">{selectedSheet.client||"—"}</p></div>
+              <div><span className="text-xs text-brand-muted">Nº Obra</span><p className="text-brand-dark font-medium">{selectedSheet.work_number||"—"}</p></div>
+              <div><span className="text-xs text-brand-muted">Total</span><p className="text-brand-dark font-mono font-bold">{formatMinutes(calcMinutes(selectedSheet.work_entries||[]))}</p></div>
+            </div>
+
+            {/* Full table with all data */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-brand-light/30">
+                    <th className="text-left py-2 px-1 font-semibold text-brand-soft">Dia</th>
+                    <th className="text-left py-2 px-1 font-semibold text-brand-soft">Trabalho</th>
+                    <th className="text-left py-2 px-1 font-semibold text-brand-soft">Tipo</th>
+                    <th className="text-left py-2 px-1 font-semibold text-brand-soft">Data</th>
+                    <th className="text-left py-2 px-1 font-semibold text-brand-soft">Horário</th>
+                    <th className="text-left py-2 px-1 font-semibold text-brand-soft">Aval.</th>
+                    <th className="text-left py-2 px-1 font-semibold text-brand-soft">Rubrica</th>
+                    <th className="text-left py-2 px-1 font-semibold text-brand-soft">Obs.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {DAY_KEYS.map(day => {
+                    const e = (selectedSheet.work_entries||[]).find((x:any) => x.day === day);
+                    if (!e) return null;
+                    return (
+                      <tr key={day} className="border-b border-brand-light/10">
+                        <td className="py-1.5 px-1 font-semibold text-brand-dark">{DL[day]}</td>
+                        <td className="py-1.5 px-1 text-brand-soft">{e.work_description||"—"}</td>
+                        <td className="py-1.5 px-1 text-brand-soft">{WT[e.work_type]||"—"}</td>
+                        <td className="py-1.5 px-1 text-brand-soft font-mono">{e.date||"—"}</td>
+                        <td className="py-1.5 px-1 text-brand-dark font-mono">{e.start_time&&e.end_time?`${e.start_time.substring(0,5)}–${e.end_time.substring(0,5)}`:"—"}</td>
+                        <td className="py-1.5 px-1 text-brand-soft">{e.evaluation||"—"}</td>
+                        <td className="py-1.5 px-1 text-brand-soft">{e.signature||"—"}</td>
+                        <td className="py-1.5 px-1 text-brand-soft">{e.observations||"—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex gap-3 justify-between pt-2">
+              <div className="flex gap-2">
+                <a href={`/api/export-sheet/${selectedSheet.id}`} className="btn-secondary text-xs !py-1.5 !px-3">Exportar Word</a>
+                {selectedSheet.status==="submitted" && (
+                  <button onClick={() => handleValidate(selectedSheet.id)} className="btn-primary text-xs !py-1.5 !px-3">Validar</button>
+                )}
+              </div>
+              <button onClick={() => setShowFullSheet(false)} className="btn-ghost text-xs !py-1.5 !px-3">← Voltar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <DeleteUserButton userId={userId} userName={profile.full_name} />
 
