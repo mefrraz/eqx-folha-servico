@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { format, addDays, startOfWeek } from "date-fns";
+import { useRouter } from "next/navigation";
 import { pt } from "date-fns/locale";
 import MonthCalendar from "@/components/MonthCalendar";
 import DeleteUserButton from "./DeleteUserButton";
@@ -24,6 +25,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
   const [showEdit, setShowEdit] = useState(false);
   const [showFullSheet, setShowFullSheet] = useState(false);
   const supabase = createClient();
+  const router = useRouter();
 
   const [editName, setEditName] = useState(profile.full_name);
   const [editEmail, setEditEmail] = useState(userEmail);
@@ -87,7 +89,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
         if (r.error) { toast.error(r.error); setEditSaving(false); return; }
       }
     }
-    if (!err) toast.success("Guardado!");
+    if (!err) { toast.success("Guardado!"); router.refresh(); }
     setEditSaving(false); setShowEdit(false); setEditPassword("");
   };
 

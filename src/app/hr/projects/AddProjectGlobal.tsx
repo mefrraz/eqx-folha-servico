@@ -19,7 +19,7 @@ export default function AddProjectGlobal({ clients }: { clients: any[] }) {
     const r = await addProject({ name: name.trim(), client_id: clientId || undefined, location: location || undefined });
     if (r.error) { toast.error(r.error); setSaving(false); return; }
     toast.success("Obra criada!");
-    setOpen(false); setName(""); setClientId(""); setLocation("");
+    setOpen(false); setName(""); setClientId(""); setLocation(""); setSaving(false);
     router.refresh();
   };
 

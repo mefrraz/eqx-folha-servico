@@ -18,7 +18,7 @@ export default function AddProjectButton({ clientId }: { clientId: string }) {
     const r = await addProject({ name: name.trim(), client_id: clientId, location: location || undefined });
     if (r.error) { toast.error(r.error); setSaving(false); return; }
     toast.success("Obra criada!");
-    setOpen(false); setName(""); setLocation("");
+    setOpen(false); setName(""); setLocation(""); setSaving(false);
     router.refresh();
   };
 
