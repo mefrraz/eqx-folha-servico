@@ -73,6 +73,9 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- Garantir que a coluna email existe mesmo em tabelas já criadas
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email TEXT;
 
+-- Garantir coluna emailed_at nas notifications (v6.18)
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS emailed_at TIMESTAMPTZ;
+
 CREATE TABLE IF NOT EXISTS clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
