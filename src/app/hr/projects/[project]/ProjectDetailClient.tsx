@@ -17,6 +17,7 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
   const [weekSheets, setWeekSheets] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const supabase = createClient();
 
   // Get unique workers
@@ -42,14 +43,33 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
     setWeekSheets(sheets);
   }, [allSheets]);
 
-  const toggle = (id: string) => {
-    setExpanded(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const toggleSelect = (id: string) => {
+    setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  };
+
+  const selectAll = () => {
+    const submitted = weekSheets.filter(s => s.status === "submitted");
+    if (selected.size === submitted.length) setSelected(new Set());
+    else setSelected(new Set(submitted.map(s => s.id)));
+  };
+
+  const bulkValidate = async () => {
+    for (const id of Array.from(selected)) {
+      await supabase.from("work_sheets").update({ status: "reviewed" }).eq("id", id);
+    }
+    setWeekSheets(prev => prev.map(s => selected.has(s.id) ? { ...s, status: "reviewed" } : s));
+    setSelected(new Set());
+    toast.success(`${selected.size} folhas validadas!`);
   };
 
   const handleValidate = async (sheetId: string) => {
     await supabase.from("work_sheets").update({status:"reviewed"}).eq("id",sheetId);
     setWeekSheets(prev => prev.map(s => s.id===sheetId ? {...s,status:"reviewed"} : s));
     toast.success("Validada!");
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   };
 
   const visibleSheets = weekSheets.slice(0, 6);
@@ -94,11 +114,28 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
           ) : (
             <div className="space-y-3">
               <h4 className="text-sm font-bold text-brand-dark">Semana {format(selectedSunday,"dd/MM",{locale:pt})} – {format(addDays(selectedSunday,6),"dd/MM/yy",{locale:pt})} — {weekSheets.length} folha{weekSheets.length!==1?"s":""}</h4>
+              {weekSheets.some(s => s.status === "submitted") && (
+                <div className="flex items-center gap-2">
+                  <button onClick={selectAll} className="text-xs text-brand-muted hover:text-brand-dark">
+                    {selected.size === weekSheets.filter(s => s.status === "submitted").length ? "Desmarcar todas" : "Selecionar todas"}
+                  </button>
+                  {selected.size > 0 && (
+                    <button onClick={bulkValidate} className="btn-primary text-xs !py-1 !px-3">
+                      Validar {selected.size} folha{selected.size !== 1 ? "s" : ""}
+                    </button>
+                  )}
+                </div>
+              )}
               {visibleSheets.map((s: any) => {
                 const isOpen = expanded.has(s.id);
                 return (
                   <div key={s.id} className="border border-brand-light/30 rounded-xl">
-                    <button onClick={() => toggle(s.id)} className="w-full flex items-center justify-between p-3 hover:bg-brand-gold/5 transition-colors rounded-xl">
+                    <div className="flex items-center p-3 hover:bg-brand-gold/5 transition-colors rounded-xl">
+                      {s.status === "submitted" && (
+                        <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggleSelect(s.id)}
+                          className="mr-2 w-4 h-4 accent-brand-gold cursor-pointer" onClick={e => e.stopPropagation()} />
+                      )}
+                      <button onClick={() => toggleExpand(s.id)} className="flex-1 flex items-center justify-between text-left">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-brand-dark text-sm">{s.worker?.full_name||"—"}</span>
                         <span className="text-xs font-mono text-brand-soft">{fM(cM(s.work_entries||[]))}</span>
@@ -108,6 +145,7 @@ export default function ProjectDetailClient({ project, sheets: allSheets }: { pr
                         <span className="text-xs text-brand-muted">{isOpen?"▲":"▼"}</span>
                       </div>
                     </button>
+                    </div>
                     {isOpen && (
                       <div className="px-3 pb-3">
                         <table className="w-full text-xs"><thead><tr className="text-brand-soft border-b border-brand-light/30"><th className="text-left py-1">Dia</th><th className="text-left py-1">Trabalho</th><th className="text-left py-1">Tipo</th><th className="text-right py-1">Horas</th></tr></thead>
