@@ -22,19 +22,39 @@ export async function updateProfile(userId: string, data: { full_name?: string; 
 }
 
 export async function adminUpdateUser(userId: string, data: { email?: string; password?: string }) {
+  console.log("[adminUpdateUser] CALLED", { userId, hasEmail: !!data.email, hasPassword: !!data.password, passwordLen: data.password?.length });
+
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
-    return { error: "SUPABASE_SERVICE_ROLE_KEY não configurada no servidor. Contacta o admin." };
+    console.error("[adminUpdateUser] MISSING SUPABASE_SERVICE_ROLE_KEY");
+    return { error: "SUPABASE_SERVICE_ROLE_KEY não configurada. Vercel → Settings → Environment Variables." };
   }
+
+  const updateData: Record<string, string> = {};
+  if (data.email) { updateData.email = data.email; console.log("[adminUpdateUser] updating email to:", data.email); }
+  if (data.password && data.password.length >= 6) { updateData.password = data.password; console.log("[adminUpdateUser] updating password (len=" + data.password.length + ")"); }
+
+  if (Object.keys(updateData).length === 0) {
+    console.warn("[adminUpdateUser] nothing to update");
+    return { success: true, skipped: true };
+  }
+
+  console.log("[adminUpdateUser] calling updateUserById", { userId, keys: Object.keys(updateData), url: process.env.NEXT_PUBLIC_SUPABASE_URL });
+
   const supabase = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     serviceRoleKey
   );
-  const updateData: Record<string, string> = {};
-  if (data.email) updateData.email = data.email;
-  if (data.password) updateData.password = data.password;
-  const { error } = await supabase.auth.admin.updateUserById(userId, updateData);
-  if (error) return { error: error.message };
+
+  try {
+    const { data: result, error } = await supabase.auth.admin.updateUserById(userId, updateData);
+    console.log("[adminUpdateUser] RESULT", { result, error: error ? { message: error.message, status: error.status, name: error.name } : null });
+    if (error) return { error: error.message + " (status: " + error.status + ")" };
+  } catch (caught: any) {
+    console.error("[adminUpdateUser] EXCEPTION", caught?.message || caught);
+    return { error: "Exceção: " + (caught?.message || String(caught)) };
+  }
+
   revalidatePath("/hr", "layout");
   return { success: true };
 }
