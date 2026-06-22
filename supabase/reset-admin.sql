@@ -1,65 +1,83 @@
 -- ============================================================
--- LIMPAR DADOS + CRIAR ADMIN (v2 — robusto)
+-- LIMPAR TUDO + CRIAR ADMIN LIMPO
 -- Executar no Supabase SQL Editor
 -- ============================================================
 
--- 1. Apagar dados das tabelas da app (ordem correcta)
+-- Apagar dados (ordem correcta, sem TRUNCATE para não partir auth)
 DELETE FROM notifications;
 DELETE FROM work_entries;
 DELETE FROM work_sheets;
 DELETE FROM projects;
 DELETE FROM clients;
 DELETE FROM profiles;
+DELETE FROM auth.identities;
+DELETE FROM auth.users;
 
--- 2. Apagar auth users (excepto o admin que vamos criar)
--- Usa CASCADE para lidar com FK internas (sessions, refresh_tokens, etc.)
-TRUNCATE auth.users CASCADE;
-
--- 3. Criar admin
+-- Criar admin com todas as colunas
 DO $$
 DECLARE
-  admin_id UUID := gen_random_uuid();
+  admin_id UUID;
+  admin_email TEXT := 'colaboradoreshoraseqx@gmail.com';
+  admin_password TEXT := 'eqx2030';
+  admin_name TEXT := 'Admin EQX';
 BEGIN
+  admin_id := gen_random_uuid();
+
   INSERT INTO auth.users (
-    id, instance_id, email, encrypted_password,
-    email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
-    aud, role, confirmation_token, recovery_token,
-    created_at, updated_at, is_super_admin, is_sso_user, deleted_at
+    id, instance_id, aud, role, email,
+    encrypted_password, email_confirmed_at,
+    invited_at, confirmation_token, confirmation_sent_at,
+    recovery_token, recovery_sent_at,
+    email_change_token_new, email_change, email_change_sent_at,
+    last_sign_in_at, raw_app_meta_data, raw_user_meta_data,
+    is_super_admin, is_sso_user, deleted_at,
+    created_at, updated_at, phone,
+    phone_confirmed_at, phone_change, phone_change_token,
+    phone_change_sent_at, confirmed_at, email_change_token_current,
+    email_change_confirm_status, banned_until,
+    reauthentication_token, reauthentication_sent_at,
+    is_anonymous
   ) VALUES (
     admin_id,
     '00000000-0000-0000-0000-000000000000',
-    'colaboradoreshoraseqx@gmail.com',
-    crypt('eqx2030', gen_salt('bf')),
-    now(),
-    jsonb_build_object('full_name', 'Admin EQX'),
-    '{"provider":"email","providers":["email"]}',
     'authenticated',
     'authenticated',
-    '',
-    '',
+    admin_email,
+    crypt(admin_password, gen_salt('bf')),
     now(),
+    NULL, '', NULL,
+    '', NULL,
+    '', '', NULL,
     now(),
-    false,
-    false,
-    NULL
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    jsonb_build_object('full_name', admin_name),
+    false, false, NULL,
+    now(), now(), NULL,
+    NULL, '', '',
+    NULL, now(), '',
+    0, NULL,
+    '', NULL,
+    false
   );
 
-  INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
-  VALUES (
+  INSERT INTO auth.identities (
+    id, user_id, identity_data, provider, provider_id,
+    last_sign_in_at, created_at, updated_at, email
+  ) VALUES (
     gen_random_uuid(),
     admin_id,
-    jsonb_build_object('sub', admin_id::text, 'email', 'colaboradoreshoraseqx@gmail.com'),
+    jsonb_build_object('sub', admin_id::text, 'email', admin_email, 'email_verified', true),
     'email',
-    'colaboradoreshoraseqx@gmail.com',
+    admin_email,
     now(),
-    now()
+    now(),
+    now(),
+    admin_email
   );
 
-  -- Trigger handle_new_user insere o profile automaticamente
-  -- Garantir que fica como admin
-  UPDATE profiles SET role = 'admin', email = 'colaboradoreshoraseqx@gmail.com'
-  WHERE id = admin_id;
+  INSERT INTO profiles (id, full_name, email, role, created_at, updated_at)
+  VALUES (admin_id, admin_name, admin_email, 'admin', now(), now());
 
-  RAISE NOTICE '✅ Admin: colaboradoreshoraseqx@gmail.com / eqx2030';
+  RAISE NOTICE '✅ Admin: % / %', admin_email, admin_password;
 END;
 $$;
