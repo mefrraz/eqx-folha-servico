@@ -31,9 +31,12 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // Use getSession() instead of getUser() — reads from cookie (instant), no network call
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const user = session?.user ?? null;
 
   // Protect worker routes
   if (request.nextUrl.pathname.startsWith("/worker") && !user) {
@@ -50,6 +53,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
+    // Check role from profiles — using the same client so RLS applies
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
