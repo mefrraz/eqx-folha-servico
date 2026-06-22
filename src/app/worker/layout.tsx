@@ -25,6 +25,7 @@ export default function WorkerLayout({ children }: { children: React.ReactNode }
           </Link>
           <div className="flex items-center gap-4">
             {userName && <span className="text-sm text-brand-soft hidden sm:block">{userName}</span>}
+            <Link href="/worker/settings" className="text-xs text-brand-muted hover:text-brand-dark transition-colors" title="Definições">⚙️</Link>
             <button onClick={async () => { await supabase.auth.signOut(); toast.success("Sessão terminada."); router.push("/auth/login"); }} className="text-xs text-brand-muted hover:text-brand-dark transition-colors">Sair</button>
           </div>
         </div>
