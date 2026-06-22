@@ -8,6 +8,7 @@ import MonthCalendar from "@/components/MonthCalendar";
 import DeleteUserButton from "./DeleteUserButton";
 import toast from "react-hot-toast";
 import { markAsReviewed } from "@/app/hr/actions";
+import { adminUpdateUser } from "@/app/hr/actions";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
 import { DAY_LABELS } from "@/lib/types";
 
@@ -67,13 +68,21 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
 
   const handleSaveEdit = async () => {
     setEditSaving(true);
-    if (editName !== profile.full_name) await fetch("/api/update-profile", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,full_name:editName}) });
-    if (editEmail !== userEmail || editPassword) {
-      const r = await fetch("/api/update-user", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,email:editEmail!==userEmail?editEmail:null,password:editPassword||null}) });
-      const d = await r.json();
-      if (d.error) { toast.error(d.error); setEditSaving(false); return; }
+    let err = false;
+    if (editName !== profile.full_name) {
+      const r = await fetch("/api/update-profile", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,full_name:editName}) });
+      if ((await r.json()).error) { toast.error("Erro no nome."); err = true; }
     }
-    toast.success("Guardado!");
+    if (editEmail !== userEmail || editPassword) {
+      const payload: { email?: string; password?: string } = {};
+      if (editEmail !== userEmail && editEmail.includes("@")) payload.email = editEmail;
+      if (editPassword && editPassword.length >= 6) payload.password = editPassword;
+      if (Object.keys(payload).length > 0) {
+        const r = await adminUpdateUser(userId, payload);
+        if (r.error) { toast.error(r.error); setEditSaving(false); return; }
+      }
+    }
+    if (!err) toast.success("Guardado!");
     setEditSaving(false); setShowEdit(false); setEditPassword("");
   };
 
