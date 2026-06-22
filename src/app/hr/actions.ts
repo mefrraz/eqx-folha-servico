@@ -45,7 +45,10 @@ export async function adminUpdateUser(userId: string, data: { email?: string; pa
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const apiUrl = `${supabaseUrl}/auth/v1/admin/users/${userId}`;
     
-    console.log("[adminUpdateUser] PUT", apiUrl);
+    // Always include email_confirm to prevent issues
+    const body = { ...updateData, email_confirm: true };
+    
+    console.log("[adminUpdateUser] PUT", apiUrl, "body keys:", Object.keys(body));
     
     const response = await fetch(apiUrl, {
       method: "PUT",
@@ -54,11 +57,13 @@ export async function adminUpdateUser(userId: string, data: { email?: string; pa
         "apikey": serviceRoleKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(updateData),
+      body: JSON.stringify(body),
     });
 
-    const result = await response.json().catch(() => null);
-    console.log("[adminUpdateUser] HTTP", response.status, response.statusText, result);
+    const rawText = await response.text();
+    let result: any = null;
+    try { result = JSON.parse(rawText); } catch { /* not JSON */ }
+    console.log("[adminUpdateUser] HTTP", response.status, "raw:", rawText.substring(0, 200));
 
     if (!response.ok) {
       return { error: `HTTP ${response.status}: ${result?.msg || result?.message || response.statusText}` };

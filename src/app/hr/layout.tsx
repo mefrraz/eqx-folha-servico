@@ -22,17 +22,25 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const supabase = createClient();
 
+  const fetchNotifCount = () => {
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("read", false).then(({ count }) => {
+      setNotifCount(count || 0);
+    });
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) supabase.from("profiles").select("full_name").eq("id", user.id).single().then(({ data }) => {
         if (data) setUserName(data.full_name);
       });
     });
-    // Fetch unread notification count
-    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("read", false).then(({ count }) => {
-      setNotifCount(count || 0);
-    });
-  }, [pathname]); // Re-fetch count on every navigation
+    fetchNotifCount();
+
+    // Listen for notification clear events to update badge in real-time
+    const handler = () => fetchNotifCount();
+    window.addEventListener("notif-cleared", handler);
+    return () => window.removeEventListener("notif-cleared", handler);
+  }, [pathname]);
 
   const isActive = (item: typeof NAV[0]) => item.exact ? pathname === item.href : pathname.startsWith(item.href);
 

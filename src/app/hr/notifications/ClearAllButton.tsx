@@ -20,6 +20,7 @@ export default function ClearAllButton() {
       toast.error("Erro: " + error.message);
     } else {
       toast.success("Todas marcadas como lidas.");
+      window.dispatchEvent(new CustomEvent("notif-cleared"));
       router.refresh();
     }
     setLoading(false);

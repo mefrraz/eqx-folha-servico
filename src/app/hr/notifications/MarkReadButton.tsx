@@ -13,6 +13,7 @@ export default function MarkReadButton({ id }: { id: string }) {
     const supabase = (await import("@/lib/supabase/client")).createClient();
     await supabase.from("notifications").update({ read: true }).eq("id", id);
     toast.success("Marcada como lida");
+    window.dispatchEvent(new CustomEvent("notif-cleared"));
     router.refresh();
   };
 
