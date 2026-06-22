@@ -12,10 +12,12 @@ const NAV = [
   { href: "/hr/projects", label: "Obras" },
   { href: "/hr/clients", label: "Clientes" },
   { href: "/hr/reports", label: "Relatórios" },
+  { href: "/hr/notifications", label: "Notificações", badge: true },
 ];
 
 export default function HRLayout({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState("");
+  const [notifCount, setNotifCount] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -25,6 +27,10 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
       if (user) supabase.from("profiles").select("full_name").eq("id", user.id).single().then(({ data }) => {
         if (data) setUserName(data.full_name);
       });
+    });
+    // Fetch unread notification count
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("read", false).then(({ count }) => {
+      setNotifCount(count || 0);
     });
   }, []);
 
@@ -40,7 +46,12 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV.map((item) => (
             <Link key={item.href} href={item.href} className={isActive(item) ? "nav-link-active" : "nav-link"}>
-              {item.label}
+              <span className="flex items-center gap-2">
+                {item.label}
+                {item.badge && notifCount > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">{notifCount}</span>
+                )}
+              </span>
             </Link>
           ))}
         </nav>
