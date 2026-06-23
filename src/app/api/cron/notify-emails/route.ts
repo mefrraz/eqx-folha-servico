@@ -1,24 +1,29 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 
-// Vercel Cron calls GET, pg_net trigger calls POST — handle both
 export async function GET() { return handleEmailSend(); }
 export async function POST() { return handleEmailSend(); }
 
 async function handleEmailSend() {
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
   const adminEmail = process.env.ADMIN_EMAIL;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!resendApiKey || !adminEmail || !serviceRoleKey) {
-    console.log("[cron:notify-emails] Skipping — missing RESEND_API_KEY, ADMIN_EMAIL, or SUPABASE_SERVICE_ROLE_KEY");
+  if (!gmailUser || !gmailPass || !adminEmail || !serviceRoleKey) {
+    console.log("[cron:notify-emails] Skipping — missing GMAIL_USER, GMAIL_APP_PASSWORD, ADMIN_EMAIL, or SUPABASE_SERVICE_ROLE_KEY");
     return NextResponse.json({ skipped: true, reason: "missing env vars" });
   }
 
   const supabase = createClient(supabaseUrl!, serviceRoleKey);
 
-  // Find notifications that haven't been emailed yet (last 60 min to be safe)
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: gmailUser, pass: gmailPass },
+  });
+
   const { data: notifications } = await supabase
     .from("notifications")
     .select("id, message, worker_id, created_at")
@@ -35,33 +40,20 @@ async function handleEmailSend() {
 
   for (const n of notifications) {
     try {
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "EQX Folha de Servico <onboarding@resend.dev>",
-          to: [adminEmail],
-          subject: `EQX: ${n.message}`,
-          text: `${n.message}\n\nData: ${n.created_at}\nVer em: https://eqx-folha-servico.vercel.app/hr/notifications`,
-        }),
+      await transporter.sendMail({
+        from: gmailUser,
+        to: adminEmail,
+        subject: `EQX: ${n.message}`,
+        text: `${n.message}\n\nData: ${n.created_at}\nVer: https://eqx-folha-servico.vercel.app/hr/notifications`,
       });
 
-      if (response.ok) {
-        await supabase
-          .from("notifications")
-          .update({ emailed_at: new Date().toISOString() })
-          .eq("id", n.id);
-        sent++;
-      } else {
-        const err = await response.text();
-        console.error("[cron:notify-emails] Resend error:", response.status, err);
-        failed++;
-      }
-    } catch (err) {
-      console.error("[cron:notify-emails] Fetch error:", err);
+      await supabase
+        .from("notifications")
+        .update({ emailed_at: new Date().toISOString() })
+        .eq("id", n.id);
+      sent++;
+    } catch (err: any) {
+      console.error("[cron:notify-emails] Gmail error:", err?.message || err);
       failed++;
     }
   }
