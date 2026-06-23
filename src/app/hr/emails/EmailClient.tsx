@@ -24,7 +24,7 @@ Aceda à plataforma e seleccione as suas obras: https://eqx-folha-servico.vercel
   },
   {
     id: "admin_notify",
-    title: "Notificacao de submissao",
+    title: "Notificação de submissão",
     trigger: "Quando um trabalhador submete uma folha",
     subject: "EQX — Folha submetida",
     body: `{name} submeteu a folha da semana {week_start} a {week_end}.
@@ -38,7 +38,7 @@ Ver notificações: https://eqx-folha-servico.vercel.app/hr/notifications`,
     id: "weekly_reminder",
     title: "Lembrete semanal",
     trigger: "Domingo as 9h — trabalhadores sem folha na semana anterior",
-    subject: "EQX — Folha de servico pendente",
+    subject: "EQX — Folha de serviço pendente",
     body: `Olá {name},
 
 A folha de serviço da semana passada ainda não foi submetida.
@@ -92,8 +92,8 @@ export default function EmailClient({ workers }: { workers: Worker[] }) {
     </div>
 
     <div>
-      <h3 className="text-sm font-semibold text-brand-soft tracking-wide uppercase mb-3">Emails automaticos</h3>
-      <p className="text-xs text-brand-muted mb-4">Estes emails sao enviados automaticamente. Pode editar o assunto e o corpo.</p>
+      <h3 className="text-sm font-semibold text-brand-soft tracking-wide uppercase mb-3">Emails automáticos</h3>
+      <p className="text-xs text-brand-muted mb-4">Estes emails são enviados automaticamente. Pode editar o assunto e o corpo.</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {PREDEFINED.map(t => (
           <div key={t.id} className="card flex flex-col justify-between gap-3">
