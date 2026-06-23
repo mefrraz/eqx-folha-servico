@@ -20,6 +20,7 @@ export default function BulkTransfer({ workers }: BulkTransferProps) {
     setOpen(true);
     const { data } = await supabase.from("projects").select("id,name,number,client:clients(name)").order("name");
     setProjects(data || []);
+    if (!data || data.length === 0) toast.error("Nenhuma obra registada. Crie obras primeiro.");
   };
 
   const toggle = (id: string) => {

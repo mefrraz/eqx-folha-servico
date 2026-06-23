@@ -4,6 +4,7 @@ import { format, startOfWeek, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
 import { STATUS_LABELS } from "@/lib/types";
+import ProjectSelector from "@/components/ProjectSelector";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export default async function WorkerDashboard() {
   const current=sheets?.find(s=>s.week_start===ws);
 
   return(<div className="space-y-6">
+    <ProjectSelector />
     <div className="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div><h2 className="text-lg font-bold text-brand-dark">Semana de {format(startOfWeek(new Date(),{weekStartsOn:1}),"dd/MM",{locale:pt})} a {format(addDays(startOfWeek(new Date(),{weekStartsOn:1}),5),"dd/MM/yyyy",{locale:pt})}</h2><p className="text-sm text-brand-soft mt-0.5">{current?`Folha ${STATUS_LABELS[current.status]||current.status}`:"Ainda não submeteu a folha desta semana."}</p></div>
       {current?<Link href={`/worker/sheet/${current.id}`} className="btn-primary text-sm">Editar folha</Link>:<Link href="/worker/sheet/new" className="btn-primary text-sm">Nova folha de serviço</Link>}
