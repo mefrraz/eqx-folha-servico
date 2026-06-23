@@ -70,8 +70,8 @@ async function handleCron() {
           to: w.email,
           subject: "EQX — Folha de servico pendente",
           html: emailTemplate(
-            `Ola ${w.full_name}`,
-            `A folha de servico da semana passada ainda nao foi submetida. Por favor, submeta a sua folha.`,
+            `Olá ${w.full_name}`,
+            `A folha de serviço da semana passada ainda não foi submetida. Por favor, submeta a sua folha.`,
             `Aceda: https://eqx-folha-servico.vercel.app/worker/dashboard`
           ),
         });
@@ -109,9 +109,9 @@ async function handleCron() {
           to: w.email,
           subject: "EQX — Resumo da semana",
           html: emailTemplate(
-            `Ola ${w.full_name}`,
-            `Resumo da semana passada:<br><br><strong>${totalHours}</strong> trabalhadas<br><strong>${workerSheets.length}</strong> folha(s) submetida(s)<br><br>Veja o seu historico: https://eqx-folha-servico.vercel.app/worker/dashboard`,
-            `Veja o seu historico em: https://eqx-folha-servico.vercel.app/worker/dashboard`
+            `Olá ${w.full_name}`,
+            `Resumo da semana passada:<br><br><strong>${totalHours}</strong> trabalhadas<br><strong>${workerSheets.length}</strong> folha(s) submetida(s)<br><br>Veja o seu histórico: https://eqx-folha-servico.vercel.app/worker/dashboard`,
+            `Veja o seu histórico em: https://eqx-folha-servico.vercel.app/worker/dashboard`
           ),
         });
         statsSent++;
@@ -138,7 +138,7 @@ function emailTemplate(title: string, body: string, footer: string) {
     <p style="margin:0;color:#7A7A7A;font-size:12px">${footer}</p>
   </td></tr>
   <tr><td style="background:#F7F7F7;padding:15px 30px;border-top:1px solid #eee">
-    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma EQX Folha de Servico.</p>
+    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma EQX Folha de Serviço.</p>
   </td></tr>
 </table>
 </td></tr></table></body></html>`;

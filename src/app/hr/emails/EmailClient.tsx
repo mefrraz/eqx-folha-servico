@@ -16,11 +16,11 @@ const PREDEFINED = [
     title: "Boas-vindas",
     trigger: "Quando um trabalhador cria conta",
     subject: "Bem-vindo a EQX",
-    body: `Ola {name},
+    body: `Olá {name},
 
-A sua conta na plataforma EQX Folha de Servico foi criada com sucesso.
+A sua conta na plataforma EQX Folha de Serviço foi criada com sucesso.
 
-Aceda a plataforma e selecione as suas obras: https://eqx-folha-servico.vercel.app`,
+Aceda à plataforma e seleccione as suas obras: https://eqx-folha-servico.vercel.app`,
   },
   {
     id: "admin_notify",
@@ -32,25 +32,25 @@ Aceda a plataforma e selecione as suas obras: https://eqx-folha-servico.vercel.a
 Cliente: Ver na plataforma
 Total de horas: Ver na plataforma
 
-Ver notificacoes: https://eqx-folha-servico.vercel.app/hr/notifications`,
+Ver notificações: https://eqx-folha-servico.vercel.app/hr/notifications`,
   },
   {
     id: "weekly_reminder",
     title: "Lembrete semanal",
     trigger: "Domingo as 9h — trabalhadores sem folha na semana anterior",
     subject: "EQX — Folha de servico pendente",
-    body: `Ola {name},
+    body: `Olá {name},
 
-A folha de servico da semana passada ainda nao foi submetida.
+A folha de serviço da semana passada ainda não foi submetida.
 
-Por favor, submeta a sua folha o mais breve possivel.`,
+Por favor, submeta a sua folha o mais breve possível.`,
   },
   {
     id: "weekly_stats",
     title: "Resumo semanal",
     trigger: "Domingo as 9h — para todos os trabalhadores",
     subject: "EQX — Resumo da semana",
-    body: `Ola {name},
+    body: `Olá {name},
 
 Resumo da semana {week_start} a {week_end}:
 

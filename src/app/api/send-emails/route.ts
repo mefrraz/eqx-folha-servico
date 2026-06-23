@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     ${replaceVars(htmlBody, w)}
   </td></tr>
   <tr><td style="background:#F7F7F7;padding:15px 30px;border-top:1px solid #eee">
-    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma EQX Folha de Servico.</p>
+    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma EQX Folha de Serviço.</p>
   </td></tr>
 </table>
 </td></tr></table></body></html>`,
