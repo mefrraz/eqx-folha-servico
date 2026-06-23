@@ -52,7 +52,7 @@ export default function BulkTransfer({ workers }: BulkTransferProps) {
   return (<>
     <button onClick={openModal} className="btn-secondary text-sm !py-2 !px-4">Transferir em massa</button>
     {open && (
-      <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 overflow-y-auto py-8" onClick={() => setOpen(false)}>
+      <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 overflow-y-auto py-8" onClick={() => setOpen(false)}>
         <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4 space-y-4" onClick={e => e.stopPropagation()}>
           <h3 className="text-lg font-bold text-brand-dark">Transferir trabalhadores</h3>
 

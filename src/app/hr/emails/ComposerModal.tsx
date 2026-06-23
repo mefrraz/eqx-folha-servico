@@ -114,7 +114,7 @@ export default function ComposerModal({ workers, onClose, presetSubject, presetB
   const previewWorker = workers.find(w => selected.has(w.id)) || workers[0];
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()} style={{height: "85vh"}}>
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-brand-light/20 shrink-0">
@@ -210,7 +210,7 @@ export default function ComposerModal({ workers, onClose, presetSubject, presetB
 
       {/* Help overlay (floating, not inline) */}
       {showHelp && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30" onClick={() => setShowHelp(false)}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/30" onClick={() => setShowHelp(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-bold text-brand-dark">Variaveis disponíveis</h4>

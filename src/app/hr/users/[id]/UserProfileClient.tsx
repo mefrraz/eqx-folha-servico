@@ -192,7 +192,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
 
       {/* Full sheet modal */}
       {showFullSheet && selectedSheet && (
-        <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 overflow-y-auto py-8" onClick={() => setShowFullSheet(false)}>
+        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 overflow-y-auto py-8" onClick={() => setShowFullSheet(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-3xl mx-4 space-y-5 my-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div>
@@ -260,7 +260,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
       <DeleteUserButton userId={userId} userName={profile.full_name} />
 
       {showEdit && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 overflow-y-auto py-8" onClick={() => setShowEdit(false)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 overflow-y-auto py-8" onClick={() => setShowEdit(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-brand-dark">Editar {profile.full_name}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

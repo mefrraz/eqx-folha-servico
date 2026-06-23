@@ -39,7 +39,7 @@ export default function EditProfile({ userId, fullName, company }: EditProfilePr
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setOpen(false)}>
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900">Editar perfil</h3>
             <div>
