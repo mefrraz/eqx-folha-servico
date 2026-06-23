@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { format, startOfWeek, addDays } from "date-fns";
@@ -48,6 +48,21 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
   const [client, setClient] = useState(existingSheet?.client || "");
   const [workNumber, setWorkNumber] = useState(existingSheet?.work_number || "");
+  const [projects, setProjects] = useState<any[]>([]);
+
+  // Fetch worker's assigned projects
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from("worker_projects")
+        .select("project:projects(id, name, number, client:clients(name))")
+        .eq("worker_id", user.id)
+        .then(({ data }) => {
+          if (data) setProjects(data.map((r: any) => r.project).filter(Boolean));
+        });
+    });
+  }, []);
   const [entries, setEntries] = useState<WorkEntry[]>(() => {
     if (existingSheet?.entries?.length) {
       return DAYS.map(
@@ -162,6 +177,27 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="label-field">Obra atribuída</label>
+            <select
+              value=""
+              onChange={(e) => {
+                const p = projects.find(p => p.id === e.target.value);
+                if (p) {
+                  setClient(p.client?.name || "");
+                  setWorkNumber(p.number || "");
+                }
+              }}
+              className="input-field"
+            >
+              <option value="">— Selecionar obra —</option>
+              {projects.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} {p.number ? `(${p.number})` : ""} {p.client?.name ? `— ${p.client.name}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="label-field">Cliente</label>
             <input
