@@ -12,7 +12,7 @@ import { DAY_LABELS, WORK_TYPE_LABELS } from "@/lib/types";
 const DL = DAY_LABELS;
 const WT = WORK_TYPE_LABELS;
 
-export default function ProjectDetailClient({ project, sheets: allSheets }: { project: any; sheets: any[] }) {
+export default function ProjectDetailClient({ project, sheets: allSheets, assignedCount }: { project: any; sheets: any[]; assignedCount: number }) {
   const [selectedSunday, setSelectedSunday] = useState<Date | null>(null);
   const [weekSheets, setWeekSheets] = useState<any[]>([]);
   const [search, setSearch] = useState("");

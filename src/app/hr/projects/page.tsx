@@ -12,8 +12,9 @@ export default async function ProjectsPage() {
   const { data: projects } = await supabase.from("projects").select("*, client:clients(name)").order("name");
   const { data: sheets } = await supabase.from("work_sheets").select("project_id, worker_id, worker:profiles!work_sheets_worker_id_fkey(full_name), week_start").order("week_start", { ascending: false }).limit(1000);
   const { data: clients } = await supabase.from("clients").select("id, name").order("name");
+  const { data: assignments } = await supabase.from("worker_projects").select("worker_id, project_id");
 
-  // Aggregate per project
+  // Aggregate per project — from sheets + assignments
   const projectData = new Map<string, { workers: Set<string>; workerNames: string[]; sheetCount: number; latestWeek: string }>();
   for (const s of sheets || []) {
     const pid = s.project_id;
@@ -21,9 +22,17 @@ export default async function ProjectsPage() {
     if (!projectData.has(pid)) projectData.set(pid, { workers: new Set(), workerNames: [], sheetCount: 0, latestWeek: s.week_start });
     const d = projectData.get(pid)!;
     d.workers.add(s.worker_id);
-    if (s.worker && !d.workerNames.includes((s.worker as any)[0]?.full_name)) d.workerNames.push((s.worker as any)[0]?.full_name);
+    // worker name from profiles join
+    const w = s.worker as any;
+    const name = w?.full_name || "";
+    if (name && !d.workerNames.includes(name)) d.workerNames.push(name);
     d.sheetCount++;
     if (s.week_start > d.latestWeek) d.latestWeek = s.week_start;
+  }
+  // Also count workers from assignments (even if they haven't submitted sheets yet)
+  for (const a of assignments || []) {
+    if (!projectData.has(a.project_id)) projectData.set(a.project_id, { workers: new Set(), workerNames: [], sheetCount: 0, latestWeek: "" });
+    projectData.get(a.project_id)!.workers.add(a.worker_id);
   }
 
   return (
