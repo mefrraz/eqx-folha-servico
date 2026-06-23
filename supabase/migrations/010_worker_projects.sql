@@ -17,6 +17,12 @@ CREATE POLICY "Workers can read own project assignments"
 ON worker_projects FOR SELECT
 USING (worker_id = auth.uid());
 
+-- Workers can insert their own assignments
+DROP POLICY IF EXISTS "Workers can insert own project assignments" ON worker_projects;
+CREATE POLICY "Workers can insert own project assignments"
+ON worker_projects FOR INSERT
+WITH CHECK (worker_id = auth.uid());
+
 -- Admins can CRUD
 DROP POLICY IF EXISTS "Admins can CRUD worker project assignments" ON worker_projects;
 CREATE POLICY "Admins can CRUD worker project assignments"

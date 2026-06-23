@@ -58,8 +58,12 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         .from("worker_projects")
         .select("project:projects(id, name, number, client:clients(name))")
         .eq("worker_id", user.id)
-        .then(({ data }) => {
-          if (data) setProjects(data.map((r: any) => r.project).filter(Boolean));
+        .then(({ data, error }) => {
+          if (error) console.error("[SheetForm] worker_projects error:", error);
+          else if (data) {
+            const projs = data.map((r: any) => r.project).filter(Boolean);
+            setProjects(projs);
+          }
         });
     });
   }, []);

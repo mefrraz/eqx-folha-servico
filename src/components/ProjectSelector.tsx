@@ -43,10 +43,13 @@ export default function ProjectSelector() {
   const handleSave = async () => {
     if (selected.size === 0) { toast.error("Selecione pelo menos uma obra."); return; }
     setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Sessao expirada."); setSaving(false); return; }
     let done = 0;
     for (const pid of Array.from(selected)) {
-      const { error } = await supabase.from("worker_projects").insert({ project_id: pid });
+      const { error } = await supabase.from("worker_projects").insert({ worker_id: user.id, project_id: pid });
       if (!error) done++;
+      else console.error("[ProjectSelector] insert error:", error);
     }
     // Mark as onboarded
     await supabase.from("profiles").update({ onboarded: true }).eq("id", (await supabase.auth.getUser()).data.user?.id);

@@ -273,6 +273,9 @@ CREATE POLICY "Admins can insert notifications" ON notifications FOR INSERT WITH
 DROP POLICY IF EXISTS "Workers can read own assignments" ON worker_projects;
 CREATE POLICY "Workers can read own assignments" ON worker_projects FOR SELECT USING (worker_id = auth.uid());
 
+DROP POLICY IF EXISTS "Workers can insert own assignments" ON worker_projects;
+CREATE POLICY "Workers can insert own assignments" ON worker_projects FOR INSERT WITH CHECK (worker_id = auth.uid());
+
 DROP POLICY IF EXISTS "Admins can CRUD worker assignments" ON worker_projects;
 CREATE POLICY "Admins can CRUD worker assignments" ON worker_projects FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 
