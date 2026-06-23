@@ -33,11 +33,15 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
   const [allProjects, setAllProjects] = useState<any[]>([]);
   const [workerProjects, setWorkerProjects] = useState<any[]>([]);
   const [editSaving, setEditSaving] = useState(false);
+  const [originalProjectIds, setOriginalProjectIds] = useState<string[]>([]);
 
   useEffect(() => {
-    supabase.from("projects").select("id,name,client:clients(name)").order("name").then(({data}) => setAllProjects(data||[]));
-    const pids = new Set(initialSheets.map(s => s.project_id).filter(Boolean));
-    if (pids.size > 0) supabase.from("projects").select("id,name,client:clients(name)").in("id", Array.from(pids)).then(({data}) => setWorkerProjects(data||[]));
+    // Fetch all projects
+    supabase.from("projects").select("id,name,number,client:clients(name)").order("name").then(({data}) => setAllProjects(data||[]));
+    // Fetch worker's assigned projects from junction table
+    supabase.from("worker_projects").select("project:projects(id,name,number,client:clients(name))").eq("worker_id", userId).then(({data}) => {
+      if (data) setWorkerProjects(data.map((r: any) => r.project).filter(Boolean));
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -91,6 +95,22 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
     }
     if (!err) { toast.success("Guardado!"); router.refresh(); }
     setEditSaving(false); setShowEdit(false); setEditPassword("");
+
+    // Sync worker_projects assignments
+    const newIds = new Set(workerProjects.map(p => p.id));
+    const oldIds = new Set(originalProjectIds);
+    // Remove unassigned
+    for (const pid of Array.from(oldIds)) {
+      if (!newIds.has(pid)) {
+        await supabase.from("worker_projects").delete().eq("worker_id", userId).eq("project_id", pid);
+      }
+    }
+    // Add new assignments
+    for (const pid of Array.from(newIds)) {
+      if (!oldIds.has(pid)) {
+        await supabase.from("worker_projects").insert({ worker_id: userId, project_id: pid });
+      }
+    }
   };
 
   return (
@@ -115,7 +135,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
             <div><span className="block text-3xl font-bold font-mono text-brand-dark tracking-tight">{latestSheet?format(new Date(latestSheet.week_start+"T00:00:00"),"dd/MM",{locale:pt}):"—"}</span><span className="text-xs text-brand-muted tracking-wide uppercase">Última folha</span></div>
           </div>
         </div>
-        <button onClick={() => { setEditName(profile.full_name); setEditEmail(userEmail); setShowEdit(true); }} className="btn-secondary text-xs !py-1.5 !px-3 mt-4">Editar</button>
+        <button onClick={() => { setEditName(profile.full_name); setEditEmail(userEmail); setOriginalProjectIds(workerProjects.map(p => p.id)); setShowEdit(true); }} className="btn-secondary text-xs !py-1.5 !px-3 mt-4">Editar</button>
       </div>
 
       {/* Calendar + Sheet detail side by side — compact */}
