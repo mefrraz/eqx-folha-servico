@@ -113,7 +113,7 @@ export default function ComposerModal({ workers, onClose }: { workers: Worker[];
             <div className="flex-1 p-5 overflow-y-auto bg-page">
               <p className="text-xs text-brand-soft mb-3 tracking-wide uppercase font-semibold">Pre-visualizacao</p>
               <div className="bg-white rounded-xl border border-brand-light/30 overflow-hidden">
-                <div style={{ background: "#F1C411", padding: "12px 16px", textAlign: "center" }}>
+                <div style={{ background: "#fff", padding: "12px 16px", textAlign: "center", borderBottom: "3px solid #F1C411" }}>
                   <span style={{ fontWeight: "bold", color: "#1a1a1a", fontSize: "14px" }}>EQX</span>
                 </div>
                 <div className="p-4 space-y-2">

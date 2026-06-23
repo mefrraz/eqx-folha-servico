@@ -39,7 +39,7 @@ async function handleCron() {
           from: gmailUser,
           to: adminEmail,
           subject: `EQX: ${n.message}`,
-          html: emailTemplate("Nova folha submetida", n.message, `Data: ${n.created_at}`, adminEmail),
+          html: emailTemplate("Nova folha submetida", n.message, `Data: ${n.created_at}`),
         });
         await supabase.from("notifications").update({ emailed_at: new Date().toISOString() }).eq("id", n.id);
         sent++;
@@ -71,9 +71,8 @@ async function handleCron() {
           subject: "EQX — Folha de servico pendente",
           html: emailTemplate(
             `Ola ${w.full_name}`,
-            `A folha de servico da semana passada ainda nao foi submetida.`,
-            `Por favor, submeta a sua folha em: https://eqx-folha-servico.vercel.app/worker/dashboard`,
-            w.email
+            `A folha de servico da semana passada ainda nao foi submetida. Por favor, submeta a sua folha.`,
+            `Aceda: https://eqx-folha-servico.vercel.app/worker/dashboard`
           ),
         });
         reminded++;
@@ -86,13 +85,13 @@ async function handleCron() {
   return NextResponse.json(results);
 }
 
-function emailTemplate(title: string, body: string, footer: string, recipientEmail: string) {
+function emailTemplate(title: string, body: string, footer: string) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#F7F7F7">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F7;padding:20px 0">
 <tr><td align="center">
 <table width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-  <tr><td style="background:#F1C411;padding:20px 30px;text-align:center">
-    <img src="https://eqx-folha-servico.vercel.app/eqx-logo.svg" alt="EQX" style="height:40px" />
+  <tr><td style="background:#fff;padding:24px 30px 16px;text-align:center;border-bottom:3px solid #F1C411">
+    <img src="https://eqx-folha-servico.vercel.app/eqx-logo.svg" alt="EQX" style="height:36px" />
   </td></tr>
   <tr><td style="padding:30px">
     <h2 style="margin:0 0 10px;color:#1a1a1a;font-size:18px">${title}</h2>
@@ -100,7 +99,7 @@ function emailTemplate(title: string, body: string, footer: string, recipientEma
     <p style="margin:0;color:#7A7A7A;font-size:12px">${footer}</p>
   </td></tr>
   <tr><td style="background:#F7F7F7;padding:15px 30px;border-top:1px solid #eee">
-    <p style="margin:0;color:#aaa;font-size:11px">EQX Folha de Servico — Plataforma de gestao semanal</p>
+    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma EQX Folha de Servico.</p>
   </td></tr>
 </table>
 </td></tr></table></body></html>`;

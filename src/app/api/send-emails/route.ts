@@ -67,8 +67,8 @@ export async function POST(request: Request) {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#F7F7F7;padding:20px 0">
 <tr><td align="center">
 <table width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-  <tr><td style="background:#F1C411;padding:20px 30px;text-align:center">
-    <img src="${logoUrl}" alt="EQX" style="height:40px" />
+  <tr><td style="background:#fff;padding:24px 30px 16px;text-align:center;border-bottom:3px solid #F1C411">
+    <img src="${logoUrl}" alt="EQX" style="height:36px" />
   </td></tr>
   <tr><td style="padding:30px">
     <h2 style="margin:0 0 15px;color:#1a1a1a;font-size:18px">${replaceVars(subject, w)}</h2>
