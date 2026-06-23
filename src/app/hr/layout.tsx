@@ -11,8 +11,9 @@ const NAV = [
   { href: "/hr/users", label: "Utilizadores" },
   { href: "/hr/projects", label: "Obras" },
   { href: "/hr/clients", label: "Clientes" },
-  { href: "/hr/reports", label: "Relatórios" },
-  { href: "/hr/notifications", label: "Notificações", badge: true },
+  { href: "/hr/reports", label: "Relatorios" },
+  { href: "/hr/emails", label: "Emails" },
+  { href: "/hr/notifications", label: "Notificacoes", badge: true },
 ];
 
 export default function HRLayout({ children }: { children: React.ReactNode }) {
