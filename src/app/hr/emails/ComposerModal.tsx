@@ -12,11 +12,11 @@ interface Worker {
 const VARIABLES = [
   { key: "{name}", desc: "Nome do trabalhador" },
   { key: "{email}", desc: "Email do trabalhador" },
-  { key: "{week_start}", desc: "Segunda-feira da semana atual" },
-  { key: "{week_end}", desc: "Sabado da semana atual" },
+  { key: "{week_start}", desc: "Segunda-feira da semana actual" },
+  { key: "{week_end}", desc: "S\u00e1bado da semana actual" },
   { key: "{total_hours}", desc: "Total de horas do trabalhador" },
-  { key: "{sheets_count}", desc: "Numero de folhas submetidas" },
-  { key: "{obra_atual}", desc: "Obra atual atribuida" },
+  { key: "{sheets_count}", desc: "Número de folhas submetidas" },
+  { key: "{obra_atual}", desc: "Obra actual atribuída" },
 ];
 
 function replaceVars(text: string, w: Worker) {
@@ -89,8 +89,8 @@ export default function ComposerModal({ workers, onClose, presetSubject, presetB
   );
 
   const handleAdvance = () => {
-    if (!subject.trim()) { toast.error("Assunto obrigatorio."); return; }
-    if (!body.trim()) { toast.error("Corpo do email obrigatorio."); return; }
+    if (!subject.trim()) { toast.error("Assunto obrigatório."); return; }
+    if (!body.trim()) { toast.error("Corpo do email obrigatório."); return; }
     setSavedSubject(subject);
     setSavedBody(body);
     setStep("recipients");
@@ -172,10 +172,11 @@ export default function ComposerModal({ workers, onClose, presetSubject, presetB
             />
             <p className="text-xs text-brand-soft mt-3 mb-2 shrink-0">{selected.size} selecionados</p>
             {/* Quick-select */}
-            <div className="flex gap-2 shrink-0">
+            <div className="flex gap-2 shrink-0 mb-3">
               <button onClick={() => quickSelect("all")} disabled={quickLoading} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30">Todos</button>
-              <button onClick={() => quickSelect("submitted")} disabled={quickLoading} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30">Ja submeteram</button>
-              <button onClick={() => quickSelect("not_submitted")} disabled={quickLoading} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30">Nao submeteram</button>
+              <button onClick={() => quickSelect("submitted")} disabled={quickLoading} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30">Já submeteram</button>
+              <button onClick={() => quickSelect("not_submitted")} disabled={quickLoading} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30">Não submeteram</button>
+              <button onClick={() => setSelected(new Set())} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30 text-red-500">Nenhum</button>
             </div>
             <div className="border border-brand-light/30 rounded-xl divide-y divide-brand-light/20 flex-1 overflow-y-auto min-h-0">
               {filtered.map(w => (
@@ -192,7 +193,7 @@ export default function ComposerModal({ workers, onClose, presetSubject, presetB
         {/* Footer */}
         <div className="flex items-center justify-between p-4 border-t border-brand-light/20 shrink-0">
           <p className="text-xs text-brand-muted italic hidden sm:block">
-            O email incluira o logo EQX e o rodape automatico.
+            O email incluira o logo EQX e o rodape automático.
           </p>
           {step === "edit" && mode === "edit" ? (
             <button onClick={() => { onSave?.(subject, body); onClose(); }} className="btn-primary text-sm !py-2 !px-6 ml-auto">Guardar</button>
@@ -212,7 +213,7 @@ export default function ComposerModal({ workers, onClose, presetSubject, presetB
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30" onClick={() => setShowHelp(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-bold text-brand-dark">Variaveis disponiveis</h4>
+              <h4 className="text-sm font-bold text-brand-dark">Variaveis disponíveis</h4>
               <button onClick={() => setShowHelp(false)} className="text-brand-muted hover:text-brand-dark font-bold">&times;</button>
             </div>
             <p className="text-xs text-brand-muted mb-3">Use <code className="bg-brand-light/20 px-1 rounded">{`{variavel}`}</code> no corpo do email. Serao substituidas pelos dados de cada trabalhador.</p>

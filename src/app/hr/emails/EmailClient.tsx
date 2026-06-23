@@ -86,7 +86,7 @@ export default function EmailClient({ workers }: { workers: Worker[] }) {
     <div className="flex items-center justify-between">
       <div>
         <h2 className="text-lg font-bold text-brand-dark">Emails</h2>
-        <p className="text-sm text-brand-soft mt-0.5">Gerir templates automaticos e enviar emails manuais</p>
+        <p className="text-sm text-brand-soft mt-0.5">Gerir templates automáticos e enviar emails manuais</p>
       </div>
       <button onClick={() => { setComposerMode("send"); setEditingId(null); setPresetSubject(""); setPresetBody(""); setShowComposer(true); }} className="btn-primary text-sm !py-2 !px-4">Novo email</button>
     </div>
