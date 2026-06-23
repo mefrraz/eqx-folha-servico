@@ -88,6 +88,7 @@ export default function EmailClient({ workers }: { workers: Worker[] }) {
           <div key={t.id} className="card flex flex-col justify-between gap-3">
             <div>
               <p className="font-semibold text-brand-dark text-sm">{t.title}</p>
+              <p className="text-xs text-brand-gold font-medium mt-0.5">{t.subject}</p>
               <p className="text-xs text-brand-muted mt-1">{t.trigger}</p>
             </div>
             <button onClick={() => startEdit(t.id)} className="btn-secondary text-xs !py-1.5">Editar</button>
