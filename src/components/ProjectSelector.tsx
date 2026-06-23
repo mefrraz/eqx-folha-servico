@@ -3,27 +3,33 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function ProjectSelector() {
-  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [show, setShow] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
-  const [hasAssignments, setHasAssignments] = useState<boolean | null>(null);
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
-    // Check if worker already has project assignments
-    supabase.from("worker_projects").select("project_id").then(({ data }) => {
-      if (data && data.length > 0) {
-        setHasAssignments(true);
-      } else {
-        setHasAssignments(false);
-        // Pre-load available projects
-        supabase.from("projects").select("id,name,number,client:clients(name)").order("name").then(({ data: pData }) => {
-          setProjects(pData || []);
-        });
-      }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { setLoading(false); return; }
+      // Check if worker and not yet onboarded
+      supabase.from("profiles").select("role, onboarded").eq("id", user.id).single().then(({ data: profile }) => {
+        if (profile && profile.role === "worker" && !profile.onboarded) {
+          // Load available projects
+          supabase.from("projects").select("id,name,number,client:clients(name)").order("name").then(({ data: pData }) => {
+            setProjects(pData || []);
+            setShow(true);
+            setLoading(false);
+          });
+        } else {
+          setLoading(false);
+        }
+      });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -42,33 +48,28 @@ export default function ProjectSelector() {
       const { error } = await supabase.from("worker_projects").insert({ project_id: pid });
       if (!error) done++;
     }
+    // Mark as onboarded
+    await supabase.from("profiles").update({ onboarded: true }).eq("id", (await supabase.auth.getUser()).data.user?.id);
     toast.success(`${done} obra(s) selecionada(s)!`);
-    setSaving(false); setOpen(false); setHasAssignments(true);
+    setSaving(false); setShow(false);
+    router.refresh();
   };
 
-  // Don't show anything while checking
-  if (hasAssignments === null) return null;
+  // Don't show while checking
+  if (loading || !show) return null;
 
-  // Already has assignments — show nothing
-  if (hasAssignments === true) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-page">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl mx-4 space-y-6">
+        <div>
+          <h2 className="text-xl font-bold text-brand-dark">Selecionar obras</h2>
+          <p className="text-sm text-brand-soft mt-1">Indique as obras em que esta a trabalhar atualmente. Podera alterar esta selecao mais tarde nas Definicoes.</p>
+        </div>
 
-  // No assignments — show prompt
-  return (<>
-    <div className="card border-2 border-brand-gold/30 bg-brand-gold/5">
-      <div className="text-center py-4">
-        <p className="text-sm text-brand-dark font-semibold mb-1">🎯 Bem-vindo à EQX!</p>
-        <p className="text-xs text-brand-soft mb-3">Selecione as obras em que está a trabalhar neste momento.</p>
-        <button onClick={() => setOpen(true)} className="btn-primary text-sm !py-2 !px-6">Selecionar obras</button>
-      </div>
-    </div>
-
-    {open && (
-      <div className="fixed inset-0 z-[70] flex items-start justify-center bg-black/50 overflow-y-auto py-8" onClick={() => setOpen(false)}>
-        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4 space-y-4" onClick={e => e.stopPropagation()}>
-          <h3 className="text-lg font-bold text-brand-dark">Selecionar obras</h3>
-          <p className="text-sm text-brand-soft">Escolha as obras em que está atualmente a trabalhar.</p>
-
-          <div className="max-h-80 overflow-y-auto border border-brand-light/30 rounded-xl divide-y divide-brand-light/20">
+        {projects.length === 0 ? (
+          <div className="text-center py-8 text-brand-muted text-sm">Nenhuma obra disponivel. Contacte o administrador.</div>
+        ) : (
+          <div className="max-h-64 overflow-y-auto border border-brand-light/30 rounded-xl divide-y divide-brand-light/20">
             {projects.map((p: any) => (
               <label key={p.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-brand-light/5">
                 <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} className="rounded" />
@@ -80,13 +81,14 @@ export default function ProjectSelector() {
               </label>
             ))}
           </div>
+        )}
 
-          <div className="flex gap-3 justify-end">
-            <button onClick={() => setOpen(false)} className="btn-secondary !py-2 !px-4 text-sm">Cancelar</button>
-            <button onClick={handleSave} disabled={saving} className="btn-primary !py-2 !px-4 text-sm">{saving ? "A guardar…" : "Confirmar"}</button>
-          </div>
+        <div className="flex gap-3 justify-end pt-2">
+          <button onClick={handleSave} disabled={saving || projects.length === 0} className="btn-primary text-sm !px-6 !py-2.5">
+            {saving ? "A guardar..." : "Confirmar"}
+          </button>
         </div>
       </div>
-    )}
-  </>);
+    </div>
+  );
 }

@@ -79,6 +79,9 @@ ALTER TABLE notifications ADD COLUMN IF NOT EXISTS emailed_at TIMESTAMPTZ;
 -- Garantir coluna number nos projects (v6.22)
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS number TEXT;
 
+-- Garantir coluna onboarded nas profiles (v6.27)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS onboarded BOOLEAN DEFAULT false;
+
 CREATE TABLE IF NOT EXISTS clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
