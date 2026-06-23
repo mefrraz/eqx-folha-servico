@@ -76,6 +76,9 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email TEXT;
 -- Garantir coluna emailed_at nas notifications (v6.18)
 ALTER TABLE notifications ADD COLUMN IF NOT EXISTS emailed_at TIMESTAMPTZ;
 
+-- Garantir coluna number nos projects (v6.22)
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS number TEXT;
+
 CREATE TABLE IF NOT EXISTS clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
@@ -87,6 +90,7 @@ CREATE TABLE IF NOT EXISTS clients (
 CREATE TABLE IF NOT EXISTS projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
+  number TEXT,
   client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
   location TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),

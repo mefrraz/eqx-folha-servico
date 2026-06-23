@@ -97,7 +97,7 @@ export async function updateClient(id: string, data: { name?: string; logo_url?:
 }
 
 // ── Project actions ──
-export async function addProject(data: { name: string; client_id?: string; location?: string }) {
+export async function addProject(data: { name: string; number?: string; client_id?: string; location?: string }) {
   const supabase = await createClient();
   const { error } = await supabase.from("projects").insert(data);
   if (error) return { error: error.message };

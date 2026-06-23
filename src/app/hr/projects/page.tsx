@@ -48,6 +48,7 @@ export default async function ProjectsPage() {
             <Link key={p.id} href={`/hr/projects/${p.id}`} className="card hover:border-brand-gold/40 transition-all group flex flex-col gap-3">
               <div>
                 <p className="font-semibold text-brand-dark">{p.name}</p>
+                {p.number && <p className="text-xs text-brand-gold font-mono mt-0.5">{p.number}</p>}
                 {p.client?.name && <p className="text-xs text-brand-soft mt-0.5">{p.client.name}</p>}
                 {p.location && <p className="text-xs text-brand-muted mt-0.5">{p.location}</p>}
               </div>
