@@ -139,6 +139,14 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Worker ↔ Project assignments (junction table)
+CREATE TABLE IF NOT EXISTS worker_projects (
+  worker_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (worker_id, project_id)
+);
+
 -- ── TRIGGERS updated_at ──
 DROP TRIGGER IF EXISTS profiles_updated_at ON profiles;
 CREATE TRIGGER profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
@@ -191,6 +199,7 @@ ALTER TABLE work_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE worker_projects ENABLE ROW LEVEL SECURITY;
 
 -- profiles
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
@@ -256,6 +265,13 @@ CREATE POLICY "Admins can update notifications" ON notifications FOR UPDATE USIN
 
 DROP POLICY IF EXISTS "Admins can insert notifications" ON notifications;
 CREATE POLICY "Admins can insert notifications" ON notifications FOR INSERT WITH CHECK (is_admin());
+
+-- worker_projects
+DROP POLICY IF EXISTS "Workers can read own assignments" ON worker_projects;
+CREATE POLICY "Workers can read own assignments" ON worker_projects FOR SELECT USING (worker_id = auth.uid());
+
+DROP POLICY IF EXISTS "Admins can CRUD worker assignments" ON worker_projects;
+CREATE POLICY "Admins can CRUD worker assignments" ON worker_projects FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 
 -- ── ÍNDICES ──
 CREATE INDEX IF NOT EXISTS idx_work_sheets_worker ON work_sheets(worker_id, week_start);
