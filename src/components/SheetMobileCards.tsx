@@ -1,6 +1,7 @@
 "use client";
 
 import type { WorkEntry } from "@/lib/types";
+import SignatureField from "@/components/SignatureField";
 
 const DAYS = [
   { key: "monday", label: "2ª Feira" },
@@ -83,12 +84,9 @@ export default function SheetMobileCards({ entries, weekDates, upd }: SheetMobil
               className="input-field text-sm"
               placeholder="Avaliação"
             />
-            <input
-              type="text"
+            <SignatureField
               value={e.signature}
-              onChange={(ev) => upd(e.day, "signature", ev.target.value)}
-              className="input-field text-sm"
-              placeholder="Rubrica"
+              onChange={(v) => upd(e.day, "signature", v)}
             />
           </div>
           <input

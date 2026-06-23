@@ -176,7 +176,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           <div>
             <label className="label-field">Obra atribuída</label>
             <select
@@ -190,7 +190,8 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
               }}
               className="input-field"
             >
-              <option value="">— Selecionar obra —</option>
+              <option value="">— Selecionar —</option>
+              {projects.length === 0 && <option disabled>Sem obras atribuídas</option>}
               {projects.map((p: any) => (
                 <option key={p.id} value={p.id}>
                   {p.name} {p.number ? `(${p.number})` : ""} {p.client?.name ? `— ${p.client.name}` : ""}
@@ -215,7 +216,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
               value={workNumber}
               onChange={(e) => setWorkNumber(e.target.value)}
               className="input-field"
-              placeholder="Número da obra"
+              placeholder="Livre"
             />
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { WorkEntry } from "@/lib/types";
+import SignatureField from "@/components/SignatureField";
 
 const DAYS = [
   { key: "monday", label: "2ª Feira" },
@@ -99,12 +100,9 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
                 />
               </td>
               <td className="py-2 px-2">
-                <input
-                  type="text"
+                <SignatureField
                   value={e.signature}
-                  onChange={(ev) => upd(e.day, "signature", ev.target.value)}
-                  className="input-field !py-1.5 !px-2 text-xs"
-                  placeholder="Rubrica"
+                  onChange={(v) => upd(e.day, "signature", v)}
                 />
               </td>
             </tr>

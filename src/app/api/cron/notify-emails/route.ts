@@ -42,9 +42,9 @@ async function handleEmailSend() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "EQX Folha de Serviço <notifications@eqx.pt>",
+          from: "EQX Folha de Servico <onboarding@resend.dev>",
           to: [adminEmail],
-          subject: `📋 ${n.message}`,
+          subject: `EQX: ${n.message}`,
           text: `${n.message}\n\nData: ${n.created_at}\nVer em: https://eqx-folha-servico.vercel.app/hr/notifications`,
         }),
       });
