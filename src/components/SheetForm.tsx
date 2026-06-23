@@ -104,6 +104,18 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
     };
 
     let sid = existingSheet?.id;
+    if (!sid) {
+      // Check if a sheet already exists for this week (e.g. saved draft)
+      const { data: existing } = await supabase
+        .from("work_sheets")
+        .select("id")
+        .eq("worker_id", user.id)
+        .eq("week_start", ws)
+        .maybeSingle();
+      if (existing) {
+        sid = existing.id;
+      }
+    }
     if (sid) {
       const { error } = await supabase.from("work_sheets").update(payload).eq("id", sid);
       if (error) {
