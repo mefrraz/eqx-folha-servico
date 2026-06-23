@@ -35,16 +35,47 @@ function replaceVars(text: string, w: Worker) {
     .replace(/{obra_atual}/g, "—");
 }
 
-export default function ComposerModal({ workers, onClose }: { workers: Worker[]; onClose: () => void }) {
+export default function ComposerModal({ workers, onClose, presetSubject, presetBody, mode = "send", onSave }: { workers: Worker[]; onClose: () => void; presetSubject?: string; presetBody?: string; mode?: "send" | "edit"; onSave?: (subject: string, body: string) => void }) {
   const [step, setStep] = useState<"edit" | "recipients">("edit");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  const [subject, setSubject] = useState(presetSubject || "");
+  const [body, setBody] = useState(presetBody || "");
   const [showHelp, setShowHelp] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [sending, setSending] = useState(false);
   const [savedSubject, setSavedSubject] = useState("");
   const [savedBody, setSavedBody] = useState("");
+  const [quickLoading, setQuickLoading] = useState(false);
+
+  // Quick-select: auto-select workers based on submission status
+  const quickSelect = async (mode: "all" | "submitted" | "not_submitted") => {
+    setQuickLoading(true);
+    const supabase = (await import("@/lib/supabase/client")).createClient();
+
+    if (mode === "all") {
+      setSelected(new Set(workers.map(w => w.id)));
+    } else {
+      // Get current week's Monday
+      const now = new Date();
+      const mon = new Date(now);
+      mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      const monday = mon.toISOString().split("T")[0];
+
+      const { data: sheets } = await supabase
+        .from("work_sheets")
+        .select("worker_id")
+        .eq("week_start", monday);
+
+      const submittedIds = new Set((sheets || []).map(s => s.worker_id));
+
+      if (mode === "submitted") {
+        setSelected(new Set(workers.filter(w => submittedIds.has(w.id)).map(w => w.id)));
+      } else {
+        setSelected(new Set(workers.filter(w => !submittedIds.has(w.id)).map(w => w.id)));
+      }
+    }
+    setQuickLoading(false);
+  };
 
   const toggle = (id: string) => {
     const next = new Set(selected);
@@ -88,7 +119,7 @@ export default function ComposerModal({ workers, onClose }: { workers: Worker[];
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-brand-light/20 shrink-0">
           <h3 className="text-lg font-bold text-brand-dark">
-            {step === "edit" ? "Novo email" : "Selecionar destinatarios"}
+            {step === "edit" ? (mode === "edit" ? "Editar template" : "Novo email") : "Selecionar destinatarios"}
           </h3>
           <button onClick={onClose} className="text-brand-muted hover:text-brand-dark font-bold text-lg leading-none">&times;</button>
         </div>
@@ -140,6 +171,12 @@ export default function ComposerModal({ workers, onClose }: { workers: Worker[];
               placeholder="Pesquisar trabalhador..."
             />
             <p className="text-xs text-brand-soft mt-3 mb-2 shrink-0">{selected.size} selecionados</p>
+            {/* Quick-select */}
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => quickSelect("all")} disabled={quickLoading} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30">Todos</button>
+              <button onClick={() => quickSelect("submitted")} disabled={quickLoading} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30">Ja submeteram</button>
+              <button onClick={() => quickSelect("not_submitted")} disabled={quickLoading} className="btn-ghost text-xs !py-1 !px-3 border border-brand-light/30">Nao submeteram</button>
+            </div>
             <div className="border border-brand-light/30 rounded-xl divide-y divide-brand-light/20 flex-1 overflow-y-auto min-h-0">
               {filtered.map(w => (
                 <label key={w.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-brand-light/5">
@@ -157,7 +194,9 @@ export default function ComposerModal({ workers, onClose }: { workers: Worker[];
           <p className="text-xs text-brand-muted italic hidden sm:block">
             O email incluira o logo EQX e o rodape automatico.
           </p>
-          {step === "edit" ? (
+          {step === "edit" && mode === "edit" ? (
+            <button onClick={() => { onSave?.(subject, body); onClose(); }} className="btn-primary text-sm !py-2 !px-6 ml-auto">Guardar</button>
+          ) : step === "edit" ? (
             <button onClick={handleAdvance} className="btn-primary text-sm !py-2 !px-6 ml-auto">Avancar</button>
           ) : (
             <div className="flex gap-2 ml-auto">

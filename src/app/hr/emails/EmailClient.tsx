@@ -62,22 +62,24 @@ Continue o bom trabalho!`,
 ];
 
 export default function EmailClient({ workers }: { workers: Worker[] }) {
-  const [editing, setEditing] = useState<string | null>(null);
-  const [editSubject, setEditSubject] = useState("");
-  const [editBody, setEditBody] = useState("");
   const [showComposer, setShowComposer] = useState(false);
+  const [presetSubject, setPresetSubject] = useState("");
+  const [presetBody, setPresetBody] = useState("");
+  const [composerMode, setComposerMode] = useState<"send" | "edit">("send");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const startEdit = (id: string) => {
     const t = PREDEFINED.find(t => t.id === id);
-    if (t) { setEditing(id); setEditSubject(t.subject); setEditBody(t.body); }
+    if (t) { setPresetSubject(t.subject); setPresetBody(t.body); setEditingId(id); setComposerMode("edit"); setShowComposer(true); }
   };
 
-  const saveEdit = async () => {
-    // Save to DB — for now, store in localStorage
-    localStorage.setItem(`email_template_${editing}_subject`, editSubject);
-    localStorage.setItem(`email_template_${editing}_body`, editBody);
-    toast.success("Template guardado.");
-    setEditing(null);
+  const startSend = (id: string) => {
+    const t = PREDEFINED.find(t => t.id === id);
+    if (t) { setPresetSubject(t.subject); setPresetBody(t.body); setEditingId(null); setComposerMode("send"); setShowComposer(true); }
+  };
+
+  const resetComposer = () => {
+    setShowComposer(false); setPresetSubject(""); setPresetBody(""); setEditingId(null); setComposerMode("send");
   };
 
   return (<div className="space-y-8 max-w-5xl">
@@ -86,14 +88,13 @@ export default function EmailClient({ workers }: { workers: Worker[] }) {
         <h2 className="text-lg font-bold text-brand-dark">Emails</h2>
         <p className="text-sm text-brand-soft mt-0.5">Gerir templates automaticos e enviar emails manuais</p>
       </div>
-      <button onClick={() => setShowComposer(true)} className="btn-primary text-sm !py-2 !px-4">Novo email</button>
+      <button onClick={() => { setComposerMode("send"); setEditingId(null); setPresetSubject(""); setPresetBody(""); setShowComposer(true); }} className="btn-primary text-sm !py-2 !px-4">Novo email</button>
     </div>
 
-    {/* Pre-defined templates */}
     <div>
       <h3 className="text-sm font-semibold text-brand-soft tracking-wide uppercase mb-3">Emails automaticos</h3>
       <p className="text-xs text-brand-muted mb-4">Estes emails sao enviados automaticamente. Pode editar o assunto e o corpo.</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {PREDEFINED.map(t => (
           <div key={t.id} className="card flex flex-col justify-between gap-3">
             <div>
@@ -101,46 +102,29 @@ export default function EmailClient({ workers }: { workers: Worker[] }) {
               <p className="text-xs text-brand-gold font-medium mt-0.5">{t.subject}</p>
               <p className="text-xs text-brand-muted mt-1">{t.trigger}</p>
             </div>
-            <button onClick={() => startEdit(t.id)} className="btn-secondary text-xs !py-1.5">Editar</button>
+            <div className="flex gap-2">
+              <button onClick={() => startEdit(t.id)} className="btn-ghost text-xs !py-1.5 flex-1">Editar</button>
+              <button onClick={() => startSend(t.id)} className="btn-primary text-xs !py-1.5 flex-1">Enviar</button>
+            </div>
           </div>
         ))}
       </div>
     </div>
 
-    {/* Edit template modal */}
-    {editing && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setEditing(null)}>
-        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xl mx-4 space-y-4" onClick={e => e.stopPropagation()}>
-          <h3 className="text-lg font-bold text-brand-dark">
-            Editar — {PREDEFINED.find(t => t.id === editing)?.title}
-          </h3>
-          <p className="text-xs text-brand-muted">{PREDEFINED.find(t => t.id === editing)?.trigger}</p>
-          <div>
-            <label className="label-field">Assunto</label>
-            <input type="text" value={editSubject} onChange={e => setEditSubject(e.target.value)} className="input-field" />
-          </div>
-          <div>
-            <label className="label-field">Corpo</label>
-            <textarea value={editBody} onChange={e => setEditBody(e.target.value)} className="input-field min-h-[150px] font-mono text-xs" />
-          </div>
-          <div className="flex justify-between items-center">
-            <div className="text-xs text-brand-muted">
-              Variaveis: <code className="bg-brand-light/20 px-1 rounded">{`{name}`}</code> <code className="bg-brand-light/20 px-1 rounded">{`{week_start}`}</code> <code className="bg-brand-light/20 px-1 rounded">{`{week_end}`}</code> <code className="bg-brand-light/20 px-1 rounded">{`{total_hours}`}</code> <code className="bg-brand-light/20 px-1 rounded">{`{sheets_count}`}</code> <code className="bg-brand-light/20 px-1 rounded">{`{email}`}</code> <code className="bg-brand-light/20 px-1 rounded">{`{obra_atual}`}</code>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setEditing(null)} className="btn-ghost text-xs">Cancelar</button>
-              <button onClick={saveEdit} className="btn-primary text-xs !py-1.5 !px-3">Guardar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* Custom email composer */}
     {showComposer && (
       <ComposerModal
         workers={workers}
-        onClose={() => setShowComposer(false)}
+        onClose={resetComposer}
+        presetSubject={presetSubject}
+        presetBody={presetBody}
+        mode={composerMode}
+        onSave={(subject, body) => {
+          if (editingId) {
+            localStorage.setItem(`email_template_${editingId}_subject`, subject);
+            localStorage.setItem(`email_template_${editingId}_body`, body);
+            toast.success("Template guardado."); resetComposer();
+          }
+        }}
       />
     )}
   </div>);
