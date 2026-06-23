@@ -80,6 +80,45 @@ async function handleCron() {
     }
     console.log(`[cron] Sunday reminders — Sent: ${reminded}, Failed: ${remindFailed}`);
     results.reminders = { sent: reminded, failed: remindFailed };
+
+    // ── 3. Weekly stats to ALL workers ──
+    const { data: allWorkers } = await supabase.from("profiles").select("id, full_name, email").eq("role", "worker");
+    const { data: weekSheets } = await supabase.from("work_sheets").select("worker_id, work_entries(*)").eq("week_start", lastMonday);
+
+    let statsSent = 0, statsFailed = 0;
+    for (const w of (allWorkers || [])) {
+      if (!w.email) continue;
+      const workerSheets = (weekSheets || []).filter((s: any) => s.worker_id === w.id);
+      const mins = workerSheets.reduce((sum: number, s: any) => {
+        return sum + (s.work_entries || []).reduce((s2: number, e: any) => {
+          if (e.start_time && e.end_time) {
+            const [sh, sm] = e.start_time.split(":").map(Number);
+            const [eh, em] = e.end_time.split(":").map(Number);
+            return s2 + (eh * 60 + em) - (sh * 60 + sm);
+          }
+          return s2;
+        }, 0);
+      }, 0);
+      const hours = Math.floor(mins / 60);
+      const minsRem = mins % 60;
+      const totalHours = minsRem > 0 ? `${hours}h ${minsRem}m` : `${hours}h`;
+
+      try {
+        await transporter.sendMail({
+          from: gmailUser,
+          to: w.email,
+          subject: "EQX — Resumo da semana",
+          html: emailTemplate(
+            `Ola ${w.full_name}`,
+            `Resumo da semana passada:<br><br>Total de horas: <strong>${totalHours}</strong><br>Folhas submetidas: <strong>${workerSheets.length}</strong><br><br>Continue o bom trabalho!`,
+            `Veja o seu historico em: https://eqx-folha-servico.vercel.app/worker/dashboard`
+          ),
+        });
+        statsSent++;
+      } catch (err: any) { console.error("[cron] stats error:", err?.message); statsFailed++; }
+    }
+    console.log(`[cron] Weekly stats — Sent: ${statsSent}, Failed: ${statsFailed}`);
+    results.stats = { sent: statsSent, failed: statsFailed };
   }
 
   return NextResponse.json(results);
