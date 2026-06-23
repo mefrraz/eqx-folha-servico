@@ -20,9 +20,19 @@ const PREDEFINED = [
 
 A sua conta na plataforma EQX Folha de Servico foi criada com sucesso.
 
-Por favor, aceda a plataforma e selecione as obras em que esta a trabalhar.
+Aceda a plataforma e selecione as suas obras: https://eqx-folha-servico.vercel.app`,
+  },
+  {
+    id: "admin_notify",
+    title: "Notificacao de submissao",
+    trigger: "Quando um trabalhador submete uma folha",
+    subject: "EQX — Folha submetida",
+    body: `{name} submeteu a folha da semana {week_start} a {week_end}.
 
-Aceder: https://eqx-folha-servico.vercel.app`,
+Cliente: Ver na plataforma
+Total de horas: Ver na plataforma
+
+Ver notificacoes: https://eqx-folha-servico.vercel.app/hr/notifications`,
   },
   {
     id: "weekly_reminder",

@@ -39,7 +39,7 @@ async function handleCron() {
           from: gmailUser,
           to: adminEmail,
           subject: `EQX: ${n.message}`,
-          html: emailTemplate("Nova folha submetida", n.message, `Data: ${n.created_at}`),
+          html: emailTemplate("Nova folha submetida", n.message, `Ver: https://eqx-folha-servico.vercel.app/hr/notifications`),
         });
         await supabase.from("notifications").update({ emailed_at: new Date().toISOString() }).eq("id", n.id);
         sent++;
@@ -110,7 +110,7 @@ async function handleCron() {
           subject: "EQX — Resumo da semana",
           html: emailTemplate(
             `Ola ${w.full_name}`,
-            `Resumo da semana passada:<br><br>Total de horas: <strong>${totalHours}</strong><br>Folhas submetidas: <strong>${workerSheets.length}</strong><br><br>Continue o bom trabalho!`,
+            `Resumo da semana passada:<br><br><strong>${totalHours}</strong> trabalhadas<br><strong>${workerSheets.length}</strong> folha(s) submetida(s)<br><br>Veja o seu historico: https://eqx-folha-servico.vercel.app/worker/dashboard`,
             `Veja o seu historico em: https://eqx-folha-servico.vercel.app/worker/dashboard`
           ),
         });
