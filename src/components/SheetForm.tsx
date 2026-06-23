@@ -81,8 +81,18 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
   };
 
   const handleSave = async (status: "draft" | "submitted") => {
-    if (status === "submitted") setSubmitting(true);
-    else setSaving(true);
+    if (status === "submitted") {
+      if (!client.trim()) { toast.error("Cliente é obrigatório para submeter."); return; }
+      if (!workNumber.trim()) { toast.error("Nº Obra é obrigatório para submeter."); return; }
+      // Validate times: start requires end and vice versa
+      for (const e of entries) {
+        if (e.start_time && !e.end_time) { toast.error("Hora de fim obrigatória quando tem início."); return; }
+        if (e.end_time && !e.start_time) { toast.error("Hora de início obrigatória quando tem fim."); return; }
+      }
+      setSubmitting(true);
+    } else {
+      setSaving(true);
+    }
 
     const {
       data: { user },
