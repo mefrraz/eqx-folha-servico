@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
 import AddUserButton from "./AddUserButton";
+import BulkTransfer from "./BulkTransfer";
 
 export default function UsersPageClient() {
   const [workers, setWorkers] = useState<any[]>([]);
@@ -41,7 +42,10 @@ export default function UsersPageClient() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div><h2 className="text-lg font-bold text-brand-dark">Utilizadores</h2><p className="text-sm text-brand-soft mt-0.5">{workers.length} trabalhadores</p></div>
-        <AddUserButton />
+        <div className="flex items-center gap-2">
+          <BulkTransfer workers={workers.map(w => ({ id: w.id, full_name: w.full_name }))} />
+          <AddUserButton />
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
