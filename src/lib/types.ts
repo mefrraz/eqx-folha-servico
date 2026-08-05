@@ -4,6 +4,7 @@ export interface WorkEntry {
   id?: string;
   sheet_id?: string;
   day: "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
+  shift: "morning" | "afternoon";
   work_description: string;
   work_type: "" | "new_installation" | "installation_continuation" | "preventive_maintenance" | "corrective_maintenance";
   date: string;

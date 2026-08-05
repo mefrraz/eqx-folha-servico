@@ -160,20 +160,25 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
                 <span className={selectedSheet.status==="draft"?"badge-draft text-[10px]":selectedSheet.status==="submitted"?"badge-submitted text-[10px]":"badge-reviewed text-[10px]"}>{selectedSheet.status==="draft"?"Rascunho":selectedSheet.status==="submitted"?"Submetida":"Validada"}</span>
               </div>
               <div className="text-xs text-brand-soft mb-2">{selectedSheet.client||"—"} · Obra {selectedSheet.work_number||"—"}</div>
-              {/* Days — compact list */}
-              <div className="space-y-1 flex-1">
+              {/* Days — compact list with shifts */}
+              <div className="space-y-0.5 flex-1">
                 {DAY_KEYS.map(day => {
-                  const e = (selectedSheet.work_entries||[]).find((x:any) => x.day === day);
-                  if (!e || (!e.work_description && !e.start_time)) return null;
-                  return (
-                    <div key={day} className="flex items-center gap-2 text-xs py-0.5">
-                      <span className="font-semibold text-brand-dark w-6 shrink-0">{DL[day].replace(" Feira","").replace("á","")}</span>
-                      <span className="text-brand-soft truncate">{e.work_description||"—"}</span>
-                      {e.start_time && e.end_time && (
-                        <span className="font-mono text-brand-dark ml-auto shrink-0">{e.start_time.substring(0,5)}–{e.end_time.substring(0,5)}</span>
-                      )}
-                    </div>
-                  );
+                  const dayEntries = (selectedSheet.work_entries||[]).filter((x:any) => x.day === day);
+                  if (dayEntries.length === 0) return null;
+                  return dayEntries.map((e: any) => {
+                    if (!e || (!e.work_description && !e.start_time)) return null;
+                    const shiftLabel = e.shift === "afternoon" ? "T" : "M";
+                    return (
+                      <div key={`${day}-${e.shift}`} className="flex items-center gap-2 text-xs py-0.5">
+                        <span className="font-semibold text-brand-dark w-6 shrink-0">{DL[day].replace(" Feira","").replace("á","")}</span>
+                        <span className={`text-[9px] px-1 rounded ${e.shift === "afternoon" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-800"}`}>{shiftLabel}</span>
+                        <span className="text-brand-soft truncate">{e.work_description||"—"}</span>
+                        {e.start_time && e.end_time && (
+                          <span className="font-mono text-brand-dark ml-auto shrink-0">{e.start_time.substring(0,5)}–{e.end_time.substring(0,5)}</span>
+                        )}
+                      </div>
+                    );
+                  });
                 })}
               </div>
               <div className="flex items-center justify-between gap-2 pt-2 mt-auto border-t border-brand-light/20">
@@ -225,11 +230,16 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
                 </thead>
                 <tbody>
                   {DAY_KEYS.map(day => {
-                    const e = (selectedSheet.work_entries||[]).find((x:any) => x.day === day);
-                    if (!e) return null;
-                    return (
-                      <tr key={day} className="border-b border-brand-light/10">
-                        <td className="py-1.5 px-1 font-semibold text-brand-dark">{DL[day]}</td>
+                    const dayEntries = (selectedSheet.work_entries||[]).filter((x:any) => x.day === day);
+                    if (dayEntries.length === 0) return null;
+                    return dayEntries.map((e: any) => (
+                      <tr key={`${day}-${e.shift}`} className={`border-b border-brand-light/10 ${e.shift === "afternoon" ? "bg-blue-50/30" : ""}`}>
+                        <td className="py-1.5 px-1 font-semibold text-brand-dark">
+                          {DL[day]}
+                          <span className={`ml-1 text-[9px] ${e.shift === "afternoon" ? "text-blue-600" : "text-amber-600"}`}>
+                            {e.shift === "afternoon" ? "T" : "M"}
+                          </span>
+                        </td>
                         <td className="py-1.5 px-1 text-brand-soft">{e.work_description||"—"}</td>
                         <td className="py-1.5 px-1 text-brand-soft">{WT[e.work_type]||"—"}</td>
                         <td className="py-1.5 px-1 text-brand-soft font-mono">{e.date||"—"}</td>
@@ -238,7 +248,7 @@ export default function UserProfileClient({ userId, profile, sheets: initialShee
                         <td className="py-1.5 px-1 text-brand-soft">{e.signature||"—"}</td>
                         <td className="py-1.5 px-1 text-brand-soft">{e.observations||"—"}</td>
                       </tr>
-                    );
+                    ));
                   })}
                 </tbody>
               </table>

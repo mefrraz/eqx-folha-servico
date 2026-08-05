@@ -20,9 +20,15 @@ const DAYS = [
   { key: "saturday", label: "Sábado" },
 ] as const;
 
-function emptyEntry(day: WorkEntry["day"]): WorkEntry {
+const SHIFTS = ["morning", "afternoon"] as const;
+
+/** Composite key identifying one row: day + shift */
+type EntryKey = `${typeof DAYS[number]["key"]}-${typeof SHIFTS[number]}`;
+
+function emptyEntry(day: WorkEntry["day"], shift: WorkEntry["shift"]): WorkEntry {
   return {
     day,
+    shift,
     work_description: "",
     work_type: "",
     date: "",
@@ -67,32 +73,73 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         });
     });
   }, []);
+
   const [entries, setEntries] = useState<WorkEntry[]>(() => {
-    if (existingSheet?.entries?.length) {
-      return DAYS.map(
-        (d) => existingSheet.entries.find((e) => e.day === d.key) || emptyEntry(d.key)
-      );
+    // Build 12 entries: 6 days × 2 shifts
+    const flat: WorkEntry[] = [];
+    for (const d of DAYS) {
+      for (const s of SHIFTS) {
+        if (existingSheet?.entries?.length) {
+          const found = existingSheet.entries.find(
+            (e) => e.day === d.key && e.shift === s
+          );
+          flat.push(found || emptyEntry(d.key, s));
+        } else {
+          flat.push(emptyEntry(d.key, s));
+        }
+      }
     }
-    return DAYS.map((d) => emptyEntry(d.key));
+    return flat;
   });
 
   const weekDates = getWeekDates(
     existingSheet ? new Date(existingSheet.week_start + "T00:00:00") : weekStart
   );
 
-  const upd = (dk: string, f: keyof WorkEntry, v: string) => {
-    setEntries((p) => p.map((e) => (e.day === dk ? { ...e, [f]: v } : e)));
+  /** Update a single field on an entry, identified by "day-shift" key */
+  const upd = (key: string, f: keyof WorkEntry, v: string) => {
+    const [day, shift] = key.split("-") as [WorkEntry["day"], WorkEntry["shift"]];
+    setEntries((p) =>
+      p.map((e) => (e.day === day && e.shift === shift ? { ...e, [f]: v } : e))
+    );
   };
+
+  /** Validate shifts don't overlap: morning.end <= afternoon.start */
+  function validateShifts(): string | null {
+    for (const d of DAYS) {
+      const morning = entries.find((e) => e.day === d.key && e.shift === "morning");
+      const afternoon = entries.find((e) => e.day === d.key && e.shift === "afternoon");
+      if (!morning || !afternoon) continue;
+
+      // Validate each shift's own times
+      for (const shift of [morning, afternoon]) {
+        if (shift.start_time && !shift.end_time) {
+          return `${d.label} (${shift.shift === "morning" ? "manhã" : "tarde"}): hora de fim obrigatória.`;
+        }
+        if (shift.end_time && !shift.start_time) {
+          return `${d.label} (${shift.shift === "morning" ? "manhã" : "tarde"}): hora de início obrigatória.`;
+        }
+        if (shift.start_time && shift.end_time && shift.start_time >= shift.end_time) {
+          return `${d.label} (${shift.shift === "morning" ? "manhã" : "tarde"}): hora de início deve ser anterior à de fim.`;
+        }
+      }
+
+      // Validate no overlap between morning and afternoon
+      if (morning.end_time && afternoon.start_time) {
+        if (morning.end_time > afternoon.start_time) {
+          return `${d.label}: turnos sobrepostos. Fim da manhã (${morning.end_time}) deve ser ≤ início da tarde (${afternoon.start_time}).`;
+        }
+      }
+    }
+    return null;
+  }
 
   const handleSave = async (status: "draft" | "submitted") => {
     if (status === "submitted") {
       if (!client.trim()) { toast.error("Cliente é obrigatório para submeter."); return; }
       if (!workNumber.trim()) { toast.error("Nº Obra é obrigatório para submeter."); return; }
-      // Validate times: start requires end and vice versa
-      for (const e of entries) {
-        if (e.start_time && !e.end_time) { toast.error("Hora de fim obrigatória quando tem início."); return; }
-        if (e.end_time && !e.start_time) { toast.error("Hora de início obrigatória quando tem fim."); return; }
-      }
+      const overlapError = validateShifts();
+      if (overlapError) { toast.error(overlapError); return; }
       setSubmitting(true);
     } else {
       setSaving(true);
@@ -119,7 +166,6 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
 
     let sid = existingSheet?.id;
     if (!sid) {
-      // Check if a sheet already exists for this week (e.g. saved draft)
       const { data: existing } = await supabase
         .from("work_sheets")
         .select("id")
@@ -153,10 +199,12 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
       sid = data.id;
     }
 
+    // Upsert entries — insert new, update existing
     for (const e of entries) {
       const ep = {
         sheet_id: sid,
         day: e.day,
+        shift: e.shift,
         work_description: e.work_description,
         work_type: e.work_type,
         date: e.date || weekDates.find((d) => d.key === e.day)?.date || null,
@@ -166,8 +214,11 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         start_time: e.start_time || null,
         end_time: e.end_time || null,
       };
-      if (e.id) await supabase.from("work_entries").update(ep).eq("id", e.id);
-      else await supabase.from("work_entries").insert(ep);
+      if (e.id) {
+        await supabase.from("work_entries").update(ep).eq("id", e.id);
+      } else {
+        await supabase.from("work_entries").insert(ep);
+      }
     }
 
     toast.success(status === "submitted" ? "Folha submetida!" : "Rascunho guardado!");
@@ -257,13 +308,13 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         <div className="hidden lg:block mt-4">
           <h4 className="text-sm font-semibold text-brand-soft mb-2">Observações</h4>
           <div className="grid grid-cols-3 gap-2">
-            {entries.map((e, i) => (
-              <div key={e.day}>
-                <label className="text-xs text-brand-muted">{DAYS[i].label}</label>
+            {DAYS.map((d) => (
+              <div key={d.key}>
+                <label className="text-xs text-brand-muted">{d.label}</label>
                 <input
                   type="text"
-                  value={e.observations}
-                  onChange={(ev) => upd(e.day, "observations", ev.target.value)}
+                  value={entries.find((e) => e.day === d.key && e.shift === "morning")?.observations || ""}
+                  onChange={(ev) => upd(`${d.key}-morning`, "observations", ev.target.value)}
                   className="input-field !py-1.5 !px-2 text-xs"
                   placeholder="Obs."
                 />

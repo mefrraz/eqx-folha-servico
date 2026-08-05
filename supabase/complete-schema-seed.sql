@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS work_entries (
   signature TEXT DEFAULT '',
   signature_url TEXT,
   observations TEXT DEFAULT '',
+  shift TEXT NOT NULL DEFAULT 'morning' CHECK (shift IN ('morning', 'afternoon')),
   start_time TIME,
   end_time TIME,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -400,12 +401,27 @@ BEGIN
         VALUES (uid, w_start, w_start + 5, (ARRAY['EDP Renováveis','Navais de Viana','Metro do Porto'])[1 + floor(random() * 3)::int], 'OB-' || to_char(w_start, 'YY') || '-' || lpad((floor(random() * 999) + 1)::text, 3, '0'), prj[i], CASE WHEN w = 0 THEN 'draft' WHEN w <= 2 THEN 'submitted' ELSE 'reviewed' END)
         RETURNING id INTO sid;
         FOR d IN 0..5 LOOP
-          IF d = 5 AND random() < 0.3 THEN INSERT INTO work_entries (sheet_id, day, date) VALUES (sid, 'saturday', w_start + d); CONTINUE; END IF;
+          -- Saturday: sometimes skip
+          IF d = 5 AND random() < 0.3 THEN
+            INSERT INTO work_entries (sheet_id, day, shift, date) VALUES (sid, 'saturday', 'morning', w_start + d);
+            CONTINUE;
+          END IF;
+
+          -- Morning shift: ~7h-12h
           st := ((7 + floor(random() * 1.5)::int)::text || ':' || lpad((floor(random() * 4) * 15)::text, 2, '0') || ':00')::time;
-          et := ((16 + floor(random() * 2.5)::int)::text || ':' || lpad((floor(random() * 4) * 15)::text, 2, '0') || ':00')::time;
+          et := ((11 + floor(random() * 2)::int)::text || ':' || lpad((floor(random() * 4) * 15)::text, 2, '0') || ':00')::time;
           descr := (ARRAY['Instalação de quadro elétrico','Ligação de tomadas industriais','Manutenção preventiva de motores','Reparação de painel de controlo','Soldadura de estruturas metálicas','Montagem de calhas','Teste de continuidade elétrica','Passagem de cabos BT','Inspeção de válvulas','Substituição de disjuntores','Limpeza de permutadores','Instalação de iluminação LED','Certificação de instalação','Configuração de inversores','Reparação de tubagens','Montagem de andaimes','Ligação ao quadro geral','Verificação de terras'])[1 + floor(random() * 18)::int];
-          INSERT INTO work_entries (sheet_id, day, work_description, work_type, date, evaluation, signature, observations, start_time, end_time)
-          VALUES (sid, CASE d WHEN 0 THEN 'monday' WHEN 1 THEN 'tuesday' WHEN 2 THEN 'wednesday' WHEN 3 THEN 'thursday' WHEN 4 THEN 'friday' ELSE 'saturday' END, descr, (ARRAY['new_installation','installation_continuation','preventive_maintenance','corrective_maintenance'])[1 + floor(random() * 4)::int], w_start + d, (ARRAY['Bom','Muito Bom','Satisfatório',''])[1 + floor(random() * 4)::int], left(names[i],1) || left(split_part(names[i],' ',2),1), CASE WHEN random() < 0.2 THEN (ARRAY['Aguardar material','Verificar com encarregado','Horas extra aprovadas'])[1 + floor(random() * 3)::int] ELSE '' END, st, et);
+          INSERT INTO work_entries (sheet_id, day, shift, work_description, work_type, date, evaluation, signature, observations, start_time, end_time)
+          VALUES (sid, CASE d WHEN 0 THEN 'monday' WHEN 1 THEN 'tuesday' WHEN 2 THEN 'wednesday' WHEN 3 THEN 'thursday' WHEN 4 THEN 'friday' ELSE 'saturday' END, 'morning', descr, (ARRAY['new_installation','installation_continuation','preventive_maintenance','corrective_maintenance'])[1 + floor(random() * 4)::int], w_start + d, (ARRAY['Bom','Muito Bom','Satisfatório',''])[1 + floor(random() * 4)::int], left(names[i],1) || left(split_part(names[i],' ',2),1), CASE WHEN random() < 0.2 THEN (ARRAY['Aguardar material','Verificar com encarregado','Horas extra aprovadas'])[1 + floor(random() * 3)::int] ELSE '' END, st, et);
+
+          -- Afternoon shift: ~13h-18h (skip occasionally for Saturday)
+          IF d < 5 OR random() < 0.5 THEN
+            st := ((13 + floor(random() * 1)::int)::text || ':' || lpad((floor(random() * 4) * 15)::text, 2, '0') || ':00')::time;
+            et := ((17 + floor(random() * 2)::int)::text || ':' || lpad((floor(random() * 4) * 15)::text, 2, '0') || ':00')::time;
+            descr := (ARRAY['Continuação dos trabalhos','Montagem de calhas','Teste de continuidade elétrica','Passagem de cabos BT','Inspeção de válvulas','Substituição de disjuntores','Limpeza de permutadores','Instalação de iluminação LED','Certificação de instalação','Configuração de inversores','Reparação de tubagens','Ligação ao quadro geral','Verificação de terras'])[1 + floor(random() * 13)::int];
+            INSERT INTO work_entries (sheet_id, day, shift, work_description, work_type, date, evaluation, signature, observations, start_time, end_time)
+            VALUES (sid, CASE d WHEN 0 THEN 'monday' WHEN 1 THEN 'tuesday' WHEN 2 THEN 'wednesday' WHEN 3 THEN 'thursday' WHEN 4 THEN 'friday' ELSE 'saturday' END, 'afternoon', descr, (ARRAY['installation_continuation','preventive_maintenance','corrective_maintenance',''])[1 + floor(random() * 4)::int], w_start + d, (ARRAY['Bom','Satisfatório',''])[1 + floor(random() * 3)::int], left(names[i],1) || left(split_part(names[i],' ',2),1), CASE WHEN random() < 0.1 THEN (ARRAY['Aguardar material','Verificar com encarregado'])[1 + floor(random() * 2)::int] ELSE '' END, st, et);
+          END IF;
         END LOOP;
       END IF;
     END LOOP;

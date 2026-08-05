@@ -7,6 +7,7 @@ function makeEntry(
 ): WorkEntry {
   return {
     day: "monday",
+    shift: "morning",
     work_description: "",
     work_type: "",
     date: "",

@@ -12,6 +12,8 @@ const DAYS = [
   { key: "saturday", label: "Sábado" },
 ];
 
+const SHIFT_LABEL: Record<string, string> = { morning: "Manhã", afternoon: "Tarde" };
+
 const WORK_TYPES = [
   { value: "", label: "— Selecionar —" },
   { value: "new_installation", label: "Nova Instalação" },
@@ -23,7 +25,8 @@ const WORK_TYPES = [
 interface SheetTableProps {
   entries: WorkEntry[];
   weekDates: { key: string; label: string; date: string }[];
-  upd: (dk: string, f: keyof WorkEntry, v: string) => void;
+  /** key is "day-shift" e.g. "monday-morning" */
+  upd: (key: string, f: keyof WorkEntry, v: string) => void;
 }
 
 export default function SheetTable({ entries, weekDates, upd }: SheetTableProps) {
@@ -44,13 +47,18 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
         </thead>
         <tbody>
           {entries.map((e, i) => (
-            <tr key={e.day} className="border-b border-brand-light/20 hover:bg-brand-gold/5">
-              <td className="py-2 px-2 font-medium text-brand-dark">{DAYS[i].label}</td>
+            <tr key={`${e.day}-${e.shift}`} className={`border-b border-brand-light/20 hover:bg-brand-gold/5 ${e.shift === "morning" && i > 0 ? "border-t-2 border-brand-light/40" : ""}`}>
+              <td className="py-2 px-2 font-medium text-brand-dark text-xs">
+                {e.shift === "morning" ? DAYS.find(d => d.key === e.day)?.label : ""}
+                <span className={`ml-1 text-[10px] ${e.shift === "morning" ? "text-brand-gold" : "text-brand-soft"}`}>
+                  {SHIFT_LABEL[e.shift]}
+                </span>
+              </td>
               <td className="py-2 px-2">
                 <input
                   type="text"
                   value={e.work_description}
-                  onChange={(ev) => upd(e.day, "work_description", ev.target.value)}
+                  onChange={(ev) => upd(`${e.day}-${e.shift}`, "work_description", ev.target.value)}
                   className="input-field !py-1.5 !px-2 text-xs"
                   placeholder="Descrever..."
                 />
@@ -58,7 +66,7 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
               <td className="py-2 px-2">
                 <select
                   value={e.work_type}
-                  onChange={(ev) => upd(e.day, "work_type", ev.target.value)}
+                  onChange={(ev) => upd(`${e.day}-${e.shift}`, "work_type", ev.target.value)}
                   className="input-field !py-1.5 !px-2 text-xs"
                 >
                   {WORK_TYPES.map((wt) => (
@@ -69,8 +77,8 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
               <td className="py-2 px-2">
                 <input
                   type="date"
-                  value={e.date || weekDates[i].date}
-                  onChange={(ev) => upd(e.day, "date", ev.target.value)}
+                  value={e.date || weekDates.find(d => d.key === e.day)?.date || ""}
+                  onChange={(ev) => upd(`${e.day}-${e.shift}`, "date", ev.target.value)}
                   className="input-field !py-1.5 !px-2 text-xs"
                 />
               </td>
@@ -78,7 +86,7 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
                 <input
                   type="time"
                   value={e.start_time}
-                  onChange={(ev) => upd(e.day, "start_time", ev.target.value)}
+                  onChange={(ev) => upd(`${e.day}-${e.shift}`, "start_time", ev.target.value)}
                   className="input-field !py-1.5 !px-2 text-xs"
                 />
               </td>
@@ -86,7 +94,7 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
                 <input
                   type="time"
                   value={e.end_time}
-                  onChange={(ev) => upd(e.day, "end_time", ev.target.value)}
+                  onChange={(ev) => upd(`${e.day}-${e.shift}`, "end_time", ev.target.value)}
                   className="input-field !py-1.5 !px-2 text-xs"
                 />
               </td>
@@ -94,7 +102,7 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
                 <input
                   type="text"
                   value={e.evaluation}
-                  onChange={(ev) => upd(e.day, "evaluation", ev.target.value)}
+                  onChange={(ev) => upd(`${e.day}-${e.shift}`, "evaluation", ev.target.value)}
                   className="input-field !py-1.5 !px-2 text-xs"
                   placeholder="Após trabalho"
                 />
@@ -102,7 +110,7 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
               <td className="py-2 px-2">
                 <SignatureField
                   value={e.signature}
-                  onChange={(v) => upd(e.day, "signature", v)}
+                  onChange={(v) => upd(`${e.day}-${e.shift}`, "signature", v)}
                 />
               </td>
             </tr>

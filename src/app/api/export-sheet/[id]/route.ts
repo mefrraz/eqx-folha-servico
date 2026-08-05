@@ -45,19 +45,34 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const td = "border:1px solid #999;padding:4px 6px;font-size:10px;font-family:Arial;vertical-align:top";
   const th = "border:1px solid #999;padding:4px 6px;font-size:9px;font-family:Arial;font-weight:bold;background:#e8e8e8;text-align:left;white-space:nowrap";
 
-  const rows = ["monday","tuesday","wednesday","thursday","friday","saturday"].map(day => {
-    const e = (sheet.work_entries || []).find((x: any) => x.day === day);
-    return `<tr>
-      <td style="${td};font-weight:bold">${DL[day]}</td>
-      <td style="${td}">${e?.work_description || ""}</td>
-      <td style="${td}">${WT[e?.work_type] || ""}</td>
-      <td style="${td};text-align:center">${e?.date || ""}</td>
-      <td style="${td};text-align:center">${e?.evaluation || ""}</td>
-      <td style="${td};text-align:center">${e?.signature || ""}</td>
-      <td style="${td}">${e?.observations || ""}</td>
-      <td style="${td};text-align:center;white-space:nowrap">${e?.start_time || ""}</td>
-      <td style="${td};text-align:center;white-space:nowrap">${e?.end_time || ""}</td>
-    </tr>`;
+  const rows = ["monday","tuesday","wednesday","thursday","friday","saturday"].flatMap(day => {
+    const dayEntries = (sheet.work_entries || []).filter((x: any) => x.day === day);
+    const morning = dayEntries.find((x: any) => x.shift === "morning");
+    const afternoon = dayEntries.find((x: any) => x.shift === "afternoon");
+    return [
+      morning ? `<tr>
+        <td style="${td};font-weight:bold">${DL[day]}</td>
+        <td style="${td}">${morning.work_description || ""}</td>
+        <td style="${td}">${WT[morning.work_type] || ""}</td>
+        <td style="${td};text-align:center">${morning.date || ""}</td>
+        <td style="${td};text-align:center">${morning.evaluation || ""}</td>
+        <td style="${td};text-align:center">${morning.signature || ""}</td>
+        <td style="${td}">${morning.observations || ""}</td>
+        <td style="${td};text-align:center;white-space:nowrap;background:#FFF9E6">${morning.start_time || ""}</td>
+        <td style="${td};text-align:center;white-space:nowrap;background:#FFF9E6">${morning.end_time || ""}</td>
+      </tr>` : `<tr><td style="${td};font-weight:bold">${DL[day]}</td><td style="${td}" colspan="8"><em>Manhã — sem registo</em></td></tr>`,
+      afternoon ? `<tr>
+        <td style="${td}"></td>
+        <td style="${td}">${afternoon.work_description || ""}</td>
+        <td style="${td}">${WT[afternoon.work_type] || ""}</td>
+        <td style="${td};text-align:center">${afternoon.date || ""}</td>
+        <td style="${td};text-align:center">${afternoon.evaluation || ""}</td>
+        <td style="${td};text-align:center">${afternoon.signature || ""}</td>
+        <td style="${td}">${afternoon.observations || ""}</td>
+        <td style="${td};text-align:center;white-space:nowrap;background:#E6F0FF">${afternoon.start_time || ""}</td>
+        <td style="${td};text-align:center;white-space:nowrap;background:#E6F0FF">${afternoon.end_time || ""}</td>
+      </tr>` : `<tr><td style="${td}"></td><td style="${td}" colspan="8"><em>Tarde — sem registo</em></td></tr>`,
+    ];
   }).join("");
 
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
