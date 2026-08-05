@@ -19,6 +19,6 @@ DROP POLICY IF EXISTS "Admins can read email log" ON weekly_email_log;
 CREATE POLICY "Admins can read email log" ON weekly_email_log FOR SELECT USING (is_admin());
 
 DROP POLICY IF EXISTS "Service role can insert email log" ON weekly_email_log;
-CREATE POLICY "Service role can insert email log" ON weekly_email_log FOR INSERT WITH CHECK (true);
+CREATE POLICY "Service role can insert email log" ON weekly_email_log FOR INSERT TO service_role WITH CHECK (true);
 
 CREATE INDEX IF NOT EXISTS idx_weekly_email_log_worker ON weekly_email_log(worker_id, week_start);

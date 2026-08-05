@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
+  // Verify caller is admin
+  const serverClient = await createServerClient();
+  const { data: { user } } = await serverClient.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+  }
+  const { data: profile } = await serverClient
+    .from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || (profile.role !== "admin" && profile.role !== "hr")) {
+    return NextResponse.json({ error: "Apenas administradores." }, { status: 403 });
+  }
+
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
 

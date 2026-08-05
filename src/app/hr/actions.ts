@@ -24,6 +24,15 @@ export async function updateProfile(userId: string, data: { full_name?: string; 
 export async function adminUpdateUser(userId: string, data: { email?: string; password?: string }) {
   console.log("[adminUpdateUser] CALLED", { userId, hasEmail: !!data.email, hasPassword: !!data.password, passwordLen: data.password?.length });
 
+  // Verify caller is admin
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Não autenticado." };
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || (profile.role !== "admin" && profile.role !== "hr")) {
+    return { error: "Apenas administradores." };
+  }
+
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     console.error("[adminUpdateUser] MISSING SUPABASE_SERVICE_ROLE_KEY");

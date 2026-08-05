@@ -3,10 +3,22 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { startOfWeek, subDays, format } from "date-fns";
 
-export async function GET() { return handleCron(); }
-export async function POST() { return handleCron(); }
+export async function GET(request: Request) { return handleCron(request, "GET"); }
+export async function POST(request: Request) { return handleCron(request, "POST"); }
 
-async function handleCron() {
+async function handleCron(request: Request, method: string) {
+  // Vercel Cron calls with GET + x-vercel-cron header. pg_net trigger calls with POST.
+  // Gate GET (public HTTP) but allow POST (server-to-server from Supabase pg_net).
+  if (method === "GET") {
+    const isVercelCron = request.headers.get("x-vercel-cron") === "1";
+    const cronSecret = process.env.CRON_SECRET;
+    if (!isVercelCron) {
+      const authHeader = request.headers.get("authorization");
+      if (!cronSecret || !authHeader || authHeader !== `Bearer ${cronSecret}`) {
+        return NextResponse.json({ error: "Não autorizado. Use POST ou configure CRON_SECRET." }, { status: 401 });
+      }
+    }
+  }
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
   const adminEmail = process.env.ADMIN_EMAIL;
