@@ -54,13 +54,22 @@ async function handleCron() {
   if (today.getDay() === 0) { // Sunday
     const lastMonday = format(startOfWeek(subDays(today, 7), { weekStartsOn: 1 }), "yyyy-MM-dd");
 
+    // Get already-sent reminders for this week
+    const { data: sentReminders } = await supabase
+      .from("weekly_email_log")
+      .select("worker_id")
+      .eq("week_start", lastMonday)
+      .eq("email_type", "reminder");
+
+    const alreadyReminded = new Set((sentReminders || []).map(r => r.worker_id));
+
     // Get all workers
     const { data: workers } = await supabase.from("profiles").select("id, full_name, email").eq("role", "worker");
     // Get workers who already submitted for last week
     const { data: submitted } = await supabase.from("work_sheets").select("worker_id").eq("week_start", lastMonday);
 
     const submittedIds = new Set((submitted || []).map(s => s.worker_id));
-    const missing = (workers || []).filter(w => !submittedIds.has(w.id) && w.email);
+    const missing = (workers || []).filter(w => !submittedIds.has(w.id) && !alreadyReminded.has(w.id) && w.email);
 
     let reminded = 0, remindFailed = 0;
     for (const w of missing) {
@@ -68,12 +77,16 @@ async function handleCron() {
         await transporter.sendMail({
           from: gmailUser,
           to: w.email,
-          subject: "EQX — Folha de servico pendente",
+          subject: "EQX — Folha de serviço pendente",
           html: emailTemplate(
             `Olá ${w.full_name}`,
             `A folha de serviço da semana passada ainda não foi submetida. Por favor, submeta a sua folha.`,
             `Aceda: https://eqx-folha-servico.vercel.app/worker/dashboard`
           ),
+        });
+        // Log the reminder
+        await supabase.from("weekly_email_log").insert({
+          worker_id: w.id, week_start: lastMonday, email_type: "reminder",
         });
         reminded++;
       } catch (err: any) { console.error("[cron] reminder error:", err?.message); remindFailed++; }
@@ -82,12 +95,21 @@ async function handleCron() {
     results.reminders = { sent: reminded, failed: remindFailed };
 
     // ── 3. Weekly stats to ALL workers ──
+    // Check which workers already received stats for this week
+    const { data: sentStats } = await supabase
+      .from("weekly_email_log")
+      .select("worker_id")
+      .eq("week_start", lastMonday)
+      .eq("email_type", "stats");
+
+    const alreadyGotStats = new Set((sentStats || []).map(s => s.worker_id));
+
     const { data: allWorkers } = await supabase.from("profiles").select("id, full_name, email").eq("role", "worker");
     const { data: weekSheets } = await supabase.from("work_sheets").select("worker_id, work_entries(*)").eq("week_start", lastMonday);
 
     let statsSent = 0, statsFailed = 0;
     for (const w of (allWorkers || [])) {
-      if (!w.email) continue;
+      if (!w.email || alreadyGotStats.has(w.id)) continue;
       const workerSheets = (weekSheets || []).filter((s: any) => s.worker_id === w.id);
       const mins = workerSheets.reduce((sum: number, s: any) => {
         return sum + (s.work_entries || []).reduce((s2: number, e: any) => {
@@ -113,6 +135,10 @@ async function handleCron() {
             `Resumo da semana passada:<br><br><strong>${totalHours}</strong> trabalhadas<br><strong>${workerSheets.length}</strong> folha(s) submetida(s)<br><br>Veja o seu histórico: https://eqx-folha-servico.vercel.app/worker/dashboard`,
             `Veja o seu histórico em: https://eqx-folha-servico.vercel.app/worker/dashboard`
           ),
+        });
+        // Log the stats email
+        await supabase.from("weekly_email_log").insert({
+          worker_id: w.id, week_start: lastMonday, email_type: "stats",
         });
         statsSent++;
       } catch (err: any) { console.error("[cron] stats error:", err?.message); statsFailed++; }
