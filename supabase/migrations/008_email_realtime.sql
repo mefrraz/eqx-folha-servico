@@ -13,7 +13,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  api_url TEXT := 'https://eqx-folha-servico.vercel.app/api/cron/notify-emails';
+  api_url TEXT := 'https://folhas.eqx.pt/api/cron/notify-emails';
 BEGIN
   -- Faz o pedido HTTP em background (async)
   PERFORM net.http_post(

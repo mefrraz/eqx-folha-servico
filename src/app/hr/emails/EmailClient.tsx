@@ -10,6 +10,8 @@ interface Worker {
   email: string;
 }
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://folhas.eqx.pt";
+
 const PREDEFINED = [
   {
     id: "welcome",
@@ -20,7 +22,7 @@ const PREDEFINED = [
 
 A sua conta na plataforma EQX Folha de Serviço foi criada com sucesso.
 
-Aceda à plataforma e seleccione as suas obras: https://eqx-folha-servico.vercel.app`,
+Aceda à plataforma e seleccione as suas obras: ${APP_URL}`,
   },
   {
     id: "admin_notify",
@@ -32,7 +34,7 @@ Aceda à plataforma e seleccione as suas obras: https://eqx-folha-servico.vercel
 Cliente: Ver na plataforma
 Total de horas: Ver na plataforma
 
-Ver notificações: https://eqx-folha-servico.vercel.app/hr/notifications`,
+Ver notificações: ${APP_URL}/hr/notifications`,
   },
   {
     id: "weekly_reminder",

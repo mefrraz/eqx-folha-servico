@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { startOfWeek, subDays, format } from "date-fns";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://folhas.eqx.pt";
+
 export async function GET(request: Request) { return handleCron(request, "GET"); }
 export async function POST(request: Request) { return handleCron(request, "POST"); }
 
@@ -31,7 +33,7 @@ async function handleCron(request: Request, method: string) {
 
   const supabase = createClient(supabaseUrl!, serviceRoleKey);
   const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
-  const logoUrl = "https://eqx-folha-servico.vercel.app/eqx-logo.svg";
+  const logoUrl = `${APP_URL}/eqx-logo.svg`;
 
   const results: any = {};
 
@@ -51,7 +53,7 @@ async function handleCron(request: Request, method: string) {
           from: gmailUser,
           to: adminEmail,
           subject: `EQX: ${n.message}`,
-          html: emailTemplate("Nova folha submetida", n.message, `Ver: https://eqx-folha-servico.vercel.app/hr/notifications`),
+          html: emailTemplate("Nova folha submetida", n.message, `Ver: ${APP_URL}/hr/notifications`),
         });
         await supabase.from("notifications").update({ emailed_at: new Date().toISOString() }).eq("id", n.id);
         sent++;
@@ -93,7 +95,7 @@ async function handleCron(request: Request, method: string) {
           html: emailTemplate(
             `Olá ${w.full_name}`,
             `A folha de serviço da semana passada ainda não foi submetida. Por favor, submeta a sua folha.`,
-            `Aceda: https://eqx-folha-servico.vercel.app/worker/dashboard`
+            `Aceda: ${APP_URL}/worker/dashboard`
           ),
         });
         // Log the reminder
@@ -144,8 +146,8 @@ async function handleCron(request: Request, method: string) {
           subject: "EQX — Resumo da semana",
           html: emailTemplate(
             `Olá ${w.full_name}`,
-            `Resumo da semana passada:<br><br><strong>${totalHours}</strong> trabalhadas<br><strong>${workerSheets.length}</strong> folha(s) submetida(s)<br><br>Veja o seu histórico: https://eqx-folha-servico.vercel.app/worker/dashboard`,
-            `Veja o seu histórico em: https://eqx-folha-servico.vercel.app/worker/dashboard`
+            `Resumo da semana passada:<br><br><strong>${totalHours}</strong> trabalhadas<br><strong>${workerSheets.length}</strong> folha(s) submetida(s)<br><br>Veja o seu histórico: ${APP_URL}/worker/dashboard`,
+            `Veja o seu histórico em: ${APP_URL}/worker/dashboard`
           ),
         });
         // Log the stats email
@@ -168,7 +170,7 @@ function emailTemplate(title: string, body: string, footer: string) {
 <tr><td align="center">
 <table width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
   <tr><td style="background:#fff;padding:24px 30px 16px;text-align:center;border-bottom:3px solid #F1C411">
-    <img src="https://eqx-folha-servico.vercel.app/eqx-logo.svg" alt="EQX" style="height:36px" />
+    <img src="${APP_URL}/eqx-logo.svg" alt="EQX" style="height:36px" />
   </td></tr>
   <tr><td style="padding:30px">
     <h2 style="margin:0 0 10px;color:#1a1a1a;font-size:18px">${title}</h2>

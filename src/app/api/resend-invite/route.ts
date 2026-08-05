@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const gmailPass = process.env.GMAIL_APP_PASSWORD;
     if (gmailUser && gmailPass) {
       const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://eqx-folha-servico.vercel.app";
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://folhas.eqx.pt";
       const setPasswordUrl = `${appUrl}/auth/set-password?token=${inviteToken}`;
 
       await transporter.sendMail({

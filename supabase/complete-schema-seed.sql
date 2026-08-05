@@ -185,7 +185,7 @@ CREATE OR REPLACE FUNCTION notify_email_send()
 RETURNS TRIGGER SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   PERFORM net.http_post(
-    url := 'https://eqx-folha-servico.vercel.app/api/cron/notify-emails',
+    url := 'https://folhas.eqx.pt/api/cron/notify-emails',
     body := '{}'::jsonb,
     timeout_milliseconds := 5000
   );
