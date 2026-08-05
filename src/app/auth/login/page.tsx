@@ -18,6 +18,7 @@ export default function LoginPage() {
         <div><label htmlFor="password" className="label-field">Password</label><input id="password" type="password" required value={password} onChange={e=>setPassword(e.target.value)} className="input-field" placeholder="••••••••"/></div>
         <button type="submit" disabled={loading} className="btn-primary w-full">{loading?"A entrar…":"Entrar"}</button>
         <p className="text-center text-xs text-brand-muted">Sem conta? <Link href="/auth/signup" className="font-semibold text-brand-dark hover:text-brand-gold transition-colors">Criar conta</Link></p>
+        <p className="text-center"><Link href="/auth/reset-password" className="text-xs text-brand-muted hover:text-brand-gold transition-colors">Esqueci a password</Link></p>
       </form>
     </div>
   </div>);

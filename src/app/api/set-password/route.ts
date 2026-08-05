@@ -1,7 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  // Rate limit: 5 requests per minute per IP
+  const ip = request.headers.get("x-forwarded-for") || "unknown";
+  const rl = checkRateLimit(`set-password:${ip}`, 5, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Demasiadas tentativas. Tente novamente mais tarde." }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const { token, password } = body;

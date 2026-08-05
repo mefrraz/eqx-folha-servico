@@ -6,6 +6,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
+import toast from "react-hot-toast";
 import AddUserButton from "./AddUserButton";
 import BulkTransfer from "./BulkTransfer";
 
@@ -18,12 +19,22 @@ export default function UsersPageClient() {
   const supabase = createClient();
 
   useEffect(() => {
-    supabase.from("profiles").select("id,full_name,email,created_at").eq("role","worker").order("full_name").then(({data}) => setWorkers(data||[]));
-    // Fetch latest sheets per worker (limit to avoid over-fetching; add server-side pagination for production)
+    supabase.from("profiles").select("id,full_name,email,created_at,onboarded").eq("role","worker").order("full_name").then(({data}) => setWorkers(data||[]));
     supabase.from("work_sheets").select("worker_id,week_start,work_entries(*),project_id").order("week_start",{ascending:false}).limit(500).then(({data}) => setSheets(data||[]));
     supabase.from("projects").select("id,name").order("name").then(({data}) => setProjects(data||[]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleResendInvite = async (userId: string, name: string) => {
+    const res = await fetch("/api/resend-invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    const data = await res.json();
+    if (data.error) { toast.error(data.error); return; }
+    toast.success(`Convite reenviado para ${name}.`);
+  };
 
   const latestByWorker = new Map<string,any>();
   for(const s of sheets){if(!latestByWorker.has(s.worker_id))latestByWorker.set(s.worker_id,s);}
@@ -59,7 +70,7 @@ export default function UsersPageClient() {
       <div className="card !p-0 overflow-hidden">
         <table className="w-full text-sm table-fixed">
           <thead><tr className="border-b border-brand-light/30 bg-brand-gold/5"><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide">Nome</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden sm:table-cell">Email</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden md:table-cell">Última folha</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden md:table-cell">Horas</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden lg:table-cell">Registo</th></tr></thead>
-          <tbody>{filtered.map(w=>{const l=latestByWorker.get(w.id);const m=calcMinutes(l?.work_entries||[]);return(<tr key={w.id} className="border-b border-brand-light/20 hover:bg-brand-gold/5 transition-colors"><td className="py-3 px-4"><Link href={`/hr/users/${w.id}`} prefetch={false} className="text-brand-dark hover:text-brand-gold font-medium">{w.full_name}</Link></td><td className="py-3 px-4 text-brand-soft hidden sm:table-cell text-xs">{w.email||"—"}</td><td className="py-3 px-4 text-brand-soft hidden md:table-cell font-mono text-xs">{l?format(new Date(l.week_start+"T00:00:00"),"dd/MM/yy",{locale:pt}):"—"}</td><td className="py-3 px-4 text-brand-dark hidden md:table-cell font-mono text-xs">{l?formatMinutes(m):"—"}</td><td className="py-3 px-4 text-brand-muted hidden lg:table-cell text-xs font-mono">{format(new Date(w.created_at),"dd/MM/yy",{locale:pt})}</td></tr>);})}</tbody>
+          <tbody>{filtered.map(w=>{const l=latestByWorker.get(w.id);const m=calcMinutes(l?.work_entries||[]);const notOnboarded = w.onboarded === false;return(<tr key={w.id} className={`border-b border-brand-light/20 hover:bg-brand-gold/5 transition-colors ${notOnboarded ? "bg-red-50/30" : ""}`}><td className="py-3 px-4"><Link href={`/hr/users/${w.id}`} prefetch={false} className="text-brand-dark hover:text-brand-gold font-medium">{w.full_name}</Link>{notOnboarded && <span className="ml-2 text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">Pendente</span>}</td><td className="py-3 px-4 text-brand-soft hidden sm:table-cell text-xs">{w.email||"—"}</td><td className="py-3 px-4 text-brand-soft hidden md:table-cell font-mono text-xs">{l?format(new Date(l.week_start+"T00:00:00"),"dd/MM/yy",{locale:pt}):"—"}</td><td className="py-3 px-4 text-brand-dark hidden md:table-cell font-mono text-xs">{l?formatMinutes(m):"—"}</td><td className="py-3 px-4 text-brand-muted hidden lg:table-cell text-xs font-mono">{format(new Date(w.created_at),"dd/MM/yy",{locale:pt})}</td><td className="py-3 px-2">{notOnboarded && <button onClick={() => handleResendInvite(w.id, w.full_name)} className="text-[10px] text-brand-gold hover:underline whitespace-nowrap">Reenviar convite</button>}</td></tr>);})}</tbody>
         </table>
         {filtered.length===0 && <div className="text-center py-12 text-brand-muted text-sm">Nenhum resultado.</div>}
       </div>

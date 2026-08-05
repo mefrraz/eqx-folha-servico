@@ -1,10 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 
 export async function POST(request: Request) {
+  // Rate limit: 20 invites per hour per admin
+  const ip = request.headers.get("x-forwarded-for") || "unknown";
+  const rl = checkRateLimit(`create-user:${ip}`, 20, 3600_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Demasiados convites. Tente novamente mais tarde." }, { status: 429 });
+  }
+
   try {
     // Verify the caller is an admin
     const serverClient = await createServerClient();
