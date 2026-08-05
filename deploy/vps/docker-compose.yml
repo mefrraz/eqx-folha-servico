@@ -1,0 +1,45 @@
+# EQX Folha de Serviço — Serviços VPS
+# Roda na VPS Linux 24/7 para backups + monitorização.
+# A app Next.js continua no Vercel (gratuito, mais fiável).
+#
+# Setup:
+#   1. Copiar .env.example → .env e preencher SUPABASE_URL
+#   2. docker compose up -d
+#   3. Verificar: docker compose logs backup
+
+version: "3.8"
+
+services:
+  # ── Backup diário do Supabase PostgreSQL ──
+  backup:
+    image: alpine:3.20
+    container_name: eqx-backup
+    restart: unless-stopped
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    env_file:
+      - .env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "0 3 * * * /backup.sh >> /var/log/backup.log 2>&1" > /etc/crontabs/root
+        crond -f -l 2
+    networks:
+      - eqx-net
+
+  # ── Uptime Kuma (monitorização) ──
+  uptime:
+    image: louislam/uptime-kuma:1
+    container_name: eqx-uptime
+    restart: unless-stopped
+    volumes:
+      - ./uptime-data:/app/data
+    ports:
+      - "3001:3001"
+    networks:
+      - eqx-net
+
+networks:
+  eqx-net:
+    driver: bridge

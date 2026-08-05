@@ -26,7 +26,8 @@ Plataforma web desenvolvida para a **[EQX](https://eqx.pt)** gerir as folhas de 
 | **Login / Registo** | Email + password |
 | **Dashboard** | Semana atual + histórico de folhas anteriores |
 | **Nova folha de serviço** | Formulário Seg–Sáb com dropdown de obras atribuídas |
-| **Campos por dia** | Trabalho a executar, tipo, data, hora início/fim, avaliação, rubrica, observações |
+| **Turnos manhã/tarde** | 2 turnos por dia com validação sem sobreposição (fim manhã ≤ início tarde) |
+| **Campos por turno** | Trabalho, tipo, data, hora início/fim, avaliação, rubrica, observações |
 | **Dropdown de obras** | Seleciona a obra atribuída → preenche cliente e nº obra automaticamente |
 | **Rascunho / Submeter** | Guarda rascunho ou submete folha final |
 | **Definições** | Alterar nome e password |
@@ -48,7 +49,7 @@ Plataforma web desenvolvida para a **[EQX](https://eqx.pt)** gerir as folhas de 
 | **Gestão de obras** | CRUD com nome, número, cliente e localização |
 | **Atribuir obras** | Atribuir/remover trabalhadores a obras (individual no perfil ou em massa na lista) |
 | **Transferir em massa** | Selecionar vários trabalhadores e atribuir a uma obra de uma vez |
-| **Criar utilizadores** | Modal no admin (sem sair da sessão) |
+| **Criar utilizadores** | Convite por email: admin cria conta → email com link → utilizador define password |
 | **Editar utilizadores** | Nome, email, password |
 | **Eliminar utilizadores** | Com confirmação de credenciais admin |
 
@@ -124,6 +125,32 @@ UPDATE profiles SET role = 'admin' WHERE email = 'admin@eqx.pt';
 1. [vercel.com](https://vercel.com) → Import repo
 2. Settings → Environment Variables → adicionar as mesmas vars do `.env.local`
 3. Deploy automático a cada push
+
+### 7. VPS — Backups e Monitorização
+
+A app corre no Vercel. A VPS serve para backups diários e monitorização.
+
+```bash
+cd deploy/vps
+cp .env.example .env
+# Editar .env com a connection string do Supabase
+nano .env
+
+docker compose up -d
+```
+
+**Serviços:**
+- **Backup PostgreSQL** — `pg_dump` diário às 3h, 30 dias de retenção, formatos `.dump` + `.sql.gz`
+- **Uptime Kuma** — Dashboard em `http://VPS_IP:3001`, monitoriza `folhas.eqx.pt` e Supabase
+
+**Restaurar backup:**
+```bash
+# Do ficheiro .dump (recomendado)
+pg_restore -d "$SUPABASE_DB_URL" eqx-20250101.dump
+
+# Ou do .sql.gz
+gunzip -c eqx-20250101.sql.gz | psql "$SUPABASE_DB_URL"
+```
 
 ---
 
