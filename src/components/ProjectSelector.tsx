@@ -54,6 +54,11 @@ export default function ProjectSelector({ open, onClose }: { open?: boolean; onC
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Sessão expirada."); setSaving(false); return; }
 
+    // Check if this is the first selection (onboarding) or a change
+    const { data: profile } = await supabase.from("profiles").select("onboarded").eq("id", user.id).single();
+    const isFirstTime = !profile?.onboarded;
+    const newStatus = isFirstTime ? "approved" : "pending";
+
     // Remove assignments the worker deselected
     const { data: current } = await supabase.from("worker_projects").select("project_id").eq("worker_id", user.id);
     const currentIds = new Set((current || []).map((c: any) => c.project_id));
@@ -63,24 +68,24 @@ export default function ProjectSelector({ open, onClose }: { open?: boolean; onC
       }
     }
 
-    // Insert newly selected as pending
+    // Insert newly selected (approved on first time, pending on change)
     let done = 0;
     for (const pid of Array.from(selected)) {
       if (currentIds.has(pid)) continue;
-      const { error } = await supabase.from("worker_projects").insert({ worker_id: user.id, project_id: pid, status: "pending" });
+      const { error } = await supabase.from("worker_projects").insert({ worker_id: user.id, project_id: pid, status: newStatus });
       if (!error) done++;
       else console.error("[ProjectSelector] insert error:", error);
     }
 
     // Mark as onboarded
     await supabase.from("profiles").update({ onboarded: true }).eq("id", user.id);
-    // Notify admin of pending project request
-    if (done > 0) {
+    // Notify admin only on project change (pending)
+    if (!isFirstTime && done > 0) {
       await supabase.from("notifications").insert({
         message: `${user.email} pediu ${done} obra(s). Aprove em Obras → Pedidos.`,
       });
     }
-    toast.success(done > 0 ? `${done} obra(s) aguardam aprovação do admin.` : "Obras atualizadas.");
+    toast.success(isFirstTime ? `${done} obra(s) selecionada(s)!` : `${done} obra(s) aguardam aprovação do admin.`);
     setSaving(false); setShow(false);
     if (onClose) onClose();
     router.refresh();
