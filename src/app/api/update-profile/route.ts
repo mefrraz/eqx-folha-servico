@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  const { userId, full_name, shift_preference } = await request.json();
+  const { userId, full_name } = await request.json();
 
   // Only allow updating own profile, or if admin
   if (user.id !== userId) {
@@ -28,11 +28,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const updates: Record<string, unknown> = {};
-  if (full_name !== undefined) updates.full_name = full_name;
-  if (shift_preference !== undefined) updates.shift_preference = shift_preference;
-
-  const { error } = await supabase.from("profiles").update(updates).eq("id", userId);
+  const { error } = await supabase.from("profiles").update({ full_name }).eq("id", userId);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ success: true });
 }

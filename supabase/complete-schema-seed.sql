@@ -82,10 +82,6 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS number TEXT;
 -- Garantir coluna onboarded nas profiles (v6.27)
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS onboarded BOOLEAN DEFAULT false;
 
--- Garantir coluna shift_preference nas profiles (v7.6)
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS shift_preference TEXT NOT NULL DEFAULT 'both'
-  CHECK (shift_preference IN ('both', 'morning', 'afternoon'));
-
 CREATE TABLE IF NOT EXISTS clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,

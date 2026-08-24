@@ -27,7 +27,6 @@ Plataforma web desenvolvida para a **[EQX](https://eqx.pt)** gerir as folhas de 
 | **Dashboard** | Semana atual + histórico de folhas anteriores |
 | **Nova folha de serviço** | Formulário Seg–Sáb com dropdown de obras atribuídas |
 | **Turnos manhã/tarde** | 2 turnos por dia com validação sem sobreposição (fim manhã ≤ início tarde) |
-| **Preferência de horário** | Cada trabalhador define "Manhã e Tarde", "Só de manhã" ou "Só de tarde" — o formulário só mostra os turnos relevantes |
 | **Não trabalhei** | No telemóvel, botão por turno que esbate os campos e marca o turno como não trabalhado |
 | **Validação em tempo real** | Aviso imediato quando os turnos manhã/tarde se sobrepõem |
 | **Campos por turno** | Trabalho, tipo, data, hora início/fim, avaliação, rubrica, observações |

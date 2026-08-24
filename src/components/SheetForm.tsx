@@ -49,7 +49,6 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [shiftPreference, setShiftPreference] = useState<"both" | "morning" | "afternoon">("both");
   const [skipped, setSkipped] = useState<Set<string>>(new Set());
 
   const today = new Date();
@@ -58,18 +57,10 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
   const [workNumber, setWorkNumber] = useState(existingSheet?.work_number || "");
   const [projects, setProjects] = useState<any[]>([]);
 
-  // Fetch worker's assigned projects + shift preference
+  // Fetch worker's assigned projects
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      supabase
-        .from("profiles")
-        .select("shift_preference")
-        .eq("id", user.id)
-        .single()
-        .then(({ data }) => {
-          if (data?.shift_preference) setShiftPreference(data.shift_preference);
-        });
       supabase
         .from("worker_projects")
         .select("project:projects(id, name, number, client:clients(name))")
@@ -83,14 +74,6 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         });
     });
   }, []);
-
-  // Shifts to display based on the worker's preference
-  const activeShifts: WorkEntry["shift"][] =
-    shiftPreference === "morning"
-      ? ["morning"]
-      : shiftPreference === "afternoon"
-        ? ["afternoon"]
-        : ["morning", "afternoon"];
 
   /** Toggle a shift as "não trabalhei" (fades fields, keeps them visible) */
   const toggleSkip = (key: string) => {
@@ -119,8 +102,6 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
     }
     return flat;
   });
-
-  const visibleEntries = entries.filter((e) => activeShifts.includes(e.shift));
 
   const weekDates = getWeekDates(
     existingSheet ? new Date(existingSheet.week_start + "T00:00:00") : weekStart
@@ -348,11 +329,11 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         </div>
 
         {/* Desktop table */}
-        <SheetTable entries={visibleEntries} weekDates={weekDates} upd={upd} />
+        <SheetTable entries={entries} weekDates={weekDates} upd={upd} />
 
         {/* Mobile cards */}
         <SheetMobileCards
-          entries={visibleEntries}
+          entries={entries}
           weekDates={weekDates}
           upd={upd}
           skipped={skipped}
