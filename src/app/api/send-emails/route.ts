@@ -17,6 +17,7 @@ export async function POST(request: Request) {
 
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  const emailFrom = process.env.EMAIL_FROM || "rh@eqx.pt";
 
   if (!gmailUser || !gmailPass) {
     return NextResponse.json({ error: "GMAIL_USER ou GMAIL_APP_PASSWORD nao configurados." }, { status: 500 });
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
         .join("");
 
       await transporter.sendMail({
-        from: gmailUser,
+        from: `EQX Folha de Serviço <${emailFrom}>`,
         to: w.email,
         subject: replaceVars(subject, w),
         html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#F7F7F7">

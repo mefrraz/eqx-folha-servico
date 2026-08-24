@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EQX — Login (Mockup)</title>
+<style>
+  :root{--gold:#F1C411;--dark:#1a1a1a;--soft:#54595F;--muted:#7A7A7A;--light:#CFCFCF;--page:#F7F7F7}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--page);color:var(--dark);line-height:1.5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:#fff;border:1px solid #e5e5e5;border-radius:20px;padding:36px;width:100%;max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+  .logo{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:18px;margin-bottom:6px}
+  .logo .mark{width:38px;height:38px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px}
+  .logo small{display:block;font-size:9px;letter-spacing:.2em;color:var(--muted);font-weight:600;text-transform:uppercase;text-align:center}
+  .sub{text-align:center;color:var(--soft);font-size:13px;margin:14px 0 24px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--soft);margin-bottom:6px}
+  input{width:100%;border:1.5px solid #e5e5e5;border-radius:12px;padding:12px 14px;font-size:14px;color:var(--dark);margin-bottom:16px;background:#fff}
+  input:focus{outline:none;border-color:var(--gold)}
+  .btn{width:100%;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:600;background:var(--gold);color:var(--dark);cursor:pointer}
+  .btn:hover{filter:brightness(1.05)}
+  .link{display:block;text-align:center;font-size:13px;color:var(--soft);margin-top:16px;text-decoration:none}
+  .link:hover{color:var(--dark)}
+  .back{position:absolute;top:20px;left:20px;font-size:13px;color:var(--soft);text-decoration:none}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← Índice</a>
+<div class="card">
+  <div class="logo"><div class="mark">✈</div><div>EQX<small>Folha de Serviço</small></div></div>
+  <p class="sub">Entra na tua conta para preencher a folha de serviço</p>
+  <label>Email</label>
+  <input type="email" placeholder="nome@eqx.pt" value="joao@eqx.pt">
+  <label>Password</label>
+  <input type="password" placeholder="••••••••">
+  <button class="btn">Entrar</button>
+  <a class="link" href="#">Esqueci-me da password</a>
+</div>
+</body>
+</html>

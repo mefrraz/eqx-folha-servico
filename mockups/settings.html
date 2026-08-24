@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EQX — Definições (Mockup)</title>
+<style>
+  :root{--gold:#F1C411;--dark:#1a1a1a;--soft:#54595F;--muted:#7A7A7A;--light:#CFCFCF;--page:#F7F7F7}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--page);color:var(--dark);line-height:1.5}
+  .topbar{background:#fff;border-bottom:1px solid #e5e5e5}
+  .topbar-inner{max-width:960px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700}
+  .logo .mark{width:30px;height:30px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .logo small{display:block;font-size:9px;letter-spacing:.18em;color:var(--muted);font-weight:600;text-transform:uppercase}
+  .wrap{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+  .back{display:inline-block;font-size:13px;color:var(--soft);text-decoration:none;margin-bottom:16px}
+  .back:hover{color:var(--dark)}
+  h1{font-size:22px;font-weight:700;margin-bottom:20px}
+  .card{background:#fff;border:1px solid #e5e5e5;border-radius:16px;padding:20px;margin-bottom:16px}
+  .card h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin-bottom:16px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--soft);margin-bottom:6px}
+  input{width:100%;border:1.5px solid #e5e5e5;border-radius:10px;padding:11px 13px;font-size:14px;color:var(--dark);margin-bottom:14px;background:#fff}
+  input:focus{outline:none;border-color:var(--gold)}
+  .btn{border:none;border-radius:12px;padding:12px 22px;font-size:14px;font-weight:600;background:var(--gold);color:var(--dark);cursor:pointer}
+  .btn:hover{filter:brightness(1.05)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .stat{background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px;text-align:center}
+  .stat .v{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
+  .stat .l{font-size:11px;color:var(--muted);margin-top:2px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:13px;background:rgba(241,196,17,.12);color:var(--dark);font-weight:600;padding:8px 14px;border-radius:10px}
+  .chip small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <div class="logo"><div class="mark">✈</div><div>EQX<small>Folha de Serviço</small></div></div>
+  <span style="font-size:13px;color:var(--soft)">João Silva</span>
+</div></div>
+<div class="wrap">
+  <a class="back" href="index.html">← Voltar ao índice</a>
+  <h1>O meu perfil</h1>
+  <div class="stats">
+    <div class="stat"><div class="v">38h</div><div class="l">Horas totais</div></div>
+    <div class="stat"><div class="v">5</div><div class="l">Folhas</div></div>
+    <div class="stat"><div class="v">2</div><div class="l">Obras</div></div>
+  </div>
+  <div class="card">
+    <h3>As minhas obras</h3>
+    <div class="chips"><span class="chip">Obra A<small>Cliente X</small></span><span class="chip">Obra B<small>Cliente Y</small></span></div>
+  </div>
+  <div class="card">
+    <h3>Editar dados</h3>
+    <label>Nome</label><input value="João Silva">
+    <label>Nova password (opcional)</label><input type="password" placeholder="Deixar vazio = manter">
+    <button class="btn">Guardar</button>
+  </div>
+</div>
+</body>
+</html>

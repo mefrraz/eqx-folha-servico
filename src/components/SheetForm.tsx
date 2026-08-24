@@ -49,6 +49,8 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [shiftPreference, setShiftPreference] = useState<"both" | "morning" | "afternoon">("both");
+  const [skipped, setSkipped] = useState<Set<string>>(new Set());
 
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -56,10 +58,18 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
   const [workNumber, setWorkNumber] = useState(existingSheet?.work_number || "");
   const [projects, setProjects] = useState<any[]>([]);
 
-  // Fetch worker's assigned projects
+  // Fetch worker's assigned projects + shift preference
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
+      supabase
+        .from("profiles")
+        .select("shift_preference")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.shift_preference) setShiftPreference(data.shift_preference);
+        });
       supabase
         .from("worker_projects")
         .select("project:projects(id, name, number, client:clients(name))")
@@ -73,6 +83,24 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         });
     });
   }, []);
+
+  // Shifts to display based on the worker's preference
+  const activeShifts: WorkEntry["shift"][] =
+    shiftPreference === "morning"
+      ? ["morning"]
+      : shiftPreference === "afternoon"
+        ? ["afternoon"]
+        : ["morning", "afternoon"];
+
+  /** Toggle a shift as "não trabalhei" (fades fields, keeps them visible) */
+  const toggleSkip = (key: string) => {
+    setSkipped((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const [entries, setEntries] = useState<WorkEntry[]>(() => {
     // Build 12 entries: 6 days × 2 shifts
@@ -91,6 +119,8 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
     }
     return flat;
   });
+
+  const visibleEntries = entries.filter((e) => activeShifts.includes(e.shift));
 
   const weekDates = getWeekDates(
     existingSheet ? new Date(existingSheet.week_start + "T00:00:00") : weekStart
@@ -111,8 +141,12 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
       const afternoon = entries.find((e) => e.day === d.key && e.shift === "afternoon");
       if (!morning || !afternoon) continue;
 
-      // Validate each shift's own times
+      const morningSkipped = skipped.has(`${d.key}-morning`);
+      const afternoonSkipped = skipped.has(`${d.key}-afternoon`);
+
+      // Validate each shift's own times (skip if marked as not worked)
       for (const shift of [morning, afternoon]) {
+        if (skipped.has(`${d.key}-${shift.shift}`)) continue;
         if (shift.start_time && !shift.end_time) {
           return `${d.label} (${shift.shift === "morning" ? "manhã" : "tarde"}): hora de fim obrigatória.`;
         }
@@ -125,7 +159,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
       }
 
       // Validate no overlap between morning and afternoon
-      if (morning.end_time && afternoon.start_time) {
+      if (!morningSkipped && !afternoonSkipped && morning.end_time && afternoon.start_time) {
         if (morning.end_time > afternoon.start_time) {
           return `${d.label}: turnos sobrepostos. Fim da manhã (${morning.end_time}) deve ser ≤ início da tarde (${afternoon.start_time}).`;
         }
@@ -201,18 +235,19 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
 
     // Upsert entries — insert new, update existing
     for (const e of entries) {
+      const isSkipped = skipped.has(`${e.day}-${e.shift}`);
       const ep = {
         sheet_id: sid,
         day: e.day,
         shift: e.shift,
-        work_description: e.work_description,
-        work_type: e.work_type,
+        work_description: isSkipped ? "" : e.work_description,
+        work_type: isSkipped ? "" : e.work_type,
         date: e.date || weekDates.find((d) => d.key === e.day)?.date || null,
-        evaluation: e.evaluation,
-        signature: e.signature,
-        observations: e.observations,
-        start_time: e.start_time || null,
-        end_time: e.end_time || null,
+        evaluation: isSkipped ? "" : e.evaluation,
+        signature: isSkipped ? "" : e.signature,
+        observations: isSkipped ? "" : e.observations,
+        start_time: isSkipped ? null : e.start_time || null,
+        end_time: isSkipped ? null : e.end_time || null,
       };
       if (e.id) {
         await supabase.from("work_entries").update(ep).eq("id", e.id);
@@ -226,7 +261,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
     router.refresh();
   };
 
-  const mins = calcMinutes(entries);
+  const mins = calcMinutes(entries.filter((e) => !skipped.has(`${e.day}-${e.shift}`)));
   const hrs = Math.floor(mins / 60);
   const min = mins % 60;
 
@@ -299,10 +334,16 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         </div>
 
         {/* Desktop table */}
-        <SheetTable entries={entries} weekDates={weekDates} upd={upd} />
+        <SheetTable entries={visibleEntries} weekDates={weekDates} upd={upd} />
 
         {/* Mobile cards */}
-        <SheetMobileCards entries={entries} weekDates={weekDates} upd={upd} />
+        <SheetMobileCards
+          entries={visibleEntries}
+          weekDates={weekDates}
+          upd={upd}
+          skipped={skipped}
+          onToggleSkip={toggleSkip}
+        />
 
         {/* Desktop observations row */}
         <div className="hidden lg:block mt-4">

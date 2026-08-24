@@ -4,9 +4,11 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import { formatMinutes } from "@/lib/utils";
+import { SHIFT_PREFERENCE_LABELS } from "@/lib/types";
 
 export default function WorkerSettingsClient({ userId, profile, totalMins, sheetsCount, projects }: { userId: string; profile: any; totalMins: number; sheetsCount: number; projects: any[] }) {
   const [name, setName] = useState(profile?.full_name || "");
+  const [shiftPreference, setShiftPreference] = useState(profile?.shift_preference || "both");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const supabase = createClient();
@@ -15,9 +17,9 @@ export default function WorkerSettingsClient({ userId, profile, totalMins, sheet
     setSaving(true);
     let err = false;
 
-    if (name !== profile?.full_name) {
-      const r = await fetch("/api/update-profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, full_name: name }) });
-      if ((await r.json()).error) { toast.error("Erro ao guardar nome."); err = true; }
+    if (name !== profile?.full_name || shiftPreference !== (profile?.shift_preference || "both")) {
+      const r = await fetch("/api/update-profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, full_name: name, shift_preference: shiftPreference }) });
+      if ((await r.json()).error) { toast.error("Erro ao guardar dados."); err = true; }
     }
 
     if (password && password.length >= 6) {
@@ -60,6 +62,15 @@ export default function WorkerSettingsClient({ userId, profile, totalMins, sheet
       <div className="card space-y-4">
         <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase">Editar dados</h4>
         <div><label className="label-field">Nome</label><input type="text" value={name} onChange={e => setName(e.target.value)} className="input-field" /></div>
+        <div>
+          <label className="label-field">Horário de trabalho</label>
+          <select value={shiftPreference} onChange={e => setShiftPreference(e.target.value)} className="input-field">
+            <option value="both">{SHIFT_PREFERENCE_LABELS.both}</option>
+            <option value="morning">{SHIFT_PREFERENCE_LABELS.morning}</option>
+            <option value="afternoon">{SHIFT_PREFERENCE_LABELS.afternoon}</option>
+          </select>
+          <p className="text-xs text-brand-muted mt-1">A folha de serviço só mostrará os turnos que trabalhas.</p>
+        </div>
         <div><label className="label-field">Nova password (opcional)</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="input-field" placeholder="Deixar vazio = manter" minLength={6} /></div>
         <button onClick={handle} disabled={saving} className="btn-primary text-sm">{saving ? "A guardar…" : "Guardar"}</button>
       </div>

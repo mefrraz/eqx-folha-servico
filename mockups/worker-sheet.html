@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EQX — Folha de Serviço (Mockup v2)</title>
+<style>
+  :root{--gold:#F1C411;--dark:#1a1a1a;--soft:#54595F;--muted:#7A7A7A;--light:#CFCFCF;--page:#F7F7F7;--success:#61CE70}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--page);color:var(--dark);line-height:1.5}
+  button{font-family:inherit;cursor:pointer}
+  .topbar{background:#fff;border-bottom:1px solid #e5e5e5;position:sticky;top:0;z-index:20}
+  .topbar-inner{max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700}
+  .logo .mark{width:30px;height:30px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .logo small{display:block;font-size:9px;letter-spacing:.18em;color:var(--muted);font-weight:600;text-transform:uppercase}
+  .devtoggle{display:flex;background:var(--page);border:1px solid #e5e5e5;border-radius:999px;padding:3px}
+  .devtoggle button{border:none;background:transparent;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--soft)}
+  .devtoggle button.active{background:var(--dark);color:#fff}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+  .back{display:inline-block;font-size:13px;color:var(--soft);text-decoration:none;margin-bottom:16px}
+  .back:hover{color:var(--dark)}
+  .sheet-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+  .sheet-head h1{font-size:22px;font-weight:700}
+  .sheet-head .week{font-size:13px;color:var(--soft);margin-top:2px}
+  .status{font-size:12px;font-weight:600;background:rgba(241,196,17,.18);color:var(--dark);padding:5px 12px;border-radius:999px}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;background:#fff;border:1px solid #e5e5e5;border-radius:16px;padding:16px;margin-bottom:20px}
+  .meta label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+  .meta select,.meta input{width:100%;border:1.5px solid #e5e5e5;border-radius:10px;padding:9px 12px;font-size:14px;color:var(--dark);background:#fff}
+  .meta select:focus,.meta input:focus{outline:none;border-color:var(--gold)}
+  .total{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e5e5e5;border-radius:16px;padding:14px 18px;margin-bottom:20px}
+  .total .lbl{font-size:13px;color:var(--soft)}
+  .total .val{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace}
+  .actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
+  .btn{border:none;border-radius:12px;padding:12px 22px;font-size:14px;font-weight:600}
+  .btn-ghost{background:#fff;border:1.5px solid #e5e5e5;color:var(--soft)}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--dark)}
+  .btn-primary{background:var(--gold);color:var(--dark)}
+  .btn-primary:hover{filter:brightness(1.05)}
+
+  /* ── Desktop: day-card grid ── */
+  .daygrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px}
+  .d-card{background:#fff;border:1px solid #e5e5e5;border-radius:16px;overflow:hidden}
+  .d-card.off{opacity:.75}
+  .d-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg,#1a1a1a,#2a2a2a);color:#fff}
+  .d-head .day{font-weight:700;font-size:14px}
+  .d-head .date{font-size:12px;color:#cfcfcf}
+  .d-head .off-badge{font-size:10px;font-weight:600;background:rgba(255,255,255,.15);padding:3px 9px;border-radius:999px}
+  .shift{padding:12px 16px;border-top:1px solid #f2f2f2}
+  .shift:first-of-type{border-top:none}
+  .shift.skipped{display:none}
+  .shift-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .shift-top .s{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+  .shift-top .s.am{color:var(--dark)}
+  .shift-top .s.pm{color:var(--soft)}
+  .skip-switch{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:600}
+  .switch{position:relative;width:38px;height:22px;background:#e5e5e5;border-radius:999px;transition:background .2s}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .switch.on{background:var(--dark)}
+  .switch.on::after{transform:translateX(16px)}
+  .f-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .f-grid .full{grid-column:1/-1}
+  .f-grid label{display:block;font-size:10px;color:var(--muted);margin-bottom:3px}
+  .f-grid input,.f-grid select{width:100%;border:1.5px solid #e5e5e5;border-radius:8px;padding:7px 9px;font-size:13px;color:var(--dark);background:#fff}
+  .f-grid input:focus,.f-grid select:focus{outline:none;border-color:var(--gold)}
+
+  /* ── Mobile cards ── */
+  .mobile{display:none}
+  .day-card{background:#fff;border:1px solid #e5e5e5;border-radius:16px;overflow:hidden;margin-bottom:14px}
+  .day-card-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#fafafa;border-bottom:1px solid #eee}
+  .day-card-head .d{font-weight:700;font-size:14px}
+  .day-card-head .date{font-size:12px;color:var(--muted)}
+  .day-off{font-size:11px;font-weight:600;color:var(--muted)}
+  .shift-block{padding:14px 16px;border-bottom:1px solid #f2f2f2}
+  .shift-block:last-child{border-bottom:none}
+  .shift-block.skipped{display:none}
+  .shift-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .shift-head .s{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .skip-btn-m{border:1.5px solid #e5e5e5;background:#fff;border-radius:999px;padding:5px 12px;font-size:11px;font-weight:600;color:var(--muted)}
+  .skip-btn-m.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+  .f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .f-row label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .f-row input,.f-row select{width:100%;border:1.5px solid #e5e5e5;border-radius:10px;padding:10px 12px;font-size:14px;color:var(--dark);background:#fff}
+  .f-row input:focus,.f-row select:focus{outline:none;border-color:var(--gold)}
+  .bottomnav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e5e5;z-index:30}
+  .bottomnav-inner{display:flex;justify-content:space-around;padding:8px 0 10px}
+  .bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);text-decoration:none;min-width:64px}
+  .bn-item.active{color:var(--dark)}
+  .bn-item .ic{font-size:18px}
+  .phone{max-width:400px;margin:0 auto;background:var(--page);border:1px solid #e5e5e5;border-radius:24px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+  .phone .topbar{position:static}
+  .phone .wrap{padding:16px 14px 80px}
+  @media (max-width:760px){.daygrid{grid-template-columns:1fr}}
+  @media (max-width:640px){.desktop{display:none}.mobile{display:block}.bottomnav{display:block}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <div class="logo"><div class="mark">✈</div><div>EQX<small>Folha de Serviço</small></div></div>
+  <div class="devtoggle"><button id="btnDesktop" class="active" onclick="setDev('desktop')">Desktop</button><button id="btnMobile" onclick="setDev('mobile')">Telemóvel</button></div>
+</div></div>
+
+<div class="wrap" id="desktopView">
+  <a class="back" href="index.html">← Voltar ao índice</a>
+  <div class="sheet-head">
+    <div><h1>Folha de Serviço</h1><div class="week">Semana de 10/02 a 15/02/2025</div></div>
+    <span class="status">Rascunho</span>
+  </div>
+  <div class="meta">
+    <div><label>Obra atribuída</label><select><option>— Selecionar —</option><option>Obra A (EQX-001) — Cliente X</option></select></div>
+    <div><label>Cliente</label><input value="Cliente X"></div>
+    <div><label>Nº Obra</label><input value="EQX-001"></div>
+  </div>
+  <div class="daygrid" id="desktopGrid"></div>
+  <div class="total"><span class="lbl">Total de horas esta semana</span><span class="val" id="totalHours">0h</span></div>
+  <div class="actions"><button class="btn btn-ghost">Guardar rascunho</button><button class="btn btn-primary">Submeter folha</button></div>
+</div>
+
+<div class="phone" id="mobileView" style="display:none">
+  <div class="topbar"><div class="topbar-inner" style="padding:10px 14px">
+    <div class="logo"><div class="mark" style="width:26px;height:26px;font-size:13px">✈</div><div>EQX<small>Folha</small></div></div>
+    <span style="font-size:12px;color:var(--soft)">João Silva</span>
+  </div></div>
+  <div class="wrap">
+    <div class="sheet-head" style="margin-bottom:14px"><div><h1 style="font-size:17px">Folha de Serviço</h1><div class="week">10/02 – 15/02/2025</div></div><span class="status">Rascunho</span></div>
+    <div class="meta" style="grid-template-columns:1fr;margin-bottom:14px"><div><label>Obra</label><select><option>Obra A (EQX-001)</option></select></div></div>
+    <div id="mobileBody"></div>
+    <div class="total" style="margin-bottom:14px"><span class="lbl">Total esta semana</span><span class="val" id="totalHoursM">0h</span></div>
+    <div class="actions"><button class="btn btn-ghost" style="flex:1">Guardar</button><button class="btn btn-primary" style="flex:1">Submeter</button></div>
+  </div>
+  <div class="bottomnav"><div class="bottomnav-inner">
+    <a class="bn-item active" href="#"><span class="ic">🏠</span>Início</a>
+    <a class="bn-item" href="#"><span class="ic">📝</span>Nova Folha</a>
+    <a class="bn-item" href="#"><span class="ic">⚙️</span>Definições</a>
+  </div></div>
+</div>
+
+<script>
+const DAYS=[{key:'monday',label:'2ª Feira',date:'10/02'},{key:'tuesday',label:'3ª Feira',date:'11/02'},{key:'wednesday',label:'4ª Feira',date:'12/02'},{key:'thursday',label:'5ª Feira',date:'13/02'},{key:'friday',label:'6ª Feira',date:'14/02'},{key:'saturday',label:'Sábado',date:'15/02'}];
+const TYPES=['Nova Instalação','Continuação instalação','Manutenção preventiva','Manutenção corretiva'];
+const state={};DAYS.forEach(d=>state[d.key]={am:{skip:false,start:'08:00',end:'12:00'},pm:{skip:false,start:'13:00',end:'17:00'}});
+state.wednesday.pm.skip=true;state.saturday.am.skip=true;state.saturday.pm.skip=true;
+
+function calcTotal(){let m=0;DAYS.forEach(d=>{['am','pm'].forEach(s=>{const e=state[d.key][s];if(!e.skip&&e.start&&e.end){const[sh,sm]=e.start.split(':').map(Number);const[eh,em]=e.end.split(':').map(Number);m+=(eh*60+em)-(sh*60+sm);}})});const h=Math.floor(m/60),mm=m%60;const str=mm>0?`${h}h ${mm}m`:`${h}h`;document.getElementById('totalHours').textContent=str;document.getElementById('totalHoursM').textContent=str;}
+
+function renderDesktop(){
+  const g=document.getElementById('desktopGrid');g.innerHTML='';
+  DAYS.forEach(d=>{
+    const off=state[d.key].am.skip&&state[d.key].pm.skip;
+    const card=document.createElement('div');card.className='d-card'+(off?' off':'');
+    card.innerHTML=`
+      <div class="d-head"><div><div class="day">${d.label}</div><div class="date">${d.date}</div></div>${off?'<span class="off-badge">Dia de folga</span>':''}</div>
+      <div class="shift ${state[d.key].am.skip?'skipped':''}">
+        <div class="shift-top"><span class="s am">Manhã</span><label class="skip-switch">Não trabalhei<input type="checkbox" class="switch ${state[d.key].am.skip?'on':''}" onchange="toggleSkip('${d.key}','am')"></label></div>
+        <div class="f-grid"><div class="full"><label>Trabalho a executar</label><input placeholder="Descrever..."></div>
+        <div><label>Tipo</label><select><option>${TYPES[0]}</option></select></div><div><label>Avaliação</label><input placeholder="Após trabalho"></div>
+        <div><label>Início</label><input type="time" value="${state[d.key].am.start}"></div><div><label>Fim</label><input type="time" value="${state[d.key].am.end}"></div></div>
+      </div>
+      <div class="shift ${state[d.key].pm.skip?'skipped':''}">
+        <div class="shift-top"><span class="s pm">Tarde</span><label class="skip-switch">Não trabalhei<input type="checkbox" class="switch ${state[d.key].pm.skip?'on':''}" onchange="toggleSkip('${d.key}','pm')"></label></div>
+        <div class="f-grid"><div class="full"><label>Trabalho a executar</label><input placeholder="Descrever..."></div>
+        <div><label>Tipo</label><select><option>${TYPES[0]}</option></select></div><div><label>Avaliação</label><input placeholder="Após trabalho"></div>
+        <div><label>Início</label><input type="time" value="${state[d.key].pm.start}"></div><div><label>Fim</label><input type="time" value="${state[d.key].pm.end}"></div></div>
+      </div>`;
+    g.appendChild(card);
+  });
+}
+
+function renderMobile(){
+  const mb=document.getElementById('mobileBody');mb.innerHTML='';
+  DAYS.forEach(d=>{
+    const off=state[d.key].am.skip&&state[d.key].pm.skip;
+    const card=document.createElement('div');card.className='day-card';
+    card.innerHTML=`
+      <div class="day-card-head"><div><div class="d">${d.label}</div><div class="date">${d.date}</div></div>${off?'<span class="day-off">Dia de folga</span>':''}</div>
+      <div class="shift-block ${state[d.key].am.skip?'skipped':''}">
+        <div class="shift-head"><span class="s am">Manhã</span><button class="skip-btn-m ${state[d.key].am.skip?'on':''}" onclick="toggleSkip('${d.key}','am')">${state[d.key].am.skip?'Não trabalhou':'Não trabalhei'}</button></div>
+        <div class="f-row"><div><label>Trabalho</label><input placeholder="Trabalho a executar"></div></div>
+        <div class="f-row"><div><label>Tipo</label><select><option>${TYPES[0]}</option></select></div><div><label>Avaliação</label><input placeholder="Após trabalho"></div></div>
+        <div class="f-row"><div><label>Início</label><input type="time" value="${state[d.key].am.start}"></div><div><label>Fim</label><input type="time" value="${state[d.key].pm.end}"></div></div>
+      </div>
+      <div class="shift-block ${state[d.key].pm.skip?'skipped':''}">
+        <div class="shift-head"><span class="s pm">Tarde</span><button class="skip-btn-m ${state[d.key].pm.skip?'on':''}" onclick="toggleSkip('${d.key}','pm')">${state[d.key].pm.skip?'Não trabalhou':'Não trabalhei'}</button></div>
+        <div class="f-row"><div><label>Trabalho</label><input placeholder="Trabalho a executar"></div></div>
+        <div class="f-row"><div><label>Tipo</label><select><option>${TYPES[0]}</option></select></div><div><label>Avaliação</label><input placeholder="Após trabalho"></div></div>
+        <div class="f-row"><div><label>Início</label><input type="time" value="${state[d.key].pm.start}"></div><div><label>Fim</label><input type="time" value="${state[d.key].pm.end}"></div></div>
+      </div>`;
+    mb.appendChild(card);
+  });
+}
+
+function toggleSkip(day,shift){state[day][shift].skip=!state[day][shift].skip;renderDesktop();renderMobile();calcTotal();}
+function setDev(dev){const d=document.getElementById('desktopView'),m=document.getElementById('mobileView'),bd=document.getElementById('btnDesktop'),bm=document.getElementById('btnMobile');if(dev==='desktop'){d.style.display='block';m.style.display='none';bd.classList.add('active');bm.classList.remove('active');}else{d.style.display='none';m.style.display='block';bm.classList.add('active');bd.classList.remove('active');}}
+renderDesktop();renderMobile();calcTotal();
+</script>
+</body>
+</html>

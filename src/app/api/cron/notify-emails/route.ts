@@ -24,6 +24,7 @@ async function handleCron(request: Request, method: string) {
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
   const adminEmail = process.env.ADMIN_EMAIL;
+  const emailFrom = process.env.EMAIL_FROM || "rh@eqx.pt";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -50,7 +51,7 @@ async function handleCron(request: Request, method: string) {
     for (const n of notifications) {
       try {
         await transporter.sendMail({
-          from: gmailUser,
+          from: `EQX Folha de Serviço <${emailFrom}>`,
           to: adminEmail,
           subject: `EQX: ${n.message}`,
           html: emailTemplate("Nova folha submetida", n.message, `Ver: ${APP_URL}/hr/notifications`),
@@ -89,7 +90,7 @@ async function handleCron(request: Request, method: string) {
     for (const w of missing) {
       try {
         await transporter.sendMail({
-          from: gmailUser,
+          from: `EQX Folha de Serviço <${emailFrom}>`,
           to: w.email,
           subject: "EQX — Folha de serviço pendente",
           html: emailTemplate(
@@ -141,7 +142,7 @@ async function handleCron(request: Request, method: string) {
 
       try {
         await transporter.sendMail({
-          from: gmailUser,
+          from: `EQX Folha de Serviço <${emailFrom}>`,
           to: w.email,
           subject: "EQX — Resumo da semana",
           html: emailTemplate(

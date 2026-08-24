@@ -46,8 +46,10 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
           </tr>
         </thead>
         <tbody>
-          {entries.map((e, i) => (
-            <tr key={`${e.day}-${e.shift}`} className={`border-b border-brand-light/20 hover:bg-brand-gold/5 ${e.shift === "morning" && i > 0 ? "border-t-2 border-brand-light/40" : ""}`}>
+          {entries.map((e, i) => {
+            const isEmpty = !e.start_time && !e.end_time;
+            return (
+            <tr key={`${e.day}-${e.shift}`} className={`border-b border-brand-light/20 hover:bg-brand-gold/5 ${e.shift === "morning" && i > 0 ? "border-t-2 border-brand-light/40" : ""} ${isEmpty ? "opacity-45" : ""}`}>
               <td className="py-2 px-2 font-medium text-brand-dark text-xs">
                 {e.shift === "morning" ? DAYS.find(d => d.key === e.day)?.label : ""}
                 <span className={`ml-1 text-[10px] ${e.shift === "morning" ? "text-brand-gold" : "text-brand-soft"}`}>
@@ -114,7 +116,8 @@ export default function SheetTable({ entries, weekDates, upd }: SheetTableProps)
                 />
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

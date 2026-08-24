@@ -40,9 +40,16 @@ export interface Profile {
   full_name: string;
   role: "worker" | "admin" | "hr";
   company?: string;
+  shift_preference?: "both" | "morning" | "afternoon";
   created_at?: string;
   updated_at?: string;
 }
+
+export const SHIFT_PREFERENCE_LABELS: Record<string, string> = {
+  both: "Manhã e Tarde",
+  morning: "Só de manhã",
+  afternoon: "Só de tarde",
+};
 
 export const STATUS_LABELS: Record<string, string> = {
   draft: "Rascunho",
