@@ -23,6 +23,19 @@ export function formatMinutes(minutes: number): string {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
+/**
+ * Formata um nome: primeira letra de cada palavra maiúscula, resto minúsculo,
+ * preservando acentos. Ex: "joão silva" → "João Silva".
+ */
+export function formatName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
 const DAY_LABELS: Record<string, string> = {
   monday: "2ª Feira",
   tuesday: "3ª Feira",

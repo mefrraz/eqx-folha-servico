@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcMinutes, formatMinutes, validateSheet } from "@/lib/utils";
+import { calcMinutes, formatMinutes, validateSheet, formatName } from "@/lib/utils";
 import type { WorkEntry } from "@/lib/types";
 
 function makeEntry(
@@ -124,5 +124,21 @@ describe("validateSheet", () => {
     const entries = day("monday", ["08:00", "13:30"], ["13:00", "17:00"]);
     const skipped = new Set(["monday-morning"]);
     expect(validateSheet(entries, skipped)).toBeNull();
+  });
+});
+
+describe("formatName", () => {
+  it("capitalizes each word and lowercases the rest", () => {
+    expect(formatName("joão silva")).toBe("João Silva");
+    expect(formatName("MARIA FERNANDES")).toBe("Maria Fernandes");
+  });
+
+  it("preserves accents", () => {
+    expect(formatName("joão")).toBe("João");
+    expect(formatName("ana márcia")).toBe("Ana Márcia");
+  });
+
+  it("trims surrounding whitespace", () => {
+    expect(formatName("  pedro  ")).toBe("Pedro");
   });
 });
