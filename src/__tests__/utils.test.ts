@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcMinutes, formatMinutes } from "@/lib/utils";
+import { calcMinutes, formatMinutes, validateSheet } from "@/lib/utils";
 import type { WorkEntry } from "@/lib/types";
 
 function makeEntry(
@@ -80,5 +80,49 @@ describe("formatMinutes", () => {
     expect(formatMinutes(90)).toBe("1h 30m");
     expect(formatMinutes(510)).toBe("8h 30m");
     expect(formatMinutes(1)).toBe("0h 1m");
+  });
+});
+
+describe("validateSheet", () => {
+  function day(day: string, morning: [string, string], afternoon: [string, string]): WorkEntry[] {
+    return [
+      makeEntry({ day: day as any, shift: "morning", start_time: morning[0], end_time: morning[1] }),
+      makeEntry({ day: day as any, shift: "afternoon", start_time: afternoon[0], end_time: afternoon[1] }),
+    ];
+  }
+
+  it("returns null for a valid sheet", () => {
+    const entries = day("monday", ["08:00", "12:00"], ["13:00", "17:00"]);
+    expect(validateSheet(entries)).toBeNull();
+  });
+
+  it("detects overlapping morning/afternoon shifts", () => {
+    const entries = day("monday", ["08:00", "13:30"], ["13:00", "17:00"]);
+    const err = validateSheet(entries);
+    expect(err).toContain("sobrepostos");
+  });
+
+  it("accepts morning ending exactly at afternoon start", () => {
+    const entries = day("monday", ["08:00", "13:00"], ["13:00", "17:00"]);
+    expect(validateSheet(entries)).toBeNull();
+  });
+
+  it("flags missing end time", () => {
+    const entries = [
+      makeEntry({ day: "monday", shift: "morning", start_time: "08:00" }),
+      makeEntry({ day: "monday", shift: "afternoon", start_time: "13:00", end_time: "17:00" }),
+    ];
+    expect(validateSheet(entries)).toContain("hora de fim obrigatória");
+  });
+
+  it("flags start time after end time", () => {
+    const entries = day("monday", ["12:00", "08:00"], ["13:00", "17:00"]);
+    expect(validateSheet(entries)).toContain("anterior à de fim");
+  });
+
+  it("ignores skipped shifts", () => {
+    const entries = day("monday", ["08:00", "13:30"], ["13:00", "17:00"]);
+    const skipped = new Set(["monday-morning"]);
+    expect(validateSheet(entries, skipped)).toBeNull();
   });
 });

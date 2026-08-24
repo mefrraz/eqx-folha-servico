@@ -7,7 +7,7 @@ import { format, startOfWeek, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import toast from "react-hot-toast";
 import type { WorkSheet, WorkEntry } from "@/lib/types";
-import { calcMinutes } from "@/lib/utils";
+import { calcMinutes, validateSheet } from "@/lib/utils";
 import SheetTable from "@/components/SheetTable";
 import SheetMobileCards from "@/components/SheetMobileCards";
 
@@ -117,36 +117,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
 
   /** Validate shifts don't overlap: morning.end <= afternoon.start */
   function validateShifts(): string | null {
-    for (const d of DAYS) {
-      const morning = entries.find((e) => e.day === d.key && e.shift === "morning");
-      const afternoon = entries.find((e) => e.day === d.key && e.shift === "afternoon");
-      if (!morning || !afternoon) continue;
-
-      const morningSkipped = skipped.has(`${d.key}-morning`);
-      const afternoonSkipped = skipped.has(`${d.key}-afternoon`);
-
-      // Validate each shift's own times (skip if marked as not worked)
-      for (const shift of [morning, afternoon]) {
-        if (skipped.has(`${d.key}-${shift.shift}`)) continue;
-        if (shift.start_time && !shift.end_time) {
-          return `${d.label} (${shift.shift === "morning" ? "manhã" : "tarde"}): hora de fim obrigatória.`;
-        }
-        if (shift.end_time && !shift.start_time) {
-          return `${d.label} (${shift.shift === "morning" ? "manhã" : "tarde"}): hora de início obrigatória.`;
-        }
-        if (shift.start_time && shift.end_time && shift.start_time >= shift.end_time) {
-          return `${d.label} (${shift.shift === "morning" ? "manhã" : "tarde"}): hora de início deve ser anterior à de fim.`;
-        }
-      }
-
-      // Validate no overlap between morning and afternoon
-      if (!morningSkipped && !afternoonSkipped && morning.end_time && afternoon.start_time) {
-        if (morning.end_time > afternoon.start_time) {
-          return `${d.label}: turnos sobrepostos. Fim da manhã (${morning.end_time}) deve ser ≤ início da tarde (${afternoon.start_time}).`;
-        }
-      }
-    }
-    return null;
+    return validateSheet(entries, skipped);
   }
 
   const handleSave = async (status: "draft" | "submitted") => {
@@ -247,18 +218,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
   const min = mins % 60;
 
   /** Real-time overlap check — returns the first day with overlapping shifts */
-  const liveOverlap = (() => {
-    for (const d of DAYS) {
-      const morning = entries.find((e) => e.day === d.key && e.shift === "morning");
-      const afternoon = entries.find((e) => e.day === d.key && e.shift === "afternoon");
-      if (!morning || !afternoon) continue;
-      if (skipped.has(`${d.key}-morning`) || skipped.has(`${d.key}-afternoon`)) continue;
-      if (morning.end_time && afternoon.start_time && morning.end_time > afternoon.start_time) {
-        return `${d.label}: turnos sobrepostos. Fim da manhã (${morning.end_time}) deve ser ≤ início da tarde (${afternoon.start_time}).`;
-      }
-    }
-    return null;
-  })();
+  const liveOverlap = validateSheet(entries, skipped);
 
   return (
     <div className="space-y-6">
