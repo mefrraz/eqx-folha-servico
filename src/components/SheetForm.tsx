@@ -265,6 +265,20 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
   const hrs = Math.floor(mins / 60);
   const min = mins % 60;
 
+  /** Real-time overlap check — returns the first day with overlapping shifts */
+  const liveOverlap = (() => {
+    for (const d of DAYS) {
+      const morning = entries.find((e) => e.day === d.key && e.shift === "morning");
+      const afternoon = entries.find((e) => e.day === d.key && e.shift === "afternoon");
+      if (!morning || !afternoon) continue;
+      if (skipped.has(`${d.key}-morning`) || skipped.has(`${d.key}-afternoon`)) continue;
+      if (morning.end_time && afternoon.start_time && morning.end_time > afternoon.start_time) {
+        return `${d.label}: turnos sobrepostos. Fim da manhã (${morning.end_time}) deve ser ≤ início da tarde (${afternoon.start_time}).`;
+      }
+    }
+    return null;
+  })();
+
   return (
     <div className="space-y-6">
       <div className="card">
@@ -372,6 +386,12 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
             </span>
           </p>
         </div>
+
+        {liveOverlap && (
+          <div className="mt-3 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            ⚠️ {liveOverlap}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
