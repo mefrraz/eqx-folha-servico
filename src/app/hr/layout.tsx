@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 const NAV = [
   { href: "/hr", label: "Dashboard", exact: true },
   { href: "/hr/users", label: "Utilizadores" },
+  { href: "/hr/invites", label: "Convites" },
   { href: "/hr/projects", label: "Obras" },
   { href: "/hr/clients", label: "Clientes" },
   { href: "/hr/reports", label: "Relatorios" },

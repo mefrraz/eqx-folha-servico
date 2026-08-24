@@ -134,3 +134,33 @@ export async function updateProject(id: string, data: { name?: string; client_id
   revalidatePath("/hr/projects", "layout");
   return { success: true };
 }
+
+// ── Invite actions ──
+export async function createInvite(data: { code: string; label?: string; expires_at?: string | null }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Não autenticado." };
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || (profile.role !== "admin" && profile.role !== "hr")) {
+    return { error: "Apenas administradores." };
+  }
+  const code = (data.code || "").trim().toUpperCase();
+  if (!code) return { error: "Código é obrigatório." };
+  const { error } = await supabase.from("invites").insert({
+    code,
+    label: data.label?.trim() || null,
+    expires_at: data.expires_at || null,
+    created_by: user.id,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/hr/invites");
+  return { success: true };
+}
+
+export async function deleteInvite(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("invites").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/hr/invites");
+  return { success: true };
+}
