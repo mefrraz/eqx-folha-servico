@@ -136,7 +136,7 @@ export async function updateProject(id: string, data: { name?: string; client_id
 }
 
 // ── Invite actions ──
-export async function createInvite(data: { code: string; label?: string; expires_at?: string | null }) {
+export async function createInvite(data: { code: string; label?: string; expires_at?: string | null; role?: string; requires_approval?: boolean }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Não autenticado." };
@@ -150,6 +150,8 @@ export async function createInvite(data: { code: string; label?: string; expires
     code,
     label: data.label?.trim() || null,
     expires_at: data.expires_at || null,
+    role: data.role === "admin" ? "admin" : "worker",
+    requires_approval: !!data.requires_approval,
     created_by: user.id,
   });
   if (error) return { error: error.message };

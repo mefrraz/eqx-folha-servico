@@ -55,9 +55,10 @@ export default function ProjectSelector({ open, onClose }: { open?: boolean; onC
     if (!user) { toast.error("Sessão expirada."); setSaving(false); return; }
 
     // Check if this is the first selection (onboarding) or a change
-    const { data: profile } = await supabase.from("profiles").select("onboarded").eq("id", user.id).single();
+    const { data: profile } = await supabase.from("profiles").select("onboarded, requires_approval").eq("id", user.id).single();
     const isFirstTime = !profile?.onboarded;
-    const newStatus = isFirstTime ? "approved" : "pending";
+    // First time: approved unless the invite requires approval. Changes: always pending.
+    const newStatus = isFirstTime && !profile?.requires_approval ? "approved" : "pending";
 
     // Remove assignments the worker deselected
     const { data: current } = await supabase.from("worker_projects").select("project_id").eq("worker_id", user.id);

@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from("invites")
-    .select("id, code, expires_at, used_at")
+    .select("id, code, expires_at, used_at, role, requires_approval")
     .eq("code", normalized)
     .maybeSingle();
 
@@ -36,5 +36,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ valid: false, reason: "expired" });
   }
 
-  return NextResponse.json({ valid: true, inviteId: data.id });
+  return NextResponse.json({ valid: true, inviteId: data.id, role: data.role, requiresApproval: data.requires_approval });
 }

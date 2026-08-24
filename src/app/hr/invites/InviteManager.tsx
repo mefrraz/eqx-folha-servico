@@ -11,6 +11,8 @@ interface Invite {
   expires_at?: string | null;
   used_by?: string | null;
   used_at?: string | null;
+  role?: string;
+  requires_approval?: boolean;
   used?: { full_name?: string; email?: string } | null;
 }
 
@@ -27,15 +29,17 @@ export default function InviteManager({ invites }: { invites: Invite[] }) {
   const [code, setCode] = useState("");
   const [label, setLabel] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [role, setRole] = useState("worker");
+  const [requiresApproval, setRequiresApproval] = useState(false);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
   const handleCreate = async () => {
     if (!code.trim()) { toast.error("Indique um código."); return; }
     setSaving(true);
-    const r = await createInvite({ code, label, expires_at: expiresAt || null });
+    const r = await createInvite({ code, label, expires_at: expiresAt || null, role, requires_approval: requiresApproval });
     if (r.error) toast.error(r.error);
-    else { toast.success("Convite criado!"); setCode(""); setLabel(""); setExpiresAt(""); router.refresh(); }
+    else { toast.success("Convite criado!"); setCode(""); setLabel(""); setExpiresAt(""); setRole("worker"); setRequiresApproval(false); router.refresh(); }
     setSaving(false);
   };
 
@@ -65,6 +69,19 @@ export default function InviteManager({ invites }: { invites: Invite[] }) {
             <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="input-field" />
           </div>
         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="label-field">Papel da conta</label>
+            <select value={role} onChange={(e) => setRole(e.target.value)} className="input-field">
+              <option value="worker">Trabalhador</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <label className="flex items-center gap-2 pt-6 cursor-pointer">
+            <input type="checkbox" checked={requiresApproval} onChange={(e) => setRequiresApproval(e.target.checked)} className="rounded" />
+            <span className="text-sm text-brand-soft">Requer aprovação das obras</span>
+          </label>
+        </div>
         <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm !px-5 !py-2.5">
           {saving ? "A criar..." : "Criar convite"}
         </button>
@@ -85,6 +102,8 @@ export default function InviteManager({ invites }: { invites: Invite[] }) {
                     <span className="font-mono font-semibold text-brand-dark">{inv.code}</span>
                     {inv.label && <span className="text-xs text-brand-soft truncate">{inv.label}</span>}
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${info.cls}`}>{info.label}</span>
+                    {inv.role === "admin" && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-dark text-white">Admin</span>}
+                    {inv.requires_approval && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Aprovação</span>}
                   </div>
                   <div className="flex items-center gap-3">
                     {inv.used ? (

@@ -21,7 +21,12 @@ export default function SignupPage() {
     if(!data.user){toast.error("Erro ao criar conta.");setLoading(false);return;}
     // Mark invite as used
     if(checkData.inviteId){await fetch("/api/use-invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({inviteId:checkData.inviteId,userId:data.user.id})});}
-    if(data.session){await supabase.from("profiles").update({full_name:formattedName}).eq("id",data.user.id);toast.success("Conta criada!");router.push("/");router.refresh();}
+    // Set profile role + approval permission from the invite
+    const profileUpdate: Record<string, unknown> = { full_name: formattedName };
+    if (checkData.role) profileUpdate.role = checkData.role;
+    if (typeof checkData.requiresApproval === "boolean") profileUpdate.requires_approval = checkData.requiresApproval;
+    await supabase.from("profiles").update(profileUpdate).eq("id", data.user.id);
+    if(data.session){toast.success("Conta criada!");router.push("/");router.refresh();}
     else{toast.success("Conta criada! Verifique o email antes de entrar.");router.push("/auth/login");}
   };
 
