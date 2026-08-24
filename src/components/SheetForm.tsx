@@ -73,6 +73,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
           }
         });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** Toggle a shift as "não trabalhei" (fades fields, keeps them visible) */
