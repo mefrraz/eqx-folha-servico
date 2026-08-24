@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import Image from "next/image";
 import AddClientButton from "./AddClientButton";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +43,7 @@ export default async function ClientsPage() {
             <Link key={c.id} href={`/hr/clients/${c.id}`} className="card hover:border-brand-gold/40 transition-all group flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 {c.logo_url ? (
-                  <img src={c.logo_url} alt={c.name} className="w-10 h-10 rounded-xl object-cover border border-brand-light/30" />
+                  <Image src={c.logo_url} alt={c.name} width={40} height={40} className="w-10 h-10 rounded-xl object-cover border border-brand-light/30" />
                 ) : (
                   <div className="w-10 h-10 rounded-xl bg-brand-gold/20 flex items-center justify-center text-brand-dark font-bold text-sm">
                     {c.name.charAt(0)}

@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -33,7 +34,7 @@ export default function WorkerLayout({ children }: { children: React.ReactNode }
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/worker/dashboard" className="flex items-center gap-3">
-              <img src="/eqx-logo.svg" alt="EQX" className="h-6 w-auto" />
+              <Image src="/eqx-logo.svg" alt="EQX" width={24} height={24} className="h-6 w-auto" />
               <span className="text-[10px] tracking-[.2em] uppercase text-brand-muted font-semibold">Folha de Serviço</span>
             </Link>
             <div className="flex items-center gap-1">
@@ -56,7 +57,7 @@ export default function WorkerLayout({ children }: { children: React.ReactNode }
       <nav className="bg-white border-b border-brand-light/30 lg:hidden">
         <div className="mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/worker/dashboard" className="flex items-center gap-2">
-            <img src="/eqx-logo.svg" alt="EQX" className="h-5 w-auto" />
+            <Image src="/eqx-logo.svg" alt="EQX" width={20} height={20} className="h-5 w-auto" />
             <span className="text-[10px] tracking-[.2em] uppercase text-brand-muted font-semibold">EQX</span>
           </Link>
           <div className="flex items-center gap-3">

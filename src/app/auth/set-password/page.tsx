@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import toast from "react-hot-toast";
 
 function SetPasswordForm() {
@@ -74,7 +75,7 @@ export default function SetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-page px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <img src="/eqx-logo.svg" alt="EQX" className="h-10 mx-auto mb-4" />
+          <Image src="/eqx-logo.svg" alt="EQX" width={40} height={40} className="h-10 w-auto mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-brand-dark">Bem-vindo</h2>
           <p className="text-sm text-brand-soft mt-1">Ativar conta EQX</p>
         </div>

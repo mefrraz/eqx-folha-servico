@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -51,7 +52,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
       {/* Fixed sidebar */}
       <aside className="w-60 bg-white border-r border-brand-light/30 flex-col shrink-0 hidden lg:flex fixed top-0 left-0 h-full z-40">
         <Link href="/hr" className="flex items-center gap-3 px-5 py-5 border-b border-brand-light/30">
-          <img src="/eqx-logo.svg" alt="EQX" className="h-6 w-auto" />
+          <Image src="/eqx-logo.svg" alt="EQX" width={24} height={24} className="h-6 w-auto" />
         </Link>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV.map((item) => (
@@ -81,7 +82,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-brand-light/30 z-50 px-4 py-2.5 flex items-center justify-between">
-        <Link href="/hr"><img src="/eqx-logo.svg" alt="EQX" className="h-5 w-auto" /></Link>
+        <Link href="/hr"><Image src="/eqx-logo.svg" alt="EQX" width={20} height={20} className="h-5 w-auto" /></Link>
         <div className="flex items-center gap-1">
           {NAV.map((item) => (
             <Link key={item.href} href={item.href}

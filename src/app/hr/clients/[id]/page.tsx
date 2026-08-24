@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import EditClient from "./EditClient";
 import AddProjectButton from "./AddProjectButton";
 
@@ -29,7 +30,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       <div className="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           {client.logo_url ? (
-            <img src={client.logo_url} alt={client.name} className="w-16 h-16 rounded-xl object-cover border border-brand-light/30" />
+            <Image src={client.logo_url} alt={client.name} width={64} height={64} className="w-16 h-16 rounded-xl object-cover border border-brand-light/30" />
           ) : (
             <div className="w-16 h-16 rounded-xl bg-brand-gold/20 flex items-center justify-center text-brand-dark font-bold text-2xl">{client.name.charAt(0)}</div>
           )}
