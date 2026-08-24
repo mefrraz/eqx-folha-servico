@@ -27,6 +27,9 @@ Plataforma web desenvolvida para a **[EQX](https://eqx.pt)** gerir as folhas de 
 | **Dashboard** | Semana atual + histórico de folhas anteriores |
 | **Nova folha de serviço** | Formulário Seg–Sáb com dropdown de obras atribuídas |
 | **Turnos manhã/tarde** | 2 turnos por dia com validação sem sobreposição (fim manhã ≤ início tarde) |
+| **Preferência de horário** | Cada trabalhador define "Manhã e Tarde", "Só de manhã" ou "Só de tarde" — o formulário só mostra os turnos relevantes |
+| **Não trabalhei** | No telemóvel, botão por turno que esbate os campos e marca o turno como não trabalhado |
+| **Validação em tempo real** | Aviso imediato quando os turnos manhã/tarde se sobrepõem |
 | **Campos por turno** | Trabalho, tipo, data, hora início/fim, avaliação, rubrica, observações |
 | **Dropdown de obras** | Seleciona a obra atribuída → preenche cliente e nº obra automaticamente |
 | **Rascunho / Submeter** | Guarda rascunho ou submete folha final |
@@ -171,6 +174,8 @@ Opcional. Requer conta gratuita em [resend.com](https://resend.com).
 1. Criar conta Resend → API Keys
 2. Adicionar `RESEND_API_KEY` e `ADMIN_EMAIL` ao Vercel
 3. Executar `supabase/migrations/008_email_realtime.sql`
+
+**Remetente:** os emails são enviados como `rh@eqx.pt` (variável `EMAIL_FROM`). Para usar esse endereço, adiciona-o em Gmail → Definições → Contas → "Enviar como" e verifica-o.
 
 **Como funciona:** Quando um trabalhador submete uma folha, o trigger `pg_net` chama a API do Vercel em tempo real, que envia o email via Resend. Adicionalmente, um Vercel Cron Job dispara 1x/dia como fallback.
 

@@ -44,7 +44,7 @@ export default function ProjectSelector() {
     if (selected.size === 0) { toast.error("Selecione pelo menos uma obra."); return; }
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { toast.error("Sessao expirada."); setSaving(false); return; }
+    if (!user) { toast.error("Sessão expirada."); setSaving(false); return; }
     let done = 0;
     for (const pid of Array.from(selected)) {
       const { error } = await supabase.from("worker_projects").insert({ worker_id: user.id, project_id: pid });
@@ -66,11 +66,11 @@ export default function ProjectSelector() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl mx-4 space-y-6">
         <div>
           <h2 className="text-xl font-bold text-brand-dark">Selecionar obras</h2>
-          <p className="text-sm text-brand-soft mt-1">Indique as obras em que esta a trabalhar atualmente. Podera alterar esta selecao mais tarde nas Definicoes.</p>
+          <p className="text-sm text-brand-soft mt-1">Indique as obras em que está a trabalhar atualmente. Poderá alterar esta seleção mais tarde nas Definições.</p>
         </div>
 
         {projects.length === 0 ? (
-          <div className="text-center py-8 text-brand-muted text-sm">Nenhuma obra disponivel. Contacte o administrador.</div>
+          <div className="text-center py-8 text-brand-muted text-sm">Nenhuma obra disponível. Contacte o administrador.</div>
         ) : (
           <div className="max-h-64 overflow-y-auto border border-brand-light/30 rounded-xl divide-y divide-brand-light/20">
             {projects.map((p: any) => (
