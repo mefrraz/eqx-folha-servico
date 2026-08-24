@@ -3,6 +3,7 @@ import { format, startOfWeek } from "date-fns";
 import { pt } from "date-fns/locale";
 import Link from "next/link";
 import WeekNavigator from "./WeekNavigator";
+import BulkValidate from "./BulkValidate";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +64,12 @@ export default async function HRHome({ searchParams }: { searchParams: { w?: str
           {not===0 && <p className="text-sm text-success py-2 font-medium">Todos submeteram!</p>}</div>
         </div>
       </div>
+
+      <BulkValidate
+        sheets={(weekSheets||[])
+          .filter((s:any)=>s.status==="submitted")
+          .map((s:any)=>({ id:s.id, worker_name:s.worker?.full_name||"—", hours:formatMinutes(calcMinutes(s.work_entries||[])) }))}
+      />
     </div>
   );
 }
