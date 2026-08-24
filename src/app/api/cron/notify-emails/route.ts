@@ -162,6 +162,45 @@ async function handleCron(request: Request, method: string) {
     results.stats = { sent: statsSent, failed: statsFailed };
   }
 
+  // ── 4. Friday reminder for the CURRENT week ──
+  if (today.getDay() === 5) { // Friday
+    const thisMonday = format(startOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
+
+    const { data: sentFri } = await supabase
+      .from("weekly_email_log")
+      .select("worker_id")
+      .eq("week_start", thisMonday)
+      .eq("email_type", "reminder_friday");
+    const alreadyFri = new Set((sentFri || []).map(r => r.worker_id));
+
+    const { data: workers } = await supabase.from("profiles").select("id, full_name, email").eq("role", "worker");
+    const { data: submitted } = await supabase.from("work_sheets").select("worker_id").eq("week_start", thisMonday);
+    const submittedIds = new Set((submitted || []).map(s => s.worker_id));
+    const missing = (workers || []).filter(w => !submittedIds.has(w.id) && !alreadyFri.has(w.id) && w.email);
+
+    let friSent = 0, friFailed = 0;
+    for (const w of missing) {
+      try {
+        await transporter.sendMail({
+          from: `EQX Folha de Serviço <${emailFrom}>`,
+          to: w.email,
+          subject: "EQX — Lembrete: folha de serviço desta semana",
+          html: emailTemplate(
+            `Olá ${w.full_name}`,
+            `Ainda não submeteu a folha de serviço desta semana. Lembre-se de a preencher até ao fim de semana.`,
+            `Aceda: ${APP_URL}/worker/dashboard`
+          ),
+        });
+        await supabase.from("weekly_email_log").insert({
+          worker_id: w.id, week_start: thisMonday, email_type: "reminder_friday",
+        });
+        friSent++;
+      } catch (err: any) { console.error("[cron] friday reminder error:", err?.message); friFailed++; }
+    }
+    console.log(`[cron] Friday reminders — Sent: ${friSent}, Failed: ${friFailed}`);
+    results.fridayReminders = { sent: friSent, failed: friFailed };
+  }
+
   return NextResponse.json(results);
 }
 
