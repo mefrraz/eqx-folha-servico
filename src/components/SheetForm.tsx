@@ -65,6 +65,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         .from("worker_projects")
         .select("project:projects(id, name, number, client:clients(name))")
         .eq("worker_id", user.id)
+        .eq("status", "approved")
         .then(({ data, error }) => {
           if (error) console.error("[SheetForm] worker_projects error:", error);
           else if (data) {

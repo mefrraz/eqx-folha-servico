@@ -4,11 +4,13 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import { formatMinutes } from "@/lib/utils";
+import ProjectSelector from "@/components/ProjectSelector";
 
 export default function WorkerSettingsClient({ userId, profile, totalMins, sheetsCount, projects }: { userId: string; profile: any; totalMins: number; sheetsCount: number; projects: any[] }) {
   const [name, setName] = useState(profile?.full_name || "");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showProjects, setShowProjects] = useState(false);
   const supabase = createClient();
 
   const handle = async () => {
@@ -42,9 +44,12 @@ export default function WorkerSettingsClient({ userId, profile, totalMins, sheet
       </div>
 
       {/* Projects */}
-      {projects.length > 0 && (
-        <div className="card">
-          <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase mb-3">Obras</h4>
+      <div className="card">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-xs font-semibold text-brand-soft tracking-wide uppercase">Obras</h4>
+          <button onClick={() => setShowProjects(true)} className="text-xs font-semibold text-brand-dark hover:text-brand-gold transition-colors">Mudar obras</button>
+        </div>
+        {projects.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {projects.map((p: any) => (
               <span key={p.id} className="text-sm bg-brand-gold/10 text-brand-dark font-medium px-3 py-2 rounded-xl">
@@ -53,8 +58,10 @@ export default function WorkerSettingsClient({ userId, profile, totalMins, sheet
               </span>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-brand-muted">Sem obras atribuídas. Clique em &quot;Mudar obras&quot; para selecionar.</p>
+        )}
+      </div>
 
       {/* Edit form */}
       <div className="card space-y-4">
@@ -63,6 +70,8 @@ export default function WorkerSettingsClient({ userId, profile, totalMins, sheet
         <div><label className="label-field">Nova password (opcional)</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="input-field" placeholder="Deixar vazio = manter" minLength={6} /></div>
         <button onClick={handle} disabled={saving} className="btn-primary text-sm">{saving ? "A guardar…" : "Guardar"}</button>
       </div>
+
+      <ProjectSelector open={showProjects} onClose={() => setShowProjects(false)} />
     </div>
   );
 }

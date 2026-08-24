@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-export default function ProjectSelector() {
+export default function ProjectSelector({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
@@ -17,22 +17,30 @@ export default function ProjectSelector() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { setLoading(false); return; }
-      // Check if worker and not yet onboarded
-      supabase.from("profiles").select("role, onboarded").eq("id", user.id).single().then(({ data: profile }) => {
-        if (profile && profile.role === "worker" && !profile.onboarded) {
-          // Load available projects
-          supabase.from("projects").select("id,name,number,client:clients(name)").order("name").then(({ data: pData }) => {
-            setProjects(pData || []);
-            setShow(true);
-            setLoading(false);
-          });
-        } else {
+      // Load available projects
+      supabase.from("projects").select("id,name,number,client:clients(name)").order("name").then(({ data: pData }) => {
+        setProjects(pData || []);
+        // Load worker's current approved assignments
+        supabase.from("worker_projects").select("project_id").eq("worker_id", user.id).eq("status", "approved").then(({ data: assigned }) => {
+          setSelected(new Set((assigned || []).map((a: any) => a.project_id)));
           setLoading(false);
-        }
+        });
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Show when forced open, or during onboarding
+  useEffect(() => {
+    if (open) { setShow(true); return; }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("profiles").select("role, onboarded").eq("id", user.id).single().then(({ data: profile }) => {
+        if (profile && profile.role === "worker" && !profile.onboarded) setShow(true);
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const toggle = (id: string) => {
     const next = new Set(selected);
@@ -45,16 +53,36 @@ export default function ProjectSelector() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Sessão expirada."); setSaving(false); return; }
+
+    // Remove assignments the worker deselected
+    const { data: current } = await supabase.from("worker_projects").select("project_id").eq("worker_id", user.id);
+    const currentIds = new Set((current || []).map((c: any) => c.project_id));
+    for (const cid of Array.from(currentIds)) {
+      if (!selected.has(cid)) {
+        await supabase.from("worker_projects").delete().eq("worker_id", user.id).eq("project_id", cid);
+      }
+    }
+
+    // Insert newly selected as pending
     let done = 0;
     for (const pid of Array.from(selected)) {
-      const { error } = await supabase.from("worker_projects").insert({ worker_id: user.id, project_id: pid });
+      if (currentIds.has(pid)) continue;
+      const { error } = await supabase.from("worker_projects").insert({ worker_id: user.id, project_id: pid, status: "pending" });
       if (!error) done++;
       else console.error("[ProjectSelector] insert error:", error);
     }
+
     // Mark as onboarded
-    await supabase.from("profiles").update({ onboarded: true }).eq("id", (await supabase.auth.getUser()).data.user?.id);
-    toast.success(`${done} obra(s) selecionada(s)!`);
+    await supabase.from("profiles").update({ onboarded: true }).eq("id", user.id);
+    // Notify admin of pending project request
+    if (done > 0) {
+      await supabase.from("notifications").insert({
+        message: `${user.email} pediu ${done} obra(s). Aprove em Obras → Pedidos.`,
+      });
+    }
+    toast.success(done > 0 ? `${done} obra(s) aguardam aprovação do admin.` : "Obras atualizadas.");
     setSaving(false); setShow(false);
+    if (onClose) onClose();
     router.refresh();
   };
 
@@ -66,7 +94,7 @@ export default function ProjectSelector() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl mx-4 space-y-6">
         <div>
           <h2 className="text-xl font-bold text-brand-dark">Selecionar obras</h2>
-          <p className="text-sm text-brand-soft mt-1">Indique as obras em que está a trabalhar atualmente. Poderá alterar esta seleção mais tarde nas Definições.</p>
+          <p className="text-sm text-brand-soft mt-1">Indique as obras em que está a trabalhar. As novas obras ficam pendentes até o admin aprovar.</p>
         </div>
 
         {projects.length === 0 ? (
@@ -87,6 +115,9 @@ export default function ProjectSelector() {
         )}
 
         <div className="flex gap-3 justify-end pt-2">
+          {onClose && (
+            <button onClick={() => { setShow(false); onClose(); }} className="btn-secondary text-sm !px-6 !py-2.5">Cancelar</button>
+          )}
           <button onClick={handleSave} disabled={saving || projects.length === 0} className="btn-primary text-sm !px-6 !py-2.5">
             {saving ? "A guardar..." : "Confirmar"}
           </button>

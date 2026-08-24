@@ -164,3 +164,28 @@ export async function deleteInvite(id: string) {
   revalidatePath("/hr/invites");
   return { success: true };
 }
+
+// ── Project request approval ──
+export async function approveProjectRequest(workerId: string, projectId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("worker_projects")
+    .update({ status: "approved" })
+    .eq("worker_id", workerId)
+    .eq("project_id", projectId);
+  if (error) return { error: error.message };
+  revalidatePath("/hr/projects/requests");
+  return { success: true };
+}
+
+export async function rejectProjectRequest(workerId: string, projectId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("worker_projects")
+    .delete()
+    .eq("worker_id", workerId)
+    .eq("project_id", projectId);
+  if (error) return { error: error.message };
+  revalidatePath("/hr/projects/requests");
+  return { success: true };
+}
