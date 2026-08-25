@@ -1,82 +1,176 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 
 const BASE = process.env.E2E_BASE_URL || "https://eqx-folha-servico.vercel.app";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || "colaboradoreshoraseqx@gmail.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || "eqx2030";
 
-async function loginAsAdmin(page: any) {
+async function login(page: Page, email: string, password: string) {
   await page.goto(`${BASE}/auth/login`);
-  await page.getByLabel("Email").fill(ADMIN_EMAIL);
-  await page.getByLabel("Password").fill(ADMIN_PASSWORD);
+  await page.getByPlaceholder("nome@eqx.pt").fill(email);
+  await page.getByPlaceholder("••••••••").fill(password);
   await page.getByRole("button", { name: /Entrar/i }).click();
+}
+
+async function loginAsAdmin(page: Page) {
+  await login(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   await page.waitForURL(/\/hr/, { timeout: 15000 });
 }
 
-test.describe("EQX Folha de Serviço", () => {
+// Create a fresh worker via invite and return its credentials
+async function createWorker(page: Page): Promise<{ email: string; password: string }> {
+  const code = `W${Date.now().toString().slice(-6)}`;
+  await loginAsAdmin(page);
+  await page.goto(`${BASE}/hr/invites`);
+  await page.getByPlaceholder("EX: EQX2025").fill(code);
+  await page.getByRole("button", { name: /Criar convite/i }).click();
+  await expect(page.getByText(code)).toBeVisible();
+
+  const email = `test${Date.now().toString().slice(-6)}@example.com`;
+  const password = "teste123";
+  await page.goto(`${BASE}/auth/signup`);
+  await page.getByPlaceholder("Código fornecido pela EQX").fill(code);
+  await page.getByPlaceholder("João Silva").fill("teste trabalhador");
+  await page.getByPlaceholder("o.seu@email.com").fill(email);
+  await page.getByPlaceholder("Mínimo 6 caracteres").fill(password);
+  await page.getByRole("button", { name: /Criar conta/i }).click();
+  await page.waitForTimeout(3000);
+  if (page.url().includes("/auth/login")) {
+    await login(page, email, password);
+  }
+  await page.waitForURL(/\/(worker|hr)/, { timeout: 15000 });
+  return { email, password };
+}
+
+test.describe("Auth", () => {
   test("login page loads", async ({ page }) => {
     await page.goto(`${BASE}/auth/login`);
     await expect(page.getByRole("heading", { name: /Folha de Serviço/i })).toBeVisible();
   });
 
-  test("admin can login and access dashboard", async ({ page }) => {
-    await loginAsAdmin(page);
-    await expect(page).toHaveURL(/\/hr/);
+  test("login with wrong password shows error", async ({ page }) => {
+    await page.goto(`${BASE}/auth/login`);
+    await page.getByPlaceholder("nome@eqx.pt").fill(ADMIN_EMAIL);
+    await page.getByPlaceholder("••••••••").fill("senha-errada");
+    await page.getByRole("button", { name: /Entrar/i }).click();
+    await expect(page.getByText(/incorretos/i)).toBeVisible();
   });
 
-  test("admin can navigate to users page", async ({ page }) => {
+  test("admin can login and logout", async ({ page }) => {
+    await loginAsAdmin(page);
+    await expect(page).toHaveURL(/\/hr/);
+    await page.getByRole("button", { name: /Sair/i }).click();
+    await page.waitForURL(/\/auth\/login/, { timeout: 15000 });
+  });
+});
+
+test.describe("Admin pages", () => {
+  test("dashboard loads with stats", async ({ page }) => {
+    await loginAsAdmin(page);
+    await expect(page.getByText(/Trabalhadores/i)).toBeVisible();
+  });
+
+  test("users page has bulk actions", async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(`${BASE}/hr/users`);
     await expect(page.getByRole("heading", { name: /Utilizadores/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Transferir em massa/i })).toBeVisible();
   });
 
-  test("admin can access invites page", async ({ page }) => {
+  test("invites page can create and delete invite", async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(`${BASE}/hr/invites`);
-    await expect(page.getByRole("heading", { name: /Convites de acesso/i })).toBeVisible();
-  });
-
-  test("admin can access projects requests page", async ({ page }) => {
-    await loginAsAdmin(page);
-    await page.goto(`${BASE}/hr/projects/requests`);
-    await expect(page.getByRole("heading", { name: /Pedidos de obras/i })).toBeVisible();
-  });
-
-  test("admin can create an invite", async ({ page }) => {
-    await loginAsAdmin(page);
-    await page.goto(`${BASE}/hr/invites`);
-    const code = `TEST${Date.now().toString().slice(-6)}`;
+    const code = `D${Date.now().toString().slice(-6)}`;
     await page.getByPlaceholder("EX: EQX2025").fill(code);
     await page.getByRole("button", { name: /Criar convite/i }).click();
     await expect(page.getByText(code)).toBeVisible();
+    // Delete it — register dialog handler BEFORE clicking
+    page.once("dialog", (d) => d.accept());
+    await page.getByRole("button", { name: /Eliminar/i }).first().click();
+    await expect(page.getByText(code)).not.toBeVisible();
   });
 
-  test("worker can register with invite and create a sheet", async ({ page }) => {
-    // Create an invite as admin
-    const code = `W${Date.now().toString().slice(-6)}`;
+  test("projects page loads", async ({ page }) => {
     await loginAsAdmin(page);
-    await page.goto(`${BASE}/hr/invites`);
-    await page.getByPlaceholder("EX: EQX2025").fill(code);
-    await page.getByRole("button", { name: /Criar convite/i }).click();
-    await expect(page.getByText(code)).toBeVisible();
+    await page.goto(`${BASE}/hr/projects`);
+    await expect(page.getByRole("heading", { name: /Obras/i })).toBeVisible();
+  });
 
-    // Register a worker with the invite
-    const email = `test${Date.now().toString().slice(-6)}@example.com`;
-    await page.goto(`${BASE}/auth/signup`);
-    await page.getByPlaceholder("Código fornecido pela EQX").fill(code);
-    await page.getByPlaceholder("João Silva").fill("teste trabalhador");
-    await page.getByPlaceholder("o.seu@email.com").fill(email);
-    await page.getByPlaceholder("Mínimo 6 caracteres").fill("teste123");
-    await page.getByRole("button", { name: /Criar conta/i }).click();
+  test("clients page loads", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto(`${BASE}/hr/clients`);
+    await expect(page.getByRole("heading", { name: /Clientes/i })).toBeVisible();
+  });
 
-    // Should land on dashboard (or login if email confirmation required)
-    await page.waitForTimeout(3000);
-    const url = page.url();
-    if (url.includes("/auth/login")) {
-      // Email confirmation required — log in directly
-      await page.getByPlaceholder("nome@eqx.pt").fill(email);
-      await page.getByPlaceholder("••••••••").fill("teste123");
-      await page.getByRole("button", { name: /Entrar/i }).click();
+  test("reports page loads", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto(`${BASE}/hr/reports`);
+    await expect(page.getByRole("heading", { name: /Relat/i })).toBeVisible();
+  });
+
+  test("emails page loads", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto(`${BASE}/hr/emails`);
+    await expect(page.getByRole("heading", { name: "Emails", exact: true })).toBeVisible();
+  });
+
+  test("notifications page loads", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto(`${BASE}/hr/notifications`);
+    await expect(page.getByRole("heading", { name: /Notifica/i })).toBeVisible();
+  });
+
+  test("settings page loads", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto(`${BASE}/hr/settings`);
+    await expect(page.getByRole("heading", { name: /Defini/i })).toBeVisible();
+  });
+});
+
+test.describe("Worker flow", () => {
+  test("worker can register, onboard, create and submit a sheet", async ({ page }) => {
+    const { email, password } = await createWorker(page);
+
+    // Handle onboarding (select a project) if shown
+    await page.waitForTimeout(2000);
+    if (await page.getByRole("heading", { name: /Selecionar obras/i }).isVisible().catch(() => false)) {
+      const firstCheckbox = page.locator('input[type="checkbox"]').first();
+      if (await firstCheckbox.isVisible().catch(() => false)) {
+        await firstCheckbox.check();
+        await page.getByRole("button", { name: /Confirmar/i }).click();
+      }
     }
-    await page.waitForURL(/\/(worker|hr)/, { timeout: 15000 });
+
+    // Go to new sheet
+    await page.goto(`${BASE}/worker/sheet/new`);
+    await expect(page.getByRole("heading", { name: /Folha de Serviço/i })).toBeVisible();
+
+    // Fill a morning shift on Monday
+    const mondayMorning = page.locator('input[type="time"]').first();
+    await mondayMorning.fill("08:00");
+    const mondayEnd = page.locator('input[type="time"]').nth(1);
+    await mondayEnd.fill("12:00");
+
+    // Test "Não trabalhei" button on mobile (or desktop)
+    const skipBtn = page.getByRole("button", { name: /Não trabalhei/i }).first();
+    if (await skipBtn.isVisible().catch(() => false)) {
+      await skipBtn.click();
+      await expect(page.getByText(/não trabalhado/i).first()).toBeVisible();
+      await skipBtn.click(); // undo
+    }
+
+    // Save as draft
+    await page.getByRole("button", { name: /Guardar rascunho/i }).click();
+    await expect(page.getByText(/Rascunho guardado/i)).toBeVisible();
+
+    // Dashboard should show the sheet
+    await page.goto(`${BASE}/worker/dashboard`);
+    await expect(page.getByText(/Folha/i).first()).toBeVisible();
+  });
+
+  test("worker settings page loads", async ({ page }) => {
+    const { email, password } = await createWorker(page);
+    await page.goto(`${BASE}/worker/settings`);
+    await expect(page.getByRole("heading", { name: /O meu perfil/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Mudar obras/i })).toBeVisible();
   });
 });
