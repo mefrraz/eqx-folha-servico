@@ -21,6 +21,7 @@ export default function LoginPage() {
         <p className="text-center text-xs text-brand-muted">Sem conta? <Link href="/auth/signup" className="font-semibold text-brand-dark hover:text-brand-gold transition-colors">Criar conta</Link></p>
         <p className="text-center"><Link href="/auth/reset-password" className="text-xs text-brand-muted hover:text-brand-gold transition-colors">Esqueci a password</Link></p>
       </form>
+      <p className="text-center text-[10px] text-brand-muted/60">Supabase: me.frraz+eqx@gmail.com</p>
     </div>
   </div>);
 }
