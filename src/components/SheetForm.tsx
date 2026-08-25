@@ -124,6 +124,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
 
   const handleSave = async (status: "draft" | "submitted") => {
     if (status === "submitted") {
+      if (projects.length === 0) { toast.error("Não tem obras atribuídas. Contacte o administrador."); return; }
       if (!client.trim()) { toast.error("Cliente é obrigatório para submeter."); return; }
       if (!workNumber.trim()) { toast.error("Nº Obra é obrigatório para submeter."); return; }
       const overlapError = validateShifts();
