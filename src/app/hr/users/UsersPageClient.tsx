@@ -9,6 +9,7 @@ import { calcMinutes, formatMinutes } from "@/lib/utils";
 import toast from "react-hot-toast";
 import AddUserButton from "./AddUserButton";
 import BulkTransfer from "./BulkTransfer";
+import BulkActions from "./BulkActions";
 
 export default function UsersPageClient() {
   const [workers, setWorkers] = useState<any[]>([]);
@@ -16,6 +17,7 @@ export default function UsersPageClient() {
   const [projects, setProjects] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [filterProject, setFilterProject] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const supabase = createClient();
 
   useEffect(() => {
@@ -49,6 +51,14 @@ export default function UsersPageClient() {
   if(search) filtered = filtered.filter(w => w.full_name.toLowerCase().includes(search.toLowerCase()));
   if(filterProject) filtered = filtered.filter(w => workerProjects.get(w.id) === filterProject);
 
+  const toggleSelect = (id: string) => {
+    setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  };
+  const toggleAll = () => {
+    if (selected.size === filtered.length) setSelected(new Set());
+    else setSelected(new Set(filtered.map(w => w.id)));
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -58,6 +68,12 @@ export default function UsersPageClient() {
           <AddUserButton />
         </div>
       </div>
+
+      <BulkActions
+        workers={workers.map(w => ({ id: w.id, full_name: w.full_name, email: w.email }))}
+        selected={selected}
+        onClear={() => setSelected(new Set())}
+      />
 
       <div className="flex flex-col sm:flex-row gap-2">
         <input type="text" value={search} onChange={e => setSearch(e.target.value)} className="input-field flex-1" placeholder="Pesquisar por nome..." />
@@ -69,8 +85,8 @@ export default function UsersPageClient() {
 
       <div className="card !p-0 overflow-hidden">
         <table className="w-full text-sm table-fixed">
-          <thead><tr className="border-b border-brand-light/30 bg-brand-gold/5"><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide">Nome</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden sm:table-cell">Email</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden md:table-cell">Última folha</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden md:table-cell">Horas</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden lg:table-cell">Registo</th></tr></thead>
-          <tbody>{filtered.map(w=>{const l=latestByWorker.get(w.id);const m=calcMinutes(l?.work_entries||[]);const notOnboarded = w.onboarded === false;return(<tr key={w.id} className={`border-b border-brand-light/20 hover:bg-brand-gold/5 transition-colors ${notOnboarded ? "bg-red-50/30" : ""}`}><td className="py-3 px-4"><Link href={`/hr/users/${w.id}`} prefetch={false} className="text-brand-dark hover:text-brand-gold font-medium">{w.full_name}</Link>{notOnboarded && <span className="ml-2 text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">Pendente</span>}</td><td className="py-3 px-4 text-brand-soft hidden sm:table-cell text-xs">{w.email||"—"}</td><td className="py-3 px-4 text-brand-soft hidden md:table-cell font-mono text-xs">{l?format(new Date(l.week_start+"T00:00:00"),"dd/MM/yy",{locale:pt}):"—"}</td><td className="py-3 px-4 text-brand-dark hidden md:table-cell font-mono text-xs">{l?formatMinutes(m):"—"}</td><td className="py-3 px-4 text-brand-muted hidden lg:table-cell text-xs font-mono">{format(new Date(w.created_at),"dd/MM/yy",{locale:pt})}</td><td className="py-3 px-2">{notOnboarded && <button onClick={() => handleResendInvite(w.id, w.full_name)} className="text-[10px] text-brand-gold hover:underline whitespace-nowrap">Reenviar convite</button>}</td></tr>);})}</tbody>
+          <thead><tr className="border-b border-brand-light/30 bg-brand-gold/5"><th className="py-3 px-4 w-10"><input type="checkbox" checked={filtered.length>0 && selected.size===filtered.length} onChange={toggleAll} className="rounded" /></th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide">Nome</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden sm:table-cell">Email</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden md:table-cell">Última folha</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden md:table-cell">Horas</th><th className="text-left py-3 px-4 font-semibold text-brand-dark text-xs tracking-wide hidden lg:table-cell">Registo</th></tr></thead>
+          <tbody>{filtered.map(w=>{const l=latestByWorker.get(w.id);const m=calcMinutes(l?.work_entries||[]);const notOnboarded = w.onboarded === false;return(<tr key={w.id} className={`border-b border-brand-light/20 hover:bg-brand-gold/5 transition-colors ${notOnboarded ? "bg-red-50/30" : ""}`}><td className="py-3 px-4"><input type="checkbox" checked={selected.has(w.id)} onChange={() => toggleSelect(w.id)} className="rounded" /></td><td className="py-3 px-4"><Link href={`/hr/users/${w.id}`} prefetch={false} className="text-brand-dark hover:text-brand-gold font-medium">{w.full_name}</Link>{notOnboarded && <span className="ml-2 text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">Pendente</span>}</td><td className="py-3 px-4 text-brand-soft hidden sm:table-cell text-xs">{w.email||"—"}</td><td className="py-3 px-4 text-brand-soft hidden md:table-cell font-mono text-xs">{l?format(new Date(l.week_start+"T00:00:00"),"dd/MM/yy",{locale:pt}):"—"}</td><td className="py-3 px-4 text-brand-dark hidden md:table-cell font-mono text-xs">{l?formatMinutes(m):"—"}</td><td className="py-3 px-4 text-brand-muted hidden lg:table-cell text-xs font-mono">{format(new Date(w.created_at),"dd/MM/yy",{locale:pt})}</td><td className="py-3 px-2">{notOnboarded && <button onClick={() => handleResendInvite(w.id, w.full_name)} className="text-[10px] text-brand-gold hover:underline whitespace-nowrap">Reenviar convite</button>}</td></tr>);})}</tbody>
         </table>
         {filtered.length===0 && <div className="text-center py-12 text-brand-muted text-sm">Nenhum resultado.</div>}
       </div>
