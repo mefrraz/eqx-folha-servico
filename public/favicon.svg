@@ -1,4 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="6" fill="#F1C411"/>
-  <text x="16" y="23" text-anchor="middle" fill="#1a1a1a" font-family="Inter,sans-serif" font-size="18" font-weight="700">EQ</text>
+  <!-- Hélice EQX (2 pás) -->
+  <g fill="#1a1a1a">
+    <ellipse cx="16" cy="9" rx="3.2" ry="7"/>
+    <ellipse cx="16" cy="23" rx="3.2" ry="7"/>
+    <circle cx="16" cy="16" r="3.4"/>
+  </g>
 </svg>

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  const emailFrom = process.env.EMAIL_FROM || "rh@eqx.pt";
+  const emailFrom = process.env.EMAIL_FROM || gmailUser;
 
   if (!gmailUser || !gmailPass) {
     return NextResponse.json({ error: "GMAIL_USER ou GMAIL_APP_PASSWORD nao configurados." }, { status: 500 });

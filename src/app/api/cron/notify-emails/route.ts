@@ -24,7 +24,7 @@ async function handleCron(request: Request, method: string) {
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
   const adminEmail = process.env.ADMIN_EMAIL;
-  const emailFrom = process.env.EMAIL_FROM || "rh@eqx.pt";
+  const emailFrom = process.env.EMAIL_FROM || gmailUser;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

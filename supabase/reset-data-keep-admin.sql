@@ -5,14 +5,15 @@
 -- ============================================================
 
 -- ── 1. Apagar todos os dados (mantém o admin em profiles) ──
-DELETE FROM notifications;
-DELETE FROM work_entries;
-DELETE FROM work_sheets;
-DELETE FROM worker_projects;
-DELETE FROM invites;
-DELETE FROM weekly_email_log;
-DELETE FROM projects;
-DELETE FROM clients;
+-- Só apaga se a tabela existir (para não falhar em bases antigas)
+DO $$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='notifications') THEN DELETE FROM notifications; END IF; END $$;
+DO $$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='work_entries') THEN DELETE FROM work_entries; END IF; END $$;
+DO $$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='work_sheets') THEN DELETE FROM work_sheets; END IF; END $$;
+DO $$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='worker_projects') THEN DELETE FROM worker_projects; END IF; END $$;
+DO $$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='invites') THEN DELETE FROM invites; END IF; END $$;
+DO $$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='weekly_email_log') THEN DELETE FROM weekly_email_log; END IF; END $$;
+DO $$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='projects') THEN DELETE FROM projects; END IF; END $$;
+DO $$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='clients') THEN DELETE FROM clients; END IF; END $$;
 
 -- ── 2. Atualizar schema (migrações 014–018) ──
 
