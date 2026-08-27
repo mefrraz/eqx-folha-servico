@@ -11,6 +11,8 @@
 }
 
 @layer components {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .btn-primary {
     @apply inline-flex items-center justify-center rounded-xl font-semibold text-sm px-5 py-3
            bg-brand-gold text-brand-dark

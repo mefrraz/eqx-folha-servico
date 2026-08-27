@@ -82,19 +82,19 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Mobile bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-brand-light/30 z-50 px-4 py-2.5 flex items-center justify-between">
-        <Link href="/hr"><Image src="/eqx-logo.svg" alt="EQX" width={20} height={20} className="h-5 w-auto" /></Link>
-        <div className="flex items-center gap-1">
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-brand-light/30 z-50 px-3 py-2.5 flex items-center gap-2">
+        <Link href="/hr" className="shrink-0"><Image src="/eqx-logo.svg" alt="EQX" width={20} height={20} className="h-5 w-auto" /></Link>
+        <div className="flex items-center gap-1 overflow-x-auto flex-1 no-scrollbar">
           {NAV.map((item) => (
             <Link key={item.href} href={item.href}
-              className={`text-xs px-2 py-1 rounded-lg font-medium ${isActive(item) ? "bg-brand-gold/20 text-brand-dark" : "text-brand-soft"}`}>
+              className={`text-xs px-2 py-1 rounded-lg font-medium whitespace-nowrap ${isActive(item) ? "bg-brand-gold/20 text-brand-dark" : "text-brand-soft"}`}>
               {item.label}
             </Link>
           ))}
-          <Link href="/hr/settings" className="text-xs text-brand-muted px-1">⚙️</Link>
-          <button onClick={async () => { await supabase.auth.signOut(); router.push("/auth/login"); }}
-            className="text-xs text-brand-muted ml-2">Sair</button>
         </div>
+        <Link href="/hr/settings" className="text-xs text-brand-muted px-1 shrink-0">⚙️</Link>
+        <button onClick={async () => { await supabase.auth.signOut(); router.push("/auth/login"); }}
+          className="text-xs text-brand-muted ml-1 shrink-0">Sair</button>
       </div>
 
       {/* Main content — offset by sidebar width on desktop */}
