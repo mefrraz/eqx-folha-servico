@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import crypto from "crypto";
 
 // ── Sheet actions ──
 export async function markAsReviewed(sheetId: string) {
@@ -189,5 +190,40 @@ export async function rejectProjectRequest(workerId: string, projectId: string) 
     .eq("project_id", projectId);
   if (error) return { error: error.message };
   revalidatePath("/hr/projects/requests");
+  return { success: true };
+}
+
+// ── API keys (MCP / API pública) ──
+export async function createApiKey(clientName: string, role: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Não autenticado." };
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || (profile.role !== "admin" && profile.role !== "hr")) {
+    return { error: "Apenas administradores." };
+  }
+  if (!clientName?.trim()) return { error: "Nome do cliente é obrigatório." };
+
+  // Gerar chave aleatória e guardar só o hash
+  const key = `eqx_${crypto.randomBytes(24).toString("hex")}`;
+  const hash = crypto.createHash("sha256").update(key).digest("hex");
+
+  const { error } = await supabase.from("api_keys").insert({
+    client_name: clientName.trim(),
+    key_hash: hash,
+    role: role === "admin" ? "admin" : "read",
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/hr/api-keys");
+  // Devolver a chave em claro (só mostrada uma vez)
+  return { success: true, key };
+}
+
+export async function revokeApiKey(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("api_keys").update({ revoked: true }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/hr/api-keys");
   return { success: true };
 }

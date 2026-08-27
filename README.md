@@ -252,6 +252,21 @@ Testes cobrem: `calcMinutes`, `formatMinutes`, `STATUS_LABELS`, `DAY_LABELS`, `W
 
 ---
 
+## 🤖 API + MCP (integração com IA)
+
+A plataforma expõe uma **API REST** e um **servidor MCP** para integração segura com agentes de IA (ex: Hermes Agent).
+
+- **API REST:** `https://eqx-folha-servico.vercel.app/api/v1` — trabalhadores, folhas, clientes, obras, validar, exportar
+- **Servidor MCP:** `https://eqx-folha-servico.vercel.app/api/mcp` — ferramentas tipadas (`listar_trabalhadores`, `listar_folhas`, `detalhe_folha`, `listar_clientes`, `listar_obras`, `validar_folha`, `exportar_folha`)
+- **Autenticação:** API key (bearer token), criada/revogada no painel admin em **API Keys**
+- **Segurança:** service role só no servidor, chaves em hash SHA-256, permissões por role (`read` vs `admin`)
+
+Documentação completa:
+- [`docs/MCP.md`](docs/MCP.md) — como configurar e ligar o Hermes
+- [`docs/API.md`](docs/API.md) — referência dos endpoints REST
+
+---
+
 ## 📄 Licença
 
 Desenvolvido para **EQX — eqx.pt**. Todos os direitos reservados.
