@@ -1,272 +1,201 @@
-# EQX Folha de Serviço — Plataforma de Gestão Semanal
+<p align="center">
+  <img src="public/eqx-logo.png" alt="Ledger — Folha de Serviço" width="60%" />
+</p>
 
-Plataforma web desenvolvida para a **[EQX](https://eqx.pt)** gerir as folhas de serviço semanais dos seus colaboradores. Os trabalhadores preenchem as horas e trabalhos realizados; o RH consulta, valida e exporta tudo.
-
----
-
-## 🛠 Stack
-
-| Camada | Tecnologia |
-|---|---|
-| Frontend | Next.js 14 (App Router) + TypeScript + TailwindCSS |
-| Autenticação | Supabase Auth (Email + Password) |
-| Base de Dados | Supabase PostgreSQL + Row Level Security |
-| Deploy | Vercel (automático via GitHub) |
-| PWA | next-pwa (instalável no telemóvel) |
-| Emails | Resend (notificações) + pg_net (triggers em tempo real) |
+> **v8.5** — 🕐 Folhas de serviço semanais · 👷 Turnos manhã/tarde · 🤖 API + MCP para IA · 🎨 White-label
 
 ---
 
-## 📋 Funcionalidades
+## 🎯 Porquê a Ledger
+
+As folhas de serviço semanais dos colaboradores são essenciais para o RH, mas preenchê-las e geri-las é muitas vezes manual, confuso e sem controlo. A **Ledger** nasceu para simplificar: o trabalhador preenche as horas e trabalhos no telemóvel em minutos, o RH consulta, valida e exporta tudo — com segurança e sem papel.
+
+| Funcionalidade | Ledger | Excel/Manual |
+|---|---|---|
+| Preenchimento no telemóvel | ✅ | ❌ |
+| Turnos manhã/tarde sem sobreposição | ✅ | ❌ |
+| Validação em tempo real | ✅ | ❌ |
+| Validação em massa | ✅ | ❌ |
+| Exportar Word | ✅ | ⚠️ |
+| Convites com permissões | ✅ | ❌ |
+| Aprovação de obras | ✅ | ❌ |
+| API + MCP para IA | ✅ | ❌ |
+| PWA instalável | ✅ | ❌ |
+| White-label (cores/nome/logo) | ✅ | ❌ |
+
+---
+
+## ✨ Funcionalidades
 
 ### 👷 Trabalhador
-
-| Feature | Descrição |
-|---|---|
-| **Login / Registo** | Email + password |
-| **Dashboard** | Semana atual + histórico de folhas anteriores |
-| **Nova folha de serviço** | Formulário Seg–Sáb com dropdown de obras atribuídas |
-| **Turnos manhã/tarde** | 2 turnos por dia com validação sem sobreposição (fim manhã ≤ início tarde) |
-| **Não trabalhei** | No telemóvel, botão por turno que esbate os campos e marca o turno como não trabalhado |
-| **Validação em tempo real** | Aviso imediato quando os turnos manhã/tarde se sobrepõem |
-| **Campos por turno** | Trabalho, tipo, data, hora início/fim, avaliação, rubrica, observações |
-| **Dropdown de obras** | Seleciona a obra atribuída → preenche cliente e nº obra automaticamente |
-| **Rascunho / Submeter** | Guarda rascunho ou submete folha final |
-| **Definições** | Alterar nome e password |
-| **Navegação mobile** | Barra inferior fixa com ícones (🏠 📝 ⚙️) |
-| **PWA** | Instalável no ecrã inicial do telemóvel |
+| Funcionalidade | v | Descrição |
+|---|---|---|
+| 📝 Folha semanal | 1.0 | Seg–Sáb, com turnos manhã/tarde |
+| 🚫 "Não trabalhei" | 7.6 | Marca turno como não trabalhado (esbate campos) |
+| ⚠️ Validação em tempo real | 7.7 | Aviso imediato de sobreposição de turnos |
+| 📱 Cards mobile por dia | 7.9 | Agrupados por dia, menos scroll |
+| 🏗️ Seleção de obras | 7.17 | Escolhe obras, com aprovação do admin |
+| ⚙️ Definições | 1.0 | Nome, password, mudar obras |
 
 ### 👔 RH / Admin
+| Funcionalidade | v | Descrição |
+|---|---|---|
+| 📊 Dashboard | 1.0 | Estatísticas, submissões, pendentes |
+| 👥 Gestão de utilizadores | 1.0 | Criar, editar, eliminar, convites |
+| 🔢 Ações em massa | 7.24 | Atribuir obra, eliminar, enviar email a vários |
+| 🎟️ Convites de acesso | 7.15 | Códigos com prazo, cores, permissões |
+| ✅ Validação em massa | 7.10 | Validar várias folhas de uma vez |
+| 🏗️ Obras e clientes | 1.0 | CRUD completo |
+| 📧 Emails | 6.31 | Templates, envio em massa, lembretes |
+| 🔑 API Keys | 8.0 | Chaves para o MCP/API |
 
-| Feature | Descrição |
-|---|---|
-| **Dashboard** | Estatísticas: total trabalhadores, horas semanais/totais, obras ativas, submissões |
-| **Lista de trabalhadores** | Nome, email, última folha, horas, data de registo, pesquisa por nome/obra |
-| **Perfil do trabalhador** | Calendário de folhas, detalhe compacto, modal "Ver folha" com tabela completa (8 colunas) |
-| **Exportar Word** | Gera documento .doc com a folha formatada |
-| **Validar folhas** | Marca folhas submetidas como validadas |
-| **Notificações** | Badge vermelho em tempo real, limpar individual/todas, link para o trabalhador |
-| **Email notifications** | Envio automático para admin quando uma folha é submetida (via Resend + pg_net) |
-| **Gestão de clientes** | CRUD com nome e logotipo |
-| **Gestão de obras** | CRUD com nome, número, cliente e localização |
-| **Atribuir obras** | Atribuir/remover trabalhadores a obras (individual no perfil ou em massa na lista) |
-| **Transferir em massa** | Selecionar vários trabalhadores e atribuir a uma obra de uma vez |
-| **Criar utilizadores** | Convite por email: admin cria conta → email com link → utilizador define password |
-| **Editar utilizadores** | Nome, email, password |
-| **Eliminar utilizadores** | Com confirmação de credenciais admin |
+### 🤖 Integração (API + MCP)
+| Funcionalidade | v | Descrição |
+|---|---|---|
+| 🌐 API REST | 8.0 | `/api/v1` — trabalhadores, folhas, clientes, obras |
+| 🔌 Servidor MCP | 8.0 | `/api/mcp` — ferramentas tipadas para IA |
+| 🔐 API keys | 8.0 | Hash SHA-256, revogáveis, por role |
+| 🚦 Rate limiting | 8.2 | 60 pedidos/min por IP |
 
----
-
-## 🗄️ Base de Dados
-
-| Tabela | Descrição |
-|---|---|
-| `profiles` | Perfis dos utilizadores (nome, email, role, empresa) |
-| `work_sheets` | Folhas de serviço (uma por trabalhador por semana) |
-| `work_entries` | Entradas diárias (até 6 por folha: Seg–Sáb) |
-| `clients` | Clientes |
-| `projects` | Obras (nome, número, cliente, localização) |
-| `worker_projects` | Atribuição trabalhador ↔ obra (junction table) |
-| `notifications` | Notificações para admin |
-
-**Segurança:** Row Level Security em todas as tabelas. Trabalhadores só veem os seus dados. Admins veem tudo.
+### 🎨 White-label
+| Funcionalidade | v | Descrição |
+|---|---|---|
+| 🎨 Cores configuráveis | 8.4 | Env vars `NEXT_PUBLIC_BRAND_*` |
+| 🏷️ Nome configurável | 8.4 | Env var `NEXT_PUBLIC_APP_NAME` |
+| 🖼️ Logo | 8.5 | Horizontal na interface, quadrado no favicon |
 
 ---
 
-## 🚀 Setup
-
-### 1. Clonar
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/mefrraz/eqx-folha-servico.git
 cd eqx-folha-servico
 npm install
+npm run dev        # → http://localhost:3000
 ```
 
-### 2. Supabase
-
-1. Criar projeto em [supabase.com](https://supabase.com)
-2. SQL Editor → abrir e executar `supabase/complete-schema-seed.sql`
-   - Cria todas as tabelas, triggers, RLS, políticas
-   - Cria 3 clientes, 5 obras de exemplo
-3. Authentication → Settings:
-   - Ativar **Email/Password**
-   - (Dev) Desativar **Confirm email**
-4. Copiar `URL` e `anon key` de Settings → API
-
-### 3. Variáveis de Ambiente
-
-Criar `.env.local`:
+Cria um ficheiro `.env.local` (ver `.env.local.example`):
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
-ADMIN_EMAIL=admin@eqx.pt
-RESEND_API_KEY=re_xxxxxxxx    # opcional — para emails
+NEXT_PUBLIC_SUPABASE_URL=https://[project].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[anon public key]
+SUPABASE_SERVICE_ROLE_KEY=[service role key]
+NEXT_PUBLIC_APP_URL=https://folhas.eqx.pt
 ```
 
-### 4. Correr
-
 ```bash
-npm run dev
-# → http://localhost:3000
-```
-
-### 5. Criar Admin
-
-```bash
-# No Supabase SQL Editor, correr:
-# supabase/create-admin.sql
-# ou via UI: Authentication → Add User → depois:
-UPDATE profiles SET role = 'admin' WHERE email = 'admin@eqx.pt';
-```
-
-### 6. Deploy Vercel
-
-1. [vercel.com](https://vercel.com) → Import repo
-2. Settings → Environment Variables → adicionar as mesmas vars do `.env.local`
-3. Deploy automático a cada push
-
-### 7. VPS — Backups e Monitorização
-
-A app corre no Vercel. A VPS serve para backups diários e monitorização.
-
-```bash
-cd deploy/vps
-cp .env.example .env
-# Editar .env com a connection string do Supabase
-nano .env
-
-docker compose up -d
-```
-
-**Serviços:**
-- **Backup PostgreSQL** — `pg_dump` diário às 3h, 30 dias de retenção, formatos `.dump` + `.sql.gz`
-- **Uptime Kuma** — Dashboard em `http://VPS_IP:3001`, monitoriza `folhas.eqx.pt` e Supabase
-
-**Restaurar backup:**
-```bash
-# Do ficheiro .dump (recomendado)
-pg_restore -d "$SUPABASE_DB_URL" eqx-20250101.dump
-
-# Ou do .sql.gz
-gunzip -c eqx-20250101.sql.gz | psql "$SUPABASE_DB_URL"
+npm test           # testes unitários
+npm run build      # build de produção
 ```
 
 ---
 
-## 📱 PWA
+## 🛠️ Stack
 
-Instalar no telemóvel:
-- **Android**: Chrome → ⋮ → "Adicionar ao ecrã inicial"
-- **iOS**: Safari → Partilhar → "Adicionar ao ecrã principal"
-
-A app funciona offline e tem barra de navegação inferior otimizada para polegar.
-
----
-
-## 📧 Notificações por Email
-
-Opcional. Requer conta gratuita em [resend.com](https://resend.com).
-
-1. Criar conta Resend → API Keys
-2. Adicionar `RESEND_API_KEY` e `ADMIN_EMAIL` ao Vercel
-3. Executar `supabase/migrations/008_email_realtime.sql`
-
-**Remetente:** os emails são enviados como `rh@eqx.pt` (variável `EMAIL_FROM`). Para usar esse endereço, adiciona-o em Gmail → Definições → Contas → "Enviar como" e verifica-o.
-
-**Como funciona:** Quando um trabalhador submete uma folha, o trigger `pg_net` chama a API do Vercel em tempo real, que envia o email via Resend. Adicionalmente, um Vercel Cron Job dispara 1x/dia como fallback.
+| Camada | Tecnologia |
+|---|---|
+| Frontend | Next.js 14 (App Router) + TypeScript |
+| Estilos | Tailwind CSS 3 |
+| Auth | Supabase Auth (email/password) |
+| Base de dados | Supabase PostgreSQL + RLS |
+| Deploy | Vercel (auto-deploy) |
+| PWA | next-pwa (instalável no telemóvel) |
+| Emails | Nodemailer (Gmail) |
+| Testes | Vitest + Playwright |
 
 ---
 
-## 📂 Estrutura do Projeto
+## ⚙️ Arquitetura
+
+```
+Browser (Next.js)
+    │
+    ├── Supabase SDK ──────────► Supabase (Auth + DB + RLS)
+    │
+    ├── /api/v1/* ─────────────► API REST pública (API keys)
+    │
+    ├── /api/mcp ───────────────► Servidor MCP (streamable HTTP)
+    │
+    └── Service Worker ────────► Cache local (PWA offline)
+```
+
+### Integração com IA (MCP)
+
+```
+Hermes Agent ──MCP (HTTPS, API key)──▶ Servidor MCP ──service role──▶ Supabase
+   (só MCP, nunca Supabase direto)      (gatekeeper)                  (dados)
+```
+
+O Hermes (ou qualquer cliente MCP) liga-se ao `/api/mcp` com uma API key. O MCP usa o service role internamente, mas expõe só as ferramentas permitidas, com permissões por role. Ver [`docs/MCP.md`](docs/MCP.md).
+
+---
+
+## 🏗️ Estrutura do Projeto
 
 ```
 src/
 ├── app/
 │   ├── api/
-│   │   ├── create-user/          # Criar utilizador (admin)
-│   │   ├── export-sheet/[id]/    # Exportar folha para Word
-│   │   ├── update-profile/       # Atualizar perfil
-│   │   ├── update-user/          # Atualizar credenciais (admin)
-│   │   ├── users/[id]/           # Eliminar utilizador (admin)
-│   │   └── cron/notify-emails/   # Envio de emails (cron + pg_net)
-│   ├── auth/
-│   │   ├── login/                # Página de login
-│   │   └── signup/               # Página de registo
-│   ├── hr/                       # Painel Admin / RH
-│   │   ├── clients/              # Gestão de clientes
-│   │   ├── notifications/        # Notificações
-│   │   ├── projects/             # Gestão de obras
-│   │   ├── reports/              # Relatórios
-│   │   ├── settings/             # Definições do admin
-│   │   └── users/                # Gestão de trabalhadores
-│   ├── worker/                   # Área do trabalhador
-│   │   ├── dashboard/            # Dashboard pessoal
-│   │   ├── settings/             # Definições pessoais
-│   │   └── sheet/                # Folha de serviço (nova/editar)
-│   ├── layout.tsx                # Layout raiz
-│   └── page.tsx                  # Redireciona baseado no role
-├── components/
-│   ├── SheetForm.tsx             # Formulário principal da folha
-│   ├── SheetTable.tsx            # Tabela desktop
-│   ├── SheetMobileCards.tsx      # Cards mobile
-│   └── MonthCalendar.tsx         # Calendário mensal
+│   │   ├── v1/                    # API REST pública (trabalhadores, folhas, clientes, obras, validar, exportar)
+│   │   ├── mcp/                   # Servidor MCP (streamable HTTP)
+│   │   └── ...                    # Outras API routes (auth, emails, users)
+│   ├── auth/                      # Login, registo, reset/set password
+│   ├── hr/                        # Painel admin/RH (dashboard, users, invites, projects, clients, emails, api-keys, mcp)
+│   └── worker/                    # Área do trabalhador (dashboard, sheet, settings)
+├── components/                    # Componentes reutilizáveis (SheetForm, SheetTable, SheetMobileCards, ProjectSelector)
 ├── lib/
-│   ├── types.ts                  # Tipos TypeScript partilhados
-│   ├── utils.ts                  # Funções utilitárias (cálculo de horas, etc.)
-│   └── supabase/
-│       ├── client.ts             # Cliente Supabase (browser)
-│       ├── server.ts             # Cliente Supabase (servidor)
-│       └── middleware.ts         # Proteção de rotas
-└── middleware.ts                 # Middleware Next.js
+│   ├── brand.ts                   # Configuração da marca (white-label)
+│   ├── api-auth.ts                # Autenticação por API key
+│   ├── types.ts                   # Tipos partilhados
+│   └── utils.ts                   # Funções utilitárias (calcMinutes, validateSheet, formatName)
+└── middleware.ts                  # Proteção de rotas
 supabase/
-├── complete-schema-seed.sql      # Schema completo + seed (executar 1x)
-├── reset-admin.sql               # Limpar tudo + criar admin
-├── create-admin.sql              # Criar admin sem apagar dados
-├── cleanup.sql                   # Limpar schema (projeto errado)
-└── migrations/                   # Migrações individuais
+├── complete-schema-seed.sql       # Schema completo + seed
+└── migrations/                    # Migrações numeradas (001–019)
+docs/
+├── MCP.md                         # Como ligar o Hermes (MCP)
+└── API.md                         # Referência da API REST
 ```
-
----
-
-## 🔐 Segurança
-
-- **Row Level Security** em todas as tabelas
-- **SECURITY DEFINER** para funções que precisam de bypass de RLS
-- **Service role key** usada apenas em server actions/API routes (nunca exposta ao cliente)
-- **Middleware** protege rotas `/worker` e `/hr` com verificação de role
-- **Políticas de storage** para upload de rubricas (só authenticated, só imagens)
 
 ---
 
 ## 🧪 Testes
 
+**23 testes unitários** (Vitest) + **14 testes e2e** (Playwright).
+
 ```bash
-npm test          # vitest run
-npm run test:watch  # vitest em modo watch
+npm test                        # unitários (Vitest)
+npx playwright test             # end-to-end (Playwright)
 ```
 
-Testes cobrem: `calcMinutes`, `formatMinutes`, `STATUS_LABELS`, `DAY_LABELS`, `WORK_TYPE_LABELS`.
+| Área | Testes |
+|---|---|
+| Utilitários (`calcMinutes`, `formatMinutes`, `validateSheet`, `formatName`) | 18 |
+| Tipos (`STATUS_LABELS`, `DAY_LABELS`, `WORK_TYPE_LABELS`) | 5 |
+| E2E (login, admin, convites, fluxo do trabalhador) | 14 |
 
 ---
 
-## 🤖 API + MCP (integração com IA)
+## 🤝 Contribuir
 
-A plataforma expõe uma **API REST** e um **servidor MCP** para integração segura com agentes de IA (ex: Hermes Agent).
-
-- **API REST:** `https://eqx-folha-servico.vercel.app/api/v1` — trabalhadores, folhas, clientes, obras, validar, exportar
-- **Servidor MCP:** `https://eqx-folha-servico.vercel.app/api/mcp` — ferramentas tipadas (`listar_trabalhadores`, `listar_folhas`, `detalhe_folha`, `listar_clientes`, `listar_obras`, `validar_folha`, `exportar_folha`)
-- **Autenticação:** API key (bearer token), criada/revogada no painel admin em **API Keys**
-- **Segurança:** service role só no servidor, chaves em hash SHA-256, permissões por role (`read` vs `admin`)
-
-Documentação completa:
-- [`docs/MCP.md`](docs/MCP.md) — como configurar e ligar o Hermes
-- [`docs/API.md`](docs/API.md) — referência dos endpoints REST
+PRs são bem-vindos! Resumo rápido:
+1. **Escolhe uma issue** ou cria uma nova
+2. **Faz fork, clone, branch** e mexe no que quiseres
+3. **`npm run build`** tem de passar
+4. **Adiciona testes** se mexeres em lógica
+5. **Abre o PR**
 
 ---
 
-## 📄 Licença
+## 📜 Licença
 
 Desenvolvido para **EQX — eqx.pt**. Todos os direitos reservados.
+
+---
+
+<p align="center">
+  <a href="https://folhas.eqx.pt">🌐 folhas.eqx.pt</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/mefrraz/eqx-folha-servico">📦 GitHub</a>
+</p>
