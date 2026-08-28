@@ -10,8 +10,13 @@ const PROTOCOL_VERSION = "2024-11-05";
 const TOOLS = [
   {
     name: "listar_trabalhadores",
-    description: "Lista todos os trabalhadores (nome, email, data de registo).",
-    inputSchema: { type: "object", properties: {} },
+    description: "Lista os perfis (trabalhadores, admin e RH). Sem filtro lista todos; usa role para filtrar.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        role: { type: "string", enum: ["worker", "admin", "hr"], description: "Filtrar por role. Opcional — sem filtro lista todos os perfis." },
+      },
+    },
   },
   {
     name: "listar_folhas",
@@ -119,6 +124,40 @@ const TOOLS = [
       required: ["folha_id", "obra_id"],
     },
   },
+  {
+    name: "apagar_trabalhadores_em_massa",
+    description: "Apaga vários trabalhadores de uma vez (uma só chamada). Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ids: { type: "array", items: { type: "string" }, description: "Lista de IDs (UUID) dos trabalhadores a apagar." },
+      },
+      required: ["ids"],
+    },
+  },
+  {
+    name: "criar_obras_em_massa",
+    description: "Cria várias obras de uma vez (uma só chamada). Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        nomes: { type: "array", items: { type: "string" }, description: "Lista de nomes das obras a criar." },
+      },
+      required: ["nomes"],
+    },
+  },
+  {
+    name: "atribuir_obra_trabalhador",
+    description: "Atribui uma obra a um trabalhador (aprovada de imediato). Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        trabalhador_id: { type: "string", description: "ID do trabalhador (UUID)." },
+        obra_id: { type: "string", description: "ID da obra (UUID)." },
+      },
+      required: ["trabalhador_id", "obra_id"],
+    },
+  },
 ];
 
 function getSupabase() {
@@ -134,13 +173,14 @@ async function callTool(name: string, args: any, role: "read" | "admin"): Promis
 
   switch (name) {
     case "listar_trabalhadores": {
-      const { data, error } = await supabase
+      let query = supabase
         .from("profiles")
         .select("id, full_name, email, role, created_at")
-        .eq("role", "worker")
         .order("full_name");
+      if (args?.role) query = query.eq("role", args.role);
+      const { data, error } = await query;
       if (error) return JSON.stringify({ error: error.message });
-      return JSON.stringify({ trabalhadores: data });
+      return JSON.stringify({ perfis: data });
     }
     case "listar_folhas": {
       let query = supabase
@@ -260,6 +300,48 @@ async function callTool(name: string, args: any, role: "read" | "admin"): Promis
         .eq("id", args.folha_id);
       if (error) return JSON.stringify({ error: error.message });
       return JSON.stringify({ success: true, message: "Obra atribuída à folha." });
+    }
+    case "atribuir_obra_trabalhador": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      if (!args?.trabalhador_id || !args?.obra_id) return JSON.stringify({ error: "trabalhador_id e obra_id são obrigatórios." });
+      const { error } = await supabase
+        .from("worker_projects")
+        .upsert(
+          { worker_id: args.trabalhador_id, project_id: args.obra_id, status: "approved" },
+          { onConflict: "worker_id,project_id" }
+        );
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, message: "Obra atribuída ao trabalhador (aprovada de imediato)." });
+    }
+    // ── Ferramentas em massa (requerem admin/RH) ──
+    case "apagar_trabalhadores_em_massa": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      const ids: string[] = Array.isArray(args?.ids) ? args.ids.map(String) : [];
+      if (ids.length === 0) return JSON.stringify({ error: "Lista de ids vazia." });
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !serviceRoleKey) return JSON.stringify({ error: "Configuração em falta." });
+      let apagados = 0, falhados = 0;
+      for (const id of ids) {
+        try {
+          const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${serviceRoleKey}`, "apikey": serviceRoleKey },
+          });
+          if (res.ok) apagados++; else falhados++;
+        } catch { falhados++; }
+      }
+      return JSON.stringify({ success: true, apagados, falhados, total: ids.length });
+    }
+    case "criar_obras_em_massa": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      const nomes: string[] = (Array.isArray(args?.nomes) ? args.nomes : [])
+        .map((n: any) => String(n).trim())
+        .filter(Boolean);
+      if (nomes.length === 0) return JSON.stringify({ error: "Lista de nomes vazia." });
+      const { data, error } = await supabase.from("projects").insert(nomes.map((n) => ({ name: n }))).select("id, name");
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, criadas: data?.length || 0, obras: data });
     }
     default:
       return JSON.stringify({ error: `Ferramenta desconhecida: ${name}` });
