@@ -8,11 +8,12 @@ import MonthCalendar from "@/components/MonthCalendar";
 import toast from "react-hot-toast";
 import { calcMinutes, formatMinutes } from "@/lib/utils";
 import { DAY_LABELS, WORK_TYPE_LABELS } from "@/lib/types";
+import EditProject from "./EditProject";
 
 const DL = DAY_LABELS;
 const WT = WORK_TYPE_LABELS;
 
-export default function ProjectDetailClient({ project, sheets: allSheets, assignedCount }: { project: any; sheets: any[]; assignedCount: number }) {
+export default function ProjectDetailClient({ project, sheets: allSheets, assignedCount, clients }: { project: any; sheets: any[]; assignedCount: number; clients?: { id: string; name: string }[] }) {
   const [selectedSunday, setSelectedSunday] = useState<Date | null>(null);
   const [weekSheets, setWeekSheets] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -84,6 +85,7 @@ export default function ProjectDetailClient({ project, sheets: allSheets, assign
             <h2 className="text-xl font-bold text-brand-dark">{project.name}</h2>
             {project.client?.name && <p className="text-sm text-brand-soft">{project.client.name}{project.location ? ` · ${project.location}` : ""}</p>}
           </div>
+          <EditProject project={project} clients={clients || []} />
         </div>
       </div>
 

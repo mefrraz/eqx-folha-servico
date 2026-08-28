@@ -119,6 +119,16 @@ export async function updateClient(id: string, data: { name?: string; logo_url?:
   return { success: true };
 }
 
+export async function deleteClient(id: string) {
+  const supabase = await createClient();
+  // Obras deste cliente ficam sem cliente associado (não são apagadas)
+  await supabase.from("projects").update({ client_id: null }).eq("client_id", id);
+  const { error } = await supabase.from("clients").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/hr/clients", "layout");
+  return { success: true };
+}
+
 // ── Project actions ──
 export async function addProject(data: { name: string; number?: string; client_id?: string; location?: string }) {
   const supabase = await createClient();
@@ -128,9 +138,19 @@ export async function addProject(data: { name: string; number?: string; client_i
   return { success: true };
 }
 
-export async function updateProject(id: string, data: { name?: string; client_id?: string; location?: string }) {
+export async function updateProject(id: string, data: { name?: string; number?: string; client_id?: string | null; location?: string }) {
   const supabase = await createClient();
   const { error } = await supabase.from("projects").update(data).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/hr/projects", "layout");
+  return { success: true };
+}
+
+export async function deleteProject(id: string) {
+  const supabase = await createClient();
+  // Remover atribuições e apagar a obra (as folhas mantêm histórico, ficam sem obra)
+  await supabase.from("worker_projects").delete().eq("project_id", id);
+  const { error } = await supabase.from("projects").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/hr/projects", "layout");
   return { success: true };
