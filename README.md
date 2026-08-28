@@ -69,8 +69,8 @@ As folhas de serviço semanais dos colaboradores são essenciais para o RH, mas 
 ## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/mefrraz/eqx-folha-servico.git
-cd eqx-folha-servico
+git clone https://github.com/mefrraz/ledger.git
+cd ledger
 npm install
 npm run dev        # → http://localhost:3000
 ```
@@ -197,5 +197,5 @@ Desenvolvido para **EQX — eqx.pt**. Todos os direitos reservados.
 <p align="center">
   <a href="https://folhas.eqx.pt">🌐 folhas.eqx.pt</a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/mefrraz/eqx-folha-servico">📦 GitHub</a>
+  <a href="https://github.com/mefrraz/ledger">📦 GitHub</a>
 </p>
