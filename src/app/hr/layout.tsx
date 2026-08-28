@@ -17,6 +17,7 @@ const NAV = [
   { href: "/hr/emails", label: "Emails" },
   { href: "/hr/notifications", label: "Notificacoes", badge: true },
   { href: "/hr/api-keys", label: "API Keys" },
+  { href: "/hr/mcp", label: "MCP" },
 ];
 
 export default function HRLayout({ children }: { children: React.ReactNode }) {
