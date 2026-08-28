@@ -271,7 +271,9 @@ async function callTool(name: string, args: any, role: "read" | "admin"): Promis
       if (args?.role) query = query.eq("role", args.role);
       const { data, error } = await query;
       if (error) return JSON.stringify({ error: error.message });
-      return JSON.stringify({ perfis: data });
+      // Compatibilidade: devolve as duas chaves (perfis inclui admin/RH; trabalhadores = filtro worker)
+      const workerOnly = (data || []).filter((p: any) => p.role === "worker");
+      return JSON.stringify({ perfis: data, trabalhadores: workerOnly });
     }
     case "listar_folhas": {
       let query = supabase
