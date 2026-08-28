@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { formatName } from "@/lib/utils";
+import { brand } from "@/lib/brand";
 
 export default function SignupPage() {
   const [fullName,setFullName]=useState("");const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [inviteCode,setInviteCode]=useState("");const [inviteId,setInviteId]=useState<string|null>(null);const [loading,setLoading]=useState(false);
@@ -33,7 +34,7 @@ export default function SignupPage() {
 
   return(<div className="flex min-h-screen items-center justify-center bg-page px-4">
     <div className="w-full max-w-sm space-y-8">
-      <div className="text-center"><Image src="/eqx-logo.png" alt="logo" width={134} height={40} className="h-10 w-auto mx-auto mb-4"/><h2 className="text-lg font-semibold text-brand-dark">Criar conta</h2><p className="text-sm text-brand-soft mt-1">Registo de trabalhador</p></div>
+      <div className="text-center"><Image src={brand.logoUrl} alt="logo" width={134} height={40} className="h-10 w-auto mx-auto mb-4"/><h2 className="text-lg font-semibold text-brand-dark">Criar conta</h2><p className="text-sm text-brand-soft mt-1">Registo de trabalhador</p></div>
       <form onSubmit={handle} className="card space-y-4">
         <div><label htmlFor="inviteCode" className="label-field">Código de convite</label><input id="inviteCode" type="text" required value={inviteCode} onChange={e=>setInviteCode(e.target.value.toUpperCase())} className="input-field" placeholder="Código fornecido pela EQX"/></div>
         <div><label htmlFor="fullName" className="label-field">Nome completo</label><input id="fullName" type="text" required value={fullName} onChange={e=>setFullName(e.target.value)} onBlur={()=>setFullName(formatName(fullName))} className="input-field" placeholder="João Silva"/></div>

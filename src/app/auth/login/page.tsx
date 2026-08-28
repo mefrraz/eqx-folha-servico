@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { brand } from "@/lib/brand";
 
 export default function LoginPage() {
   const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [loading,setLoading]=useState(false);
@@ -13,7 +14,7 @@ export default function LoginPage() {
 
   return(<div className="flex min-h-screen items-center justify-center bg-page px-4">
     <div className="w-full max-w-sm space-y-8">
-      <div className="text-center"><Image src="/eqx-logo.png" alt="logo" width={134} height={40} className="h-10 w-auto mx-auto mb-4"/><p className="text-sm text-brand-soft mt-1">Inicie sessão para continuar</p></div>
+      <div className="text-center"><Image src={brand.logoUrl} alt="logo" width={134} height={40} className="h-10 w-auto mx-auto mb-4"/><p className="text-sm text-brand-soft mt-1">Inicie sessão para continuar</p></div>
       <form onSubmit={handle} className="card space-y-4">
         <div><label htmlFor="email" className="label-field">Email</label><input id="email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} className="input-field" placeholder="nome@eqx.pt"/></div>
         <div><label htmlFor="password" className="label-field">Password</label><input id="password" type="password" required value={password} onChange={e=>setPassword(e.target.value)} className="input-field" placeholder="••••••••"/></div>

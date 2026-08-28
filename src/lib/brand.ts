@@ -6,6 +6,7 @@
 export const brand = {
   name: process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço",
   shortName: process.env.NEXT_PUBLIC_APP_SHORT_NAME || "Folha",
+  logoUrl: process.env.NEXT_PUBLIC_LOGO_URL || "/eqx-logo.png",
   primary: process.env.NEXT_PUBLIC_BRAND_PRIMARY || "#F1C411",
   dark: process.env.NEXT_PUBLIC_BRAND_DARK || "#1a1a1a",
   soft: process.env.NEXT_PUBLIC_BRAND_SOFT || "#54595F",
