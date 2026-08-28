@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content={brand.shortName} />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="icon" href={brand.faviconUrl} type="image/png" />
       </head>
       <body className="min-h-screen">
         <Toaster position="top-right" toastOptions={{
