@@ -61,6 +61,64 @@ const TOOLS = [
       required: ["id"],
     },
   },
+  {
+    name: "criar_obra",
+    description: "Cria uma obra (projeto). Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: { nome: { type: "string", description: "Nome da obra." } },
+      required: ["nome"],
+    },
+  },
+  {
+    name: "apagar_obra",
+    description: "Apaga uma obra (projeto). Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string", description: "ID da obra (UUID)." } },
+      required: ["id"],
+    },
+  },
+  {
+    name: "criar_cliente",
+    description: "Cria um cliente. Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: { nome: { type: "string", description: "Nome do cliente." } },
+      required: ["nome"],
+    },
+  },
+  {
+    name: "apagar_cliente",
+    description: "Apaga um cliente. Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string", description: "ID do cliente (UUID)." } },
+      required: ["id"],
+    },
+  },
+  {
+    name: "apagar_trabalhador",
+    description: "Apaga um trabalhador (conta). Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string", description: "ID do trabalhador (UUID)." } },
+      required: ["id"],
+    },
+  },
+  {
+    name: "atribuir_obra_folha",
+    description: "Atribui obra/cliente a uma folha de serviço. Requer permissão admin/RH.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        folha_id: { type: "string", description: "ID da folha (UUID)." },
+        obra_id: { type: "string", description: "ID da obra (UUID)." },
+        work_number: { type: "string", description: "Nº da obra. Opcional." },
+      },
+      required: ["folha_id", "obra_id"],
+    },
+  },
 ];
 
 function getSupabase() {
@@ -141,6 +199,67 @@ async function callTool(name: string, args: any, role: "read" | "admin"): Promis
         worker: sheet.worker?.full_name,
         entries: sheet.work_entries,
       });
+    }
+    // ── Ferramentas de escrita (requerem admin/RH) ──
+    case "criar_obra": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      if (!args?.nome?.trim()) return JSON.stringify({ error: "Nome da obra é obrigatório." });
+      const { data, error } = await supabase.from("projects").insert({ name: args.nome.trim() }).select("id, name").maybeSingle();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, obra: data });
+    }
+    case "apagar_obra": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      const { error } = await supabase.from("projects").delete().eq("id", args.id);
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, message: "Obra apagada." });
+    }
+    case "criar_cliente": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      if (!args?.nome?.trim()) return JSON.stringify({ error: "Nome do cliente é obrigatório." });
+      const { data, error } = await supabase.from("clients").insert({ name: args.nome.trim() }).select("id, name").maybeSingle();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, cliente: data });
+    }
+    case "apagar_cliente": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      const { error } = await supabase.from("clients").delete().eq("id", args.id);
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, message: "Cliente apagado." });
+    }
+    case "apagar_trabalhador": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !serviceRoleKey) return JSON.stringify({ error: "Configuração em falta." });
+      const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${args.id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${serviceRoleKey}`, "apikey": serviceRoleKey },
+      });
+      if (!res.ok) return JSON.stringify({ error: `Erro ao apagar trabalhador (HTTP ${res.status}).` });
+      return JSON.stringify({ success: true, message: "Trabalhador apagado." });
+    }
+    case "atribuir_obra_folha": {
+      if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
+      if (!args?.folha_id || !args?.obra_id) return JSON.stringify({ error: "folha_id e obra_id são obrigatórios." });
+      // Buscar a obra para obter o cliente
+      const { data: obra } = await supabase
+        .from("projects")
+        .select("id, name, number, client:clients(name)")
+        .eq("id", args.obra_id)
+        .maybeSingle();
+      if (!obra) return JSON.stringify({ error: "Obra não encontrada." });
+      const obraClient = (obra as any).client?.name || obra.name;
+      const { error } = await supabase
+        .from("work_sheets")
+        .update({
+          project_id: obra.id,
+          client: obraClient,
+          work_number: args.work_number || obra.number || "",
+        })
+        .eq("id", args.folha_id);
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, message: "Obra atribuída à folha." });
     }
     default:
       return JSON.stringify({ error: `Ferramenta desconhecida: ${name}` });

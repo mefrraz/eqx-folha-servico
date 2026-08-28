@@ -48,8 +48,16 @@ As chaves são criadas/revogadas no painel admin em **API Keys** (`/hr/api-keys`
 | `detalhe_folha` | Detalhe completo de uma folha (entradas, turnos, horas) | leitura |
 | `listar_clientes` | Lista todos os clientes | leitura |
 | `listar_obras` | Lista todas as obras (projetos) | leitura |
-| `validar_folha` | Marca uma folha como validada | admin/RH |
 | `exportar_folha` | Exporta uma folha (dados para Word) | leitura |
+| `validar_folha` | Marca uma folha como validada | admin/RH |
+| `criar_obra` | Cria uma obra | admin/RH |
+| `apagar_obra` | Apaga uma obra | admin/RH |
+| `criar_cliente` | Cria um cliente | admin/RH |
+| `apagar_cliente` | Apaga um cliente | admin/RH |
+| `apagar_trabalhador` | Apaga um trabalhador (conta) | admin/RH |
+| `atribuir_obra_folha` | Atribui obra/cliente a uma folha | admin/RH |
+
+**Todas as ferramentas de escrita exigem role admin/RH** — o role é verificado antes de executar (a chave de leitura não basta). Rate limiting aplica-se a todas as ferramentas.
 
 ---
 
