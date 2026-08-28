@@ -59,6 +59,7 @@ As chaves são criadas/revogadas no painel admin em **API Keys** (`/hr/api-keys`
 | `atribuir_obra_trabalhador` | Atribui obra a um trabalhador (aprovada de imediato) | admin/RH |
 | `apagar_trabalhadores_em_massa` | Apaga vários trabalhadores numa só chamada | admin/RH |
 | `criar_obras_em_massa` | Cria várias obras numa só chamada | admin/RH |
+| `resumo_semana` | Resumo da semana: quem submeteu, horas, em falta | leitura |
 
 **Todas as ferramentas de escrita exigem role admin/RH** — o role é verificado antes de executar (a chave de leitura não basta). Rate limiting aplica-se a todas as ferramentas.
 

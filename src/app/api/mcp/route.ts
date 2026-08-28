@@ -158,6 +158,16 @@ const TOOLS = [
       required: ["trabalhador_id", "obra_id"],
     },
   },
+  {
+    name: "resumo_semana",
+    description: "Resumo de uma semana: quem submeteu, horas por trabalhador e quem está em falta. Sem chamadas extra.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        week_start: { type: "string", description: "Segunda-feira da semana (YYYY-MM-DD). Opcional — por defeito usa a semana atual." },
+      },
+    },
+  },
 ];
 
 function getSupabase() {
@@ -342,6 +352,49 @@ async function callTool(name: string, args: any, role: "read" | "admin"): Promis
       const { data, error } = await supabase.from("projects").insert(nomes.map((n) => ({ name: n }))).select("id, name");
       if (error) return JSON.stringify({ error: error.message });
       return JSON.stringify({ success: true, criadas: data?.length || 0, obras: data });
+    }
+    case "resumo_semana": {
+      // Segunda-feira da semana atual (ou a passada em args)
+      const now = new Date();
+      const day = (now.getDay() + 6) % 7;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - day);
+      const ws = args?.week_start || monday.toISOString().slice(0, 10);
+      const { data: workers } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("role", "worker")
+        .order("full_name");
+      const { data: sheets } = await supabase
+        .from("work_sheets")
+        .select("*, work_entries(*), worker:profiles!work_sheets_worker_id_fkey(full_name)")
+        .eq("week_start", ws);
+      const hoursByWorker = new Map<string, { nome: string; horas: string; status: string }>();
+      for (const s of sheets || []) {
+        let m = 0;
+        for (const e of s.work_entries || []) {
+          if (e.start_time && e.end_time) {
+            const [sh, sm] = e.start_time.split(":").map(Number);
+            const [eh, em] = e.end_time.split(":").map(Number);
+            m += (eh * 60 + em) - (sh * 60 + sm);
+          }
+        }
+        const h = Math.floor(m / 60), mm = m % 60;
+        hoursByWorker.set(s.worker_id, {
+          nome: s.worker?.full_name || "—",
+          horas: mm > 0 ? `${h}h ${mm}m` : `${h}h`,
+          status: s.status,
+        });
+      }
+      const submeteram = (workers || []).filter((w) => hoursByWorker.has(w.id)).map((w) => ({ id: w.id, nome: w.full_name, ...(hoursByWorker.get(w.id) || {}) }));
+      const pendentes = (workers || []).filter((w) => !hoursByWorker.has(w.id)).map((w) => ({ id: w.id, nome: w.full_name, email: w.email }));
+      return JSON.stringify({
+        semana: ws,
+        total_trabalhadores: workers?.length || 0,
+        submeteram,
+        pendentes,
+        resumo: `${submeteram.length}/${workers?.length || 0} submeteram`,
+      });
     }
     default:
       return JSON.stringify({ error: `Ferramenta desconhecida: ${name}` });
