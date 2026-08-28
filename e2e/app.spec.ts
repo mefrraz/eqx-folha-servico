@@ -44,7 +44,7 @@ async function createWorker(page: Page): Promise<{ email: string; password: stri
 test.describe("Auth", () => {
   test("login page loads", async ({ page }) => {
     await page.goto(`${BASE}/auth/login`);
-    await expect(page.getByRole("heading", { name: /Folha de Serviço/i })).toBeVisible();
+    await expect(page.getByText(/Inicie sessão para continuar/i)).toBeVisible();
   });
 
   test("login with wrong password shows error", async ({ page }) => {
