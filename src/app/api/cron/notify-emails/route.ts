@@ -34,7 +34,7 @@ async function handleCron(request: Request, method: string) {
 
   const supabase = createClient(supabaseUrl!, serviceRoleKey);
   const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
-  const logoUrl = `${APP_URL}/eqx-logo.svg`;
+  const logoUrl = `${APP_URL}/eqx-logo.png`;
 
   const results: any = {};
 
@@ -210,7 +210,7 @@ function emailTemplate(title: string, body: string, footer: string) {
 <tr><td align="center">
 <table width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
   <tr><td style="background:#fff;padding:24px 30px 16px;text-align:center;border-bottom:3px solid #F1C411">
-    <img src="${APP_URL}/eqx-logo.svg" alt="EQX" style="height:36px" />
+    <img src="${APP_URL}/eqx-logo.png" alt="logo" style="height:36px" />
   </td></tr>
   <tr><td style="padding:30px">
     <h2 style="margin:0 0 10px;color:#1a1a1a;font-size:18px">${title}</h2>

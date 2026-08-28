@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://folhas.eqx.pt";
-  const logoUrl = `${appUrl}/eqx-logo.svg`;
+  const logoUrl = `${appUrl}/eqx-logo.png`;
 
   const now = new Date();
   const mon = new Date(now);

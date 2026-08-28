@@ -115,7 +115,7 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-page px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <Image src="/eqx-logo.svg" alt="EQX" width={40} height={40} className="h-10 w-auto mx-auto mb-4" />
+          <Image src="/eqx-logo.png" alt="logo" width={134} height={40} className="h-10 w-auto mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-brand-dark">Recuperar password</h2>
           <p className="text-sm text-brand-soft mt-1">EQX Folha de Serviço</p>
         </div>

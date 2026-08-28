@@ -35,7 +35,7 @@ export default function WorkerLayout({ children }: { children: React.ReactNode }
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/worker/dashboard" className="flex items-center gap-3">
-              <Image src="/eqx-logo.svg" alt="EQX" width={24} height={24} className="h-6 w-auto" />
+              <Image src="/eqx-logo.png" alt="logo" width={80} height={24} className="h-6 w-auto" />
               <span className="text-[10px] tracking-[.2em] uppercase text-brand-muted font-semibold">{brand.name}</span>
             </Link>
             <div className="flex items-center gap-1">
@@ -58,7 +58,7 @@ export default function WorkerLayout({ children }: { children: React.ReactNode }
       <nav className="bg-white border-b border-brand-light/30 lg:hidden">
         <div className="mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/worker/dashboard" className="flex items-center gap-2">
-            <Image src="/eqx-logo.svg" alt="EQX" width={20} height={20} className="h-5 w-auto" />
+            <Image src="/eqx-logo.png" alt="logo" width={67} height={20} className="h-5 w-auto" />
             <span className="text-[10px] tracking-[.2em] uppercase text-brand-muted font-semibold">{brand.shortName}</span>
           </Link>
           <div className="flex items-center gap-3">
