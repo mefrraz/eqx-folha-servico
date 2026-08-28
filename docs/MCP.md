@@ -158,3 +158,4 @@ curl -X POST https://eqx-folha-servico.vercel.app/api/mcp \
 - API keys **separadas por cliente** (Hermes, RH, etc.), revogáveis
 - As chaves são guardadas em **hash SHA-256** (nunca em claro)
 - Permissões por role: `read` (só consulta) vs `admin` (pode validar)
+- **Rate limiting**: máximo de 60 pedidos por minuto por IP

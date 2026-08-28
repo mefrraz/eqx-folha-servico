@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export interface ApiKeyAuth {
   role: "read" | "admin";
@@ -11,6 +12,11 @@ export interface ApiKeyAuth {
  * Devolve o role da chave, ou null se inválida/revogada.
  */
 export async function authenticateApiKey(request: Request): Promise<ApiKeyAuth | null> {
+  // Rate limiting por IP (60 pedidos/min)
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rl = checkRateLimit(`api:${ip}`, 60, 60_000);
+  if (!rl.allowed) return null;
+
   const authHeader = request.headers.get("authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
 
@@ -42,3 +48,6 @@ export async function authenticateApiKey(request: Request): Promise<ApiKeyAuth |
 export function canWrite(role: "read" | "admin"): boolean {
   return role === "admin";
 }
+
+/** Código de erro padrão para rate limiting (reutilizável nos routes). */
+export const RATE_LIMITED = -32029;

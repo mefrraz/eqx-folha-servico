@@ -132,3 +132,4 @@ curl -X POST -H "Authorization: Bearer eqx_SUA_CHAVE" \
 - Service role do Supabase fica **só** no servidor (nunca exposto)
 - API keys em **hash SHA-256**, revogáveis
 - Permissões por role (`read` vs `admin`)
+- **Rate limiting**: máximo de 60 pedidos por minuto por IP
