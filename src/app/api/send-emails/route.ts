@@ -75,7 +75,7 @@ export async function POST(request: Request) {
         .join("");
 
       await transporter.sendMail({
-        from: `EQX Folha de Serviço <${emailFrom}>`,
+        from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
         to: w.email,
         subject: replaceVars(subject, w),
         html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#F7F7F7">

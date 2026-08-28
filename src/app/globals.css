@@ -4,6 +4,18 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
+/* Valores por defeito (neutros) — a marca real é injetada via env vars no layout */
+:root {
+  --brand-gold: #F1C411;
+  --brand-dark: #1a1a1a;
+  --brand-soft: #54595F;
+  --brand-muted: #7A7A7A;
+  --brand-light: #CFCFCF;
+  --brand-page: #F7F7F7;
+  --brand-success: #61CE70;
+  --brand-olive: #98C03E;
+}
+
 @layer base {
   body {
     @apply bg-page text-brand-dark antialiased font-sans;

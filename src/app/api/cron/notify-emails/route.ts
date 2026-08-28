@@ -51,7 +51,7 @@ async function handleCron(request: Request, method: string) {
     for (const n of notifications) {
       try {
         await transporter.sendMail({
-          from: `EQX Folha de Serviço <${emailFrom}>`,
+          from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
           to: adminEmail,
           subject: `EQX: ${n.message}`,
           html: emailTemplate("Nova folha submetida", n.message, `Ver: ${APP_URL}/hr/notifications`),
@@ -90,7 +90,7 @@ async function handleCron(request: Request, method: string) {
     for (const w of missing) {
       try {
         await transporter.sendMail({
-          from: `EQX Folha de Serviço <${emailFrom}>`,
+          from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
           to: w.email,
           subject: "EQX — Folha de serviço pendente",
           html: emailTemplate(
@@ -142,7 +142,7 @@ async function handleCron(request: Request, method: string) {
 
       try {
         await transporter.sendMail({
-          from: `EQX Folha de Serviço <${emailFrom}>`,
+          from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
           to: w.email,
           subject: "EQX — Resumo da semana",
           html: emailTemplate(
@@ -182,7 +182,7 @@ async function handleCron(request: Request, method: string) {
     for (const w of missing) {
       try {
         await transporter.sendMail({
-          from: `EQX Folha de Serviço <${emailFrom}>`,
+          from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
           to: w.email,
           subject: "EQX — Lembrete: folha de serviço desta semana",
           html: emailTemplate(

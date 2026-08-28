@@ -1,5 +1,17 @@
 import type { Config } from "tailwindcss";
 
+// Cores configuráveis via env vars (build-time). Defaults neutros.
+const brand = {
+  gold: process.env.NEXT_PUBLIC_BRAND_PRIMARY || "#F1C411",
+  dark: process.env.NEXT_PUBLIC_BRAND_DARK || "#1a1a1a",
+  soft: process.env.NEXT_PUBLIC_BRAND_SOFT || "#54595F",
+  muted: process.env.NEXT_PUBLIC_BRAND_MUTED || "#7A7A7A",
+  light: process.env.NEXT_PUBLIC_BRAND_LIGHT || "#CFCFCF",
+  success: process.env.NEXT_PUBLIC_BRAND_SUCCESS || "#61CE70",
+  olive: process.env.NEXT_PUBLIC_BRAND_OLIVE || "#98C03E",
+  page: process.env.NEXT_PUBLIC_BRAND_PAGE || "#F7F7F7",
+};
+
 const config: Config = {
   darkMode: "media",
   content: [
@@ -15,15 +27,15 @@ const config: Config = {
       },
       colors: {
         brand: {
-          gold: "#F1C411",
-          dark: "#1a1a1a",
-          soft: "#54595F",
-          muted: "#7A7A7A",
-          light: "#CFCFCF",
+          gold: brand.gold,
+          dark: brand.dark,
+          soft: brand.soft,
+          muted: brand.muted,
+          light: brand.light,
         },
-        success: "#61CE70",
-        olive: "#98C03E",
-        page: "#F7F7F7",
+        success: brand.success,
+        olive: brand.olive,
+        page: brand.page,
       },
       borderRadius: {
         xl: "14px",

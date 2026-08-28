@@ -33,7 +33,7 @@ export default function SignupPage() {
 
   return(<div className="flex min-h-screen items-center justify-center bg-page px-4">
     <div className="w-full max-w-sm space-y-8">
-      <div className="text-center"><Image src="/eqx-logo.svg" alt="EQX" width={40} height={40} className="h-10 w-auto mx-auto mb-4"/><h2 className="text-lg font-semibold text-brand-dark">Criar conta</h2><p className="text-sm text-brand-soft mt-1">Registo de trabalhador EQX</p></div>
+      <div className="text-center"><Image src="/eqx-logo.svg" alt="logo" width={40} height={40} className="h-10 w-auto mx-auto mb-4"/><h2 className="text-lg font-semibold text-brand-dark">Criar conta</h2><p className="text-sm text-brand-soft mt-1">Registo de trabalhador</p></div>
       <form onSubmit={handle} className="card space-y-4">
         <div><label htmlFor="inviteCode" className="label-field">Código de convite</label><input id="inviteCode" type="text" required value={inviteCode} onChange={e=>setInviteCode(e.target.value.toUpperCase())} className="input-field" placeholder="Código fornecido pela EQX"/></div>
         <div><label htmlFor="fullName" className="label-field">Nome completo</label><input id="fullName" type="text" required value={fullName} onChange={e=>setFullName(e.target.value)} onBlur={()=>setFullName(formatName(fullName))} className="input-field" placeholder="João Silva"/></div>

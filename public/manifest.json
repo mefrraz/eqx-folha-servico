@@ -1,11 +1,11 @@
 {
-  "name": "EQX Folha de Serviço",
-  "short_name": "EQX Folhas",
-  "description": "EQX — Plataforma de gestão de folhas de serviço semanais",
+  "name": "Folha de Serviço",
+  "short_name": "Folha",
+  "description": "Plataforma de gestão de folhas de serviço semanais",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#2563eb",
+  "background_color": "#F7F7F7",
+  "theme_color": "#F1C411",
   "orientation": "portrait-primary",
   "lang": "pt",
   "icons": [
