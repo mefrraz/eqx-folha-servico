@@ -4,6 +4,8 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço";
+
 export async function POST(request: Request) {
   try {
     // Verify admin
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
       await transporter.sendMail({
         from: gmailUser,
         to: targetProfile.email,
-        subject: "EQX — Convite para a plataforma (reenvio)",
+        subject: `${APP_NAME} — Convite para a plataforma (reenvio)`,
         html: inviteEmailTemplate(targetProfile.full_name, setPasswordUrl),
       });
     }
@@ -78,12 +80,12 @@ function inviteEmailTemplate(fullName: string, link: string) {
 <tr><td align="center">
 <table width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
   <tr><td style="background:#fff;padding:24px 30px 16px;text-align:center;border-bottom:3px solid #F1C411">
-    <h2 style="margin:0;color:#1a1a1a;font-size:18px">EQX Folha de Serviço</h2>
+    <h2 style="margin:0;color:#1a1a1a;font-size:18px">${APP_NAME}</h2>
   </td></tr>
   <tr><td style="padding:30px">
     <h2 style="margin:0 0 10px;color:#1a1a1a;font-size:18px">Bem-vindo, ${fullName}</h2>
     <p style="margin:0 0 15px;color:#54595F;font-size:14px;line-height:1.6">
-      O administrador reenviou o seu convite para a plataforma EQX Folha de Serviço.<br><br>
+      O administrador reenviou o seu convite para a plataforma ${APP_NAME}.<br><br>
       Clique no botão abaixo para definir a sua palavra-passe:
     </p>
     <div style="text-align:center;margin:20px 0">

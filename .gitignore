@@ -21,3 +21,6 @@ Thumbs.db
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Logos de marca específicos (ficam só localmente; produção usa URLs do Supabase Storage)
+public/eqx-logo.svg

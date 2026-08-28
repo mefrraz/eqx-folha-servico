@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://folhas.eqx.pt";
-  const logoUrl = `${appUrl}/eqx-logo.png`;
+  const logoUrl = `${appUrl}/logo.png`;
 
   const now = new Date();
   const mon = new Date(now);
@@ -83,14 +83,14 @@ export async function POST(request: Request) {
 <tr><td align="center">
 <table width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
   <tr><td style="background:#fff;padding:24px 30px 16px;text-align:center;border-bottom:3px solid #F1C411">
-    <img src="${logoUrl}" alt="EQX" style="height:36px" />
+    <img src="${logoUrl}" alt="logo" style="height:36px" />
   </td></tr>
   <tr><td style="padding:30px">
     <h2 style="margin:0 0 15px;color:#1a1a1a;font-size:18px">${replaceVars(subject, w)}</h2>
     ${replaceVars(htmlBody, w)}
   </td></tr>
   <tr><td style="background:#F7F7F7;padding:15px 30px;border-top:1px solid #eee">
-    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma EQX Folha de Serviço.</p>
+    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma ${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"}.</p>
   </td></tr>
 </table>
 </td></tr></table></body></html>`,

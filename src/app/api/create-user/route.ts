@@ -5,6 +5,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço";
+
 export async function POST(request: Request) {
   // Rate limit: 20 invites per hour per admin
   const ip = request.headers.get("x-forwarded-for") || "unknown";
@@ -99,7 +101,7 @@ export async function POST(request: Request) {
         await transporter.sendMail({
           from: gmailUser,
           to: email,
-          subject: "EQX — Convite para a plataforma de folhas de serviço",
+          subject: `${APP_NAME} — Convite para a plataforma de folhas de serviço`,
           html: inviteEmailTemplate(full_name, setPasswordUrl),
         });
       } catch (mailErr: any) {
@@ -120,12 +122,12 @@ function inviteEmailTemplate(fullName: string, link: string) {
 <tr><td align="center">
 <table width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
   <tr><td style="background:#fff;padding:24px 30px 16px;text-align:center;border-bottom:3px solid #F1C411">
-    <h2 style="margin:0;color:#1a1a1a;font-size:18px">EQX Folha de Serviço</h2>
+    <h2 style="margin:0;color:#1a1a1a;font-size:18px">${APP_NAME}</h2>
   </td></tr>
   <tr><td style="padding:30px">
     <h2 style="margin:0 0 10px;color:#1a1a1a;font-size:18px">Bem-vindo, ${fullName}</h2>
     <p style="margin:0 0 15px;color:#54595F;font-size:14px;line-height:1.6">
-      Foi criada uma conta para si na plataforma EQX Folha de Serviço.<br><br>
+      Foi criada uma conta para si na plataforma ${APP_NAME}.<br><br>
       Clique no botão abaixo para definir a sua palavra-passe e aceder à plataforma:
     </p>
     <div style="text-align:center;margin:20px 0">

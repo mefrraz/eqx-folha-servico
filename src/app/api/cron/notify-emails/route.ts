@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 import { startOfWeek, subDays, format } from "date-fns";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://folhas.eqx.pt";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço";
 
 export async function GET(request: Request) { return handleCron(request, "GET"); }
 export async function POST(request: Request) { return handleCron(request, "POST"); }
@@ -34,7 +35,7 @@ async function handleCron(request: Request, method: string) {
 
   const supabase = createClient(supabaseUrl!, serviceRoleKey);
   const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
-  const logoUrl = `${APP_URL}/eqx-logo.png`;
+  const logoUrl = `${APP_URL}/logo.png`;
 
   const results: any = {};
 
@@ -53,7 +54,7 @@ async function handleCron(request: Request, method: string) {
         await transporter.sendMail({
           from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
           to: adminEmail,
-          subject: `EQX: ${n.message}`,
+          subject: `${APP_NAME}: ${n.message}`,
           html: emailTemplate("Nova folha submetida", n.message, `Ver: ${APP_URL}/hr/notifications`),
         });
         await supabase.from("notifications").update({ emailed_at: new Date().toISOString() }).eq("id", n.id);
@@ -92,7 +93,7 @@ async function handleCron(request: Request, method: string) {
         await transporter.sendMail({
           from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
           to: w.email,
-          subject: "EQX — Folha de serviço pendente",
+          subject: `${APP_NAME} — Folha de serviço pendente`,
           html: emailTemplate(
             `Olá ${w.full_name}`,
             `A folha de serviço da semana passada ainda não foi submetida. Por favor, submeta a sua folha.`,
@@ -144,7 +145,7 @@ async function handleCron(request: Request, method: string) {
         await transporter.sendMail({
           from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
           to: w.email,
-          subject: "EQX — Resumo da semana",
+          subject: `${APP_NAME} — Resumo da semana`,
           html: emailTemplate(
             `Olá ${w.full_name}`,
             `Resumo da semana passada:<br><br><strong>${totalHours}</strong> trabalhadas<br><strong>${workerSheets.length}</strong> folha(s) submetida(s)<br><br>Veja o seu histórico: ${APP_URL}/worker/dashboard`,
@@ -184,7 +185,7 @@ async function handleCron(request: Request, method: string) {
         await transporter.sendMail({
           from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
           to: w.email,
-          subject: "EQX — Lembrete: folha de serviço desta semana",
+          subject: `${APP_NAME} — Lembrete: folha de serviço desta semana`,
           html: emailTemplate(
             `Olá ${w.full_name}`,
             `Ainda não submeteu a folha de serviço desta semana. Lembre-se de a preencher até ao fim de semana.`,
@@ -210,7 +211,7 @@ function emailTemplate(title: string, body: string, footer: string) {
 <tr><td align="center">
 <table width="500" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
   <tr><td style="background:#fff;padding:24px 30px 16px;text-align:center;border-bottom:3px solid #F1C411">
-    <img src="${APP_URL}/eqx-logo.png" alt="logo" style="height:36px" />
+    <img src="${APP_URL}/logo.png" alt="logo" style="height:36px" />
   </td></tr>
   <tr><td style="padding:30px">
     <h2 style="margin:0 0 10px;color:#1a1a1a;font-size:18px">${title}</h2>
@@ -218,7 +219,7 @@ function emailTemplate(title: string, body: string, footer: string) {
     <p style="margin:0;color:#7A7A7A;font-size:12px">${footer}</p>
   </td></tr>
   <tr><td style="background:#F7F7F7;padding:15px 30px;border-top:1px solid #eee">
-    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma EQX Folha de Serviço.</p>
+    <p style="margin:0;color:#aaa;font-size:11px;font-style:italic">Enviado automaticamente pela plataforma ${APP_NAME}.</p>
   </td></tr>
 </table>
 </td></tr></table></body></html>`;
