@@ -35,7 +35,7 @@ async function handleCron(request: Request, method: string) {
 
   const supabase = createClient(supabaseUrl!, serviceRoleKey);
   const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
-  const logoUrl = `${APP_URL}/logo.png`;
+  const logoUrl = process.env.NEXT_PUBLIC_LOGO_URL || `${APP_URL}/logo.png`;
 
   const results: any = {};
 
