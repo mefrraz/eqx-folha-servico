@@ -60,6 +60,14 @@ As chaves são criadas/revogadas no painel admin em **API Keys** (`/hr/api-keys`
 | `apagar_trabalhadores_em_massa` | Apaga vários trabalhadores numa só chamada | admin/RH |
 | `criar_obras_em_massa` | Cria várias obras numa só chamada | admin/RH |
 | `resumo_semana` | Resumo da semana: quem submeteu, horas, em falta | leitura |
+| `listar_convites` | Lista os convites de acesso | leitura |
+| `criar_convite` | Cria código de convite (prazo, papel, aprovação) | admin/RH |
+| `apagar_convite` | Apaga um convite | admin/RH |
+| `criar_trabalhador` | Cria conta + envia email para definir password | admin/RH |
+| `editar_obra` | Edita obra (nome, nº, cliente, localização) | admin/RH |
+| `editar_cliente` | Edita cliente (nome, logotipo) | admin/RH |
+| `remover_obra_trabalhador` | Remove atribuição de obra a trabalhador | admin/RH |
+| `resumo_semana` | Resumo da semana: quem submeteu, horas, em falta | leitura |
 
 **Todas as ferramentas de escrita exigem role admin/RH** — o role é verificado antes de executar (a chave de leitura não basta). Rate limiting aplica-se a todas as ferramentas.
 

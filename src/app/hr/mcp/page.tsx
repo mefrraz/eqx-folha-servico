@@ -53,6 +53,13 @@ export default async function McpPage() {
             ["apagar_trabalhadores_em_massa", "admin/RH"],
             ["criar_obras_em_massa", "admin/RH"],
             ["resumo_semana", "leitura"],
+            ["listar_convites", "leitura"],
+            ["criar_convite", "admin/RH"],
+            ["apagar_convite", "admin/RH"],
+            ["criar_trabalhador", "admin/RH"],
+            ["editar_obra", "admin/RH"],
+            ["editar_cliente", "admin/RH"],
+            ["remover_obra_trabalhador", "admin/RH"],
           ].map(([tool, perm]) => (
             <div key={tool} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-brand-gold/5">
               <code className="font-mono text-xs text-brand-dark">{tool}</code>
