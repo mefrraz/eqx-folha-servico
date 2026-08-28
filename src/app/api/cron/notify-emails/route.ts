@@ -36,33 +36,68 @@ async function handleCron(request: Request, method: string) {
   const supabase = createClient(supabaseUrl!, serviceRoleKey);
   const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
   const logoUrl = process.env.NEXT_PUBLIC_LOGO_URL || `${APP_URL}/logo.png`;
+  // Modo digest: ADMIN_DIGEST=1 → o admin recebe UM email agrupado por execução do cron
+  // (em vez de 1 email por folha submetida). O POST em tempo real (pg_net) não envia.
+  const digestMode = process.env.ADMIN_DIGEST === "1";
+
+  // Em modo digest, a chamada em tempo real (POST do pg_net) não envia email —
+  // o cron agendado agrupa tudo num só email.
+  if (digestMode && method === "POST") {
+    return NextResponse.json({ skipped: true, reason: "digest mode — o cron envia o resumo" });
+  }
 
   const results: any = {};
 
-  // ── 1. Send notification emails to admin ──
+  // ── 1. Notificações → admin ──
   const { data: notifications } = await supabase
     .from("notifications")
     .select("id, message, created_at")
     .is("emailed_at", null)
     .order("created_at", { ascending: true })
-    .limit(10);
+    .limit(digestMode ? 100 : 10);
 
   if (notifications && notifications.length > 0) {
-    let sent = 0, failed = 0;
-    for (const n of notifications) {
+    if (digestMode) {
+      // UM email com a lista de tudo o que aconteceu
+      const list = notifications
+        .map((n) => `<li style="margin:0 0 6px">${n.message} <span style="color:#999;font-size:11px">(${new Date(n.created_at).toLocaleString("pt-PT")})</span></li>`)
+        .join("");
       try {
         await transporter.sendMail({
-          from: `${process.env.NEXT_PUBLIC_APP_NAME || "Folha de Serviço"} <${emailFrom}>`,
+          from: `${APP_NAME} <${emailFrom}>`,
           to: adminEmail,
-          subject: `${APP_NAME}: ${n.message}`,
-          html: emailTemplate("Nova folha submetida", n.message, `Ver: ${APP_URL}/hr/notifications`),
+          subject: `${APP_NAME} — ${notifications.length} notificação(ões) nova(s)`,
+          html: emailTemplate(
+            "Resumo de atividade",
+            `<strong>${notifications.length}</strong> nova(s) notificação(ões) desde o último resumo:<ul style="padding-left:18px;margin:10px 0">${list}</ul>`,
+            `Ver tudo: ${APP_URL}/hr/notifications`
+          ),
         });
-        await supabase.from("notifications").update({ emailed_at: new Date().toISOString() }).eq("id", n.id);
-        sent++;
-      } catch (err: any) { console.error("[cron] notify error:", err?.message); failed++; }
+        const ids = notifications.map((n) => n.id);
+        await supabase.from("notifications").update({ emailed_at: new Date().toISOString() }).in("id", ids);
+        console.log(`[cron] Digest — 1 email com ${notifications.length} notificações`);
+        results.notifications = { sent: 1, grouped: notifications.length };
+      } catch (err: any) {
+        console.error("[cron] digest error:", err?.message);
+        results.notifications = { sent: 0, failed: notifications.length };
+      }
+    } else {
+      let sent = 0, failed = 0;
+      for (const n of notifications) {
+        try {
+          await transporter.sendMail({
+            from: `${APP_NAME} <${emailFrom}>`,
+            to: adminEmail,
+            subject: `${APP_NAME}: ${n.message}`,
+            html: emailTemplate("Nova folha submetida", n.message, `Ver: ${APP_URL}/hr/notifications`),
+          });
+          await supabase.from("notifications").update({ emailed_at: new Date().toISOString() }).eq("id", n.id);
+          sent++;
+        } catch (err: any) { console.error("[cron] notify error:", err?.message); failed++; }
+      }
+      console.log(`[cron] Notifications — Sent: ${sent}, Failed: ${failed}`);
+      results.notifications = { sent, failed };
     }
-    console.log(`[cron] Notifications — Sent: ${sent}, Failed: ${failed}`);
-    results.notifications = { sent, failed };
   }
 
   // ── 2. Sunday reminder to workers without sheet ──
