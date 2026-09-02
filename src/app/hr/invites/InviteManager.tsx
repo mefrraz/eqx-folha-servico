@@ -13,6 +13,7 @@ interface Invite {
   used_at?: string | null;
   role?: string;
   requires_approval?: boolean;
+  project_ids?: string[] | null;
   used?: { full_name?: string; email?: string } | null;
 }
 
@@ -25,21 +26,26 @@ function expiryInfo(invite: Invite) {
   return { label: "Válido", cls: "bg-success/20 text-green-700" };
 }
 
-export default function InviteManager({ invites }: { invites: Invite[] }) {
+export default function InviteManager({ invites, projects }: { invites: Invite[]; projects: { id: string; name: string; number?: string }[] }) {
   const [code, setCode] = useState("");
   const [label, setLabel] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [role, setRole] = useState("worker");
   const [requiresApproval, setRequiresApproval] = useState(false);
+  const [obraIds, setObraIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const router = useRouter();
+
+  const toggleObra = (id: string) => {
+    setObraIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  };
 
   const handleCreate = async () => {
     if (!code.trim()) { toast.error("Indique um código."); return; }
     setSaving(true);
-    const r = await createInvite({ code, label, expires_at: expiresAt || null, role, requires_approval: requiresApproval });
+    const r = await createInvite({ code, label, expires_at: expiresAt || null, role, requires_approval: requiresApproval, project_ids: Array.from(obraIds) });
     if (r.error) toast.error(r.error);
-    else { toast.success("Convite criado!"); setCode(""); setLabel(""); setExpiresAt(""); setRole("worker"); setRequiresApproval(false); router.refresh(); }
+    else { toast.success("Convite criado!"); setCode(""); setLabel(""); setExpiresAt(""); setRole("worker"); setRequiresApproval(false); setObraIds(new Set()); router.refresh(); }
     setSaving(false);
   };
 
@@ -82,6 +88,23 @@ export default function InviteManager({ invites }: { invites: Invite[] }) {
             <span className="text-sm text-brand-soft">Requer aprovação das obras</span>
           </label>
         </div>
+        <div>
+          <label className="label-field">Obras do trabalhador (opcional — só estas lhe aparecerão)</label>
+          {projects.length === 0 ? (
+            <p className="text-xs text-brand-muted">Nenhuma obra registada. O convite ficará sem obras.</p>
+          ) : (
+            <div className="max-h-36 overflow-y-auto border border-brand-light/30 rounded-xl divide-y divide-brand-light/20 mt-1">
+              {projects.map((p) => (
+                <label key={p.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-brand-light/5">
+                  <input type="checkbox" checked={obraIds.has(p.id)} onChange={() => toggleObra(p.id)} className="rounded" />
+                  <span className="text-sm text-brand-dark">{p.name}</span>
+                  {p.number && <span className="text-xs text-brand-gold font-mono">{p.number}</span>}
+                </label>
+              ))}
+            </div>
+          )}
+          {obraIds.size > 0 && <p className="text-xs text-brand-muted mt-1">{obraIds.size} obra(s) selecionada(s) — atribuídas de imediato ao registar.</p>}
+        </div>
         <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm !px-5 !py-2.5">
           {saving ? "A criar..." : "Criar convite"}
         </button>
@@ -104,6 +127,7 @@ export default function InviteManager({ invites }: { invites: Invite[] }) {
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${info.cls}`}>{info.label}</span>
                     {inv.role === "admin" && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-dark text-white">Admin</span>}
                     {inv.requires_approval && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Aprovação</span>}
+                    {!!inv.project_ids?.length && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-gold/20 text-brand-dark">{inv.project_ids.length} obra(s)</span>}
                   </div>
                   <div className="flex items-center gap-3">
                     {inv.used ? (

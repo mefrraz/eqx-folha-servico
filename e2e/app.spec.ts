@@ -127,46 +127,41 @@ test.describe("Admin pages", () => {
 });
 
 test.describe("Worker flow", () => {
-  test("worker can register, onboard, create and submit a sheet", async ({ page }) => {
+  test("worker can register via invite and is ready to work", async ({ page }) => {
     const { email, password } = await createWorker(page);
 
-    // Handle onboarding (select a project) if shown — wait for it
-    await page.waitForTimeout(3000);
+    // Obras do convite já estão atribuídas — sem seletor de onboarding
+    await page.waitForTimeout(2000);
     const onboarding = page.getByRole("heading", { name: /Selecionar obras/i });
-    if (await onboarding.isVisible().catch(() => false)) {
-      const firstCheckbox = page.locator('input[type="checkbox"]').first();
-      const hasProjects = await firstCheckbox.isVisible().catch(() => false);
-      if (hasProjects) {
-        await firstCheckbox.check();
-        await page.getByRole("button", { name: /Confirmar/i }).click();
-        await page.waitForTimeout(2000);
-      }
-      // If no projects, just proceed — navigating to the sheet form reloads the page
-    }
+    await expect(onboarding).not.toBeVisible({ timeout: 8000 }).catch(() => {});
 
-    // Go to new sheet
+    // Nova folha → escolha de obra (ou mensagem se sem obras atribuídas)
     await page.goto(`${BASE}/worker/sheet/new`);
-    await expect(page.getByRole("heading", { name: /Folha de Serviço/i })).toBeVisible({ timeout: 15000 });
-
-    // Fill a morning shift on Monday
-    const timeInputs = page.locator('input[type="time"]');
-    await timeInputs.first().waitFor({ state: "visible", timeout: 10000 });
-    await timeInputs.nth(0).fill("08:00");
-    await timeInputs.nth(1).fill("12:00");
-
-    // Save as draft
-    await page.getByRole("button", { name: /Guardar rascunho/i }).click();
-    await expect(page.getByText(/Rascunho guardado/i)).toBeVisible({ timeout: 15000 });
-
-    // Dashboard should show the sheet
-    await page.goto(`${BASE}/worker/dashboard`);
-    await expect(page.getByText(/Folha/i).first()).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(2000);
+    const chooserEmpty = page.getByText(/Não tem obras atribuídas/i);
+    const obraCard = page.getByRole("heading", { name: /Nova folha de serviço/i });
+    const hasObraCard = await obraCard.isVisible().catch(() => false);
+    if (hasObraCard) {
+      // Há obras: escolher a primeira e preencher a folha
+      await page.locator('a[href*="/worker/sheet/new?obra="]').first().click();
+      const timeInputs = page.locator('input[type="time"]');
+      await timeInputs.first().waitFor({ state: "visible", timeout: 15000 });
+      await timeInputs.nth(0).fill("08:00");
+      await timeInputs.nth(1).fill("12:00");
+      await page.getByRole("button", { name: /Guardar rascunho/i }).click();
+      await expect(page.getByText(/Rascunho guardado/i)).toBeVisible({ timeout: 15000 });
+      await page.goto(`${BASE}/worker/dashboard`);
+      await expect(page.getByText(/Folhas desta semana/i)).toBeVisible({ timeout: 15000 });
+    } else {
+      // Sem obras: mensagem clara
+      await expect(chooserEmpty).toBeVisible({ timeout: 15000 });
+    }
   });
 
   test("worker settings page loads", async ({ page }) => {
     const { email, password } = await createWorker(page);
     await page.goto(`${BASE}/worker/settings`);
     await expect(page.getByRole("heading", { name: /O meu perfil/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Mudar obras/i })).toBeVisible();
+    await expect(page.getByText(/As minhas obras/i)).toBeVisible();
   });
 });

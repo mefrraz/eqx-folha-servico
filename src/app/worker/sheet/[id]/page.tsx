@@ -16,7 +16,7 @@ export default async function EditSheetPage({
 
   const { data: sheet } = await supabase
     .from("work_sheets")
-    .select("*, work_entries(*)")
+    .select("*, work_entries(*), project:projects(id, name, number, client:clients(name))")
     .eq("id", params.id)
     .eq("worker_id", user!.id)
     .single();
@@ -25,5 +25,5 @@ export default async function EditSheetPage({
     notFound();
   }
 
-  return <SheetForm existingSheet={sheet} />;
+  return <SheetForm project={sheet.project as any} existingSheet={sheet} />;
 }

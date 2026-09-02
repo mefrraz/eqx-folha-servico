@@ -175,7 +175,7 @@ const TOOLS = [
   },
   {
     name: "criar_convite",
-    description: "Cria um código de convite para registo de trabalhadores. Requer permissão admin/RH.",
+    description: "Cria um código de convite para registo de trabalhadores, com as obras que o trabalhador terá. Requer permissão admin/RH.",
     inputSchema: {
       type: "object",
       properties: {
@@ -183,7 +183,8 @@ const TOOLS = [
         label: { type: "string", description: "Etiqueta opcional (ex: Turma A)." },
         expires_at: { type: "string", description: "Prazo (ISO date). Opcional." },
         role: { type: "string", enum: ["worker", "admin"], description: "Papel da conta criada. Default: worker." },
-        requires_approval: { type: "boolean", description: "Se a seleção inicial de obras requer aprovação. Default: false." },
+        requires_approval: { type: "boolean", description: "Se a conta precisa de aprovação ao registar-se. Default: false." },
+        obra_ids: { type: "array", items: { type: "string" }, description: "IDs das obras do trabalhador (atribuídas de imediato ao registar). Opcional — convites sem obras dão contas sem obras." },
       },
       required: ["code"],
     },
@@ -199,12 +200,13 @@ const TOOLS = [
   },
   {
     name: "criar_trabalhador",
-    description: "Cria uma conta de trabalhador e envia email com link para definir password. Requer permissão admin/RH.",
+    description: "Cria uma conta de trabalhador, atribui as obras indicadas e envia email com link para definir password. Requer permissão admin/RH.",
     inputSchema: {
       type: "object",
       properties: {
         nome: { type: "string", description: "Nome completo." },
         email: { type: "string", description: "Email do trabalhador." },
+        obra_ids: { type: "array", items: { type: "string" }, description: "IDs das obras do trabalhador. Opcional." },
       },
       required: ["nome", "email"],
     },
@@ -491,6 +493,7 @@ async function callTool(name: string, args: any, role: "read" | "admin"): Promis
       if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
       if (!args?.code?.trim()) return JSON.stringify({ error: "Código é obrigatório." });
       const code = args.code.trim().toUpperCase();
+      const obraIds: string[] = Array.isArray(args?.obra_ids) ? args.obra_ids.map(String) : [];
       const { data, error } = await supabase
         .from("invites")
         .insert({
@@ -499,11 +502,12 @@ async function callTool(name: string, args: any, role: "read" | "admin"): Promis
           expires_at: args.expires_at || null,
           role: args.role === "admin" ? "admin" : "worker",
           requires_approval: !!args.requires_approval,
+          project_ids: obraIds,
         })
-        .select("id, code, role, expires_at")
+        .select("id, code, role, expires_at, project_ids")
         .maybeSingle();
       if (error) return JSON.stringify({ error: error.message });
-      return JSON.stringify({ success: true, convite: data });
+      return JSON.stringify({ success: true, convite: data, obras_atribuidas: obraIds.length });
     }
     case "apagar_convite": {
       if (!canWrite(role)) return JSON.stringify({ error: "Permissão insuficiente (requer admin/RH)." });
@@ -527,8 +531,14 @@ async function callTool(name: string, args: any, role: "read" | "admin"): Promis
       });
       if (authError) return JSON.stringify({ error: authError.message });
       if (userData.user) {
-        await supabase.from("profiles").update({ full_name: nome, email, onboarded: false }).eq("id", userData.user.id);
+        await supabase.from("profiles").update({ full_name: nome, email, onboarded: true }).eq("id", userData.user.id);
         await supabase.from("invite_tokens").insert({ email, full_name: nome, token: inviteToken, created_by: null });
+        // Atribuir as obras indicadas (aprovadas)
+        const obraIds: string[] = Array.isArray(args?.obra_ids) ? args.obra_ids.map(String) : [];
+        if (obraIds.length > 0) {
+          const rows = obraIds.map((pid: string) => ({ worker_id: userData.user!.id, project_id: pid, status: "approved" }));
+          await supabase.from("worker_projects").upsert(rows, { onConflict: "worker_id,project_id" });
+        }
       }
       // Enviar email com link para definir password
       const gmailUser = process.env.GMAIL_USER;

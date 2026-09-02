@@ -9,16 +9,17 @@ export default async function InvitesPage() {
     .from("invites")
     .select("*, used:profiles!invites_used_by_fkey(full_name, email)")
     .order("created_at", { ascending: false });
+  const { data: projects } = await supabase.from("projects").select("id, name, number").order("name");
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-brand-dark">Convites de acesso</h1>
         <p className="text-sm text-brand-soft mt-1">
-          Crie códigos de convite para os trabalhadores se registarem. Os códigos expirados ficam guardados para estatística.
+          Crie códigos de convite para os trabalhadores se registarem. Pode indicar as obras do convite — o trabalhador nunca vê todas as obras, só as dele.
         </p>
       </div>
-      <InviteManager invites={(invites || []) as any[]} />
+      <InviteManager invites={(invites || []) as any[]} projects={(projects || []) as any[]} />
     </div>
   );
 }

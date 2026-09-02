@@ -157,7 +157,7 @@ export async function deleteProject(id: string) {
 }
 
 // ── Invite actions ──
-export async function createInvite(data: { code: string; label?: string; expires_at?: string | null; role?: string; requires_approval?: boolean }) {
+export async function createInvite(data: { code: string; label?: string; expires_at?: string | null; role?: string; requires_approval?: boolean; project_ids?: string[] }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Não autenticado." };
@@ -173,6 +173,7 @@ export async function createInvite(data: { code: string; label?: string; expires
     expires_at: data.expires_at || null,
     role: data.role === "admin" ? "admin" : "worker",
     requires_approval: !!data.requires_approval,
+    project_ids: data.project_ids || [],
     created_by: user.id,
   });
   if (error) return { error: error.message };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { format, startOfWeek, addDays } from "date-fns";
@@ -44,7 +44,7 @@ function getWeekDates(ws: Date) {
   return DAYS.map((d, i) => ({ ...d, date: format(addDays(ws, i), "yyyy-MM-dd") }));
 }
 
-export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet | null }) {
+export default function SheetForm({ project, existingSheet }: { project: { id: string; name: string; number?: string; client?: { name?: string } | null }; existingSheet?: WorkSheet | null }) {
   const router = useRouter();
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
@@ -53,29 +53,8 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
 
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const [client, setClient] = useState(existingSheet?.client || "");
-  const [workNumber, setWorkNumber] = useState(existingSheet?.work_number || "");
-  const [projects, setProjects] = useState<any[]>([]);
-
-  // Fetch worker's assigned projects
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-      supabase
-        .from("worker_projects")
-        .select("project:projects(id, name, number, client:clients(name))")
-        .eq("worker_id", user.id)
-        .eq("status", "approved")
-        .then(({ data, error }) => {
-          if (error) console.error("[SheetForm] worker_projects error:", error);
-          else if (data) {
-            const projs = data.map((r: any) => r.project).filter(Boolean);
-            setProjects(projs);
-          }
-        });
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [client, setClient] = useState(existingSheet?.client || project?.client?.name || "");
+  const [workNumber, setWorkNumber] = useState(existingSheet?.work_number || project?.number || "");
 
   /** Toggle a shift as "não trabalhei" (fades fields, keeps them visible) */
   const toggleSkip = (key: string) => {
@@ -124,7 +103,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
 
   const handleSave = async (status: "draft" | "submitted") => {
     if (status === "submitted") {
-      if (projects.length === 0) { toast.error("Não tem obras atribuídas. Contacte o administrador."); return; }
+      if (!project?.id) { toast.error("Folha sem obra. Contacte o administrador."); return; }
       if (!client.trim()) { toast.error("Cliente é obrigatório para submeter."); return; }
       if (!workNumber.trim()) { toast.error("Nº Obra é obrigatório para submeter."); return; }
       const overlapError = validateShifts();
@@ -143,7 +122,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
       return;
     }
 
-    const ws = weekDates[0].date;
+      const ws = weekDates[0].date;
     const payload = {
       worker_id: user.id,
       week_start: ws,
@@ -151,6 +130,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
       client,
       work_number: workNumber,
       status,
+      project_id: project?.id,
     };
 
     let sid = existingSheet?.id;
@@ -160,6 +140,7 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
         .select("id")
         .eq("worker_id", user.id)
         .eq("week_start", ws)
+        .eq("project_id", project?.id)
         .maybeSingle();
       if (existing) {
         sid = existing.id;
@@ -248,26 +229,8 @@ export default function SheetForm({ existingSheet }: { existingSheet?: WorkSheet
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           <div>
-            <label className="label-field">Obra atribuída</label>
-            <select
-              value=""
-              onChange={(e) => {
-                const p = projects.find(p => p.id === e.target.value);
-                if (p) {
-                  setClient(p.client?.name || "");
-                  setWorkNumber(p.number || "");
-                }
-              }}
-              className="input-field"
-            >
-              <option value="">— Selecionar —</option>
-              {projects.length === 0 && <option disabled>Sem obras atribuídas</option>}
-              {projects.map((p: any) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} {p.number ? `(${p.number})` : ""} {p.client?.name ? `— ${p.client.name}` : ""}
-                </option>
-              ))}
-            </select>
+            <label className="label-field">Obra</label>
+            <input type="text" value={project?.name || "—"} readOnly className="input-field bg-brand-gold/5" />
           </div>
           <div>
             <label className="label-field">Cliente</label>
